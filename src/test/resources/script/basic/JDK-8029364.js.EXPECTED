@@ -1,0 +1,7 @@
+class javax.script.ScriptException
+class org.codelibs.sai.internal.runtime.ECMAException
+Error: foo
+true
+Error
+foo
+33

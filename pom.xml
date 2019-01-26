@@ -1,0 +1,128 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.codelibs</groupId>
+	<artifactId>sai</artifactId>
+	<packaging>jar</packaging>
+	<name>CodeLibs Sai</name>
+	<version>0.1.0-SNAPSHOT</version>
+	<description />
+	<url>https://github.com/codelibs/sai</url>
+	<inceptionYear>2012</inceptionYear>
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	<organization>
+		<name>CodeLibs Project</name>
+		<url>http://www.codelibs.org/</url>
+	</organization>
+	<scm>
+		<connection>scm:git:git@github.com:codelibs/sai.git</connection>
+		<url>scm:git:git@github.com:codelibs/sai.git</url>
+		<developerConnection>scm:git:git@github.com:codelibs/sai.git</developerConnection>
+	</scm>
+	<parent>
+		<groupId>org.sonatype.oss</groupId>
+		<artifactId>oss-parent</artifactId>
+		<version>9</version>
+	</parent>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<jar.main.class>org.codelibs.sai.tools.Shell</jar.main.class>
+	</properties>
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.8.0</version>
+				<configuration>
+					<source>${maven.compiler.source}</source>
+					<target>${maven.compiler.target}</target>
+					<encoding>UTF-8</encoding>
+					<compilerArgument>-XDignore.symbol.file</compilerArgument>
+					<fork>true</fork>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.0.1</version>
+				<executions>
+					<execution>
+						<id>source-jar</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.0.1</version>
+				<configuration>
+					<encoding>UTF-8</encoding>
+					<docencoding>UTF-8</docencoding>
+					<charset>UTF-8</charset>
+					<links>
+						<link>http://docs.oracle.com/javase/8/docs/api/</link>
+					</links>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.8</version>
+				<executions>
+					<execution>
+						<phase>process-classes</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<target>
+								<ant antfile="${basedir}/buildtools/saigen/build.xml"
+									dir="${basedir}/buildtools/saigen"
+									target="all"/>
+								<java fork="true" failonerror="true"
+									classname="org.codelibs.sai.internal.tools.saigen.Main">
+									<classpath>
+										<pathelement location="${basedir}/target/dist/saigen.jar" />
+										<pathelement path="${basedir}/target/classes" />
+									</classpath>
+									<arg value="${basedir}/target/classes"/>
+									<arg value="org.codelibs.sai.internal.objects"/>
+									<arg value="${basedir}/target/classes"/>
+								</java>
+							</target>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.1.1</version>
+				<configuration>
+					<archive>
+						<index>true</index>
+						<manifest>
+							<mainClass>${jar.main.class}</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
+		<dependency>
+			<groupId>org.testng</groupId>
+			<artifactId>testng</artifactId>
+			<version>6.14.3</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+</project>

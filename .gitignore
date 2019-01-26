@@ -1,0 +1,6 @@
+bin/
+.classpath
+.project
+/target
+/.settings
+SaiProfile.txt
