@@ -26,7 +26,7 @@
  *
  * @test
  * @run
- * @option -Dnashorn.debug=true
+ * @option -Dsai.debug=true
  * @fork
  */
 
@@ -34,8 +34,8 @@ var intType    = Java.type("int");
 var doubleType = Java.type("double");
 var objectType = Java.type("java.lang.Object");
 
-var Context = Java.type("jdk.nashorn.internal.runtime.Context");
-var JSType  = Java.type("jdk.nashorn.internal.runtime.JSType");
+var Context = Java.type("org.codelibs.sai.internal.runtime.Context");
+var JSType  = Java.type("org.codelibs.sai.internal.runtime.JSType");
 
 var context = Context.getContext();
 var dualFields = context.useDualFields();

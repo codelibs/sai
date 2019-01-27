@@ -23,23 +23,23 @@
  questions.
 -->
 
-<project name="nashorn" default="test" basedir="..">
-  <import file="build-nasgen.xml"/>
+<project name="sai" default="test" basedir="..">
+  <import file="build-saigen.xml"/>
   <import file="code_coverage.xml"/>
 
   <target name="init-conditions">
     <!-- loading locally defined resources and properties. NB they owerwrite default ones defined later -->
-    <property file="${user.home}/.nashorn.project.local.properties"/>
+    <property file="${user.home}/.sai.project.local.properties"/>
 
     <loadproperties srcFile="make/project.properties"/>
     <path id="dist.path">
          <pathelement location="${dist.dir}"/>
     </path>
-    <path id="nashorn.ext.path">
+    <path id="sai.ext.path">
       <pathelement location="${dist.dir}"/>
       <pathelement location="${java.ext.dirs}"/>
     </path>
-    <property name="ext.class.path" value="-Djava.ext.dirs=&quot;${toString:nashorn.ext.path}&quot;"/>
+    <property name="ext.class.path" value="-Djava.ext.dirs=&quot;${toString:sai.ext.path}&quot;"/>
     <condition property="svn.executable" value="/usr/local/bin/svn" else="svn">
       <available file="/usr/local/bin/svn"/>
     </condition>
@@ -135,14 +135,14 @@
     <mkdir dir="${dist.javadoc.dir}"/>
   </target>
 
-  <target name="clean" depends="init, clean-nasgen, init-cc-cleanup">
+  <target name="clean" depends="init, clean-saigen, init-cc-cleanup">
     <delete includeemptydirs="true">
       <fileset dir="${build.dir}" erroronmissingdir="false"/>
     </delete>
     <delete dir="${dist.dir}"/>
   </target>
 
-  <target name="compile" depends="prepare" description="Compiles nashorn">
+  <target name="compile" depends="prepare" description="Compiles sai">
     <javac srcdir="${src.dir}"
            destdir="${build.classes.dir}"
            classpath="${javac.classpath}"
@@ -159,24 +159,24 @@
     <copy todir="${build.classes.dir}/META-INF/services">
        <fileset dir="${meta.inf.dir}/services/"/>
     </copy>
-     <copy todir="${build.classes.dir}/jdk/nashorn/api/scripting/resources">
-       <fileset dir="${src.dir}/jdk/nashorn/api/scripting/resources/"/>
+     <copy todir="${build.classes.dir}/org/codelibs/sai/api/scripting/resources">
+       <fileset dir="${src.dir}/org/codelibs/sai/api/scripting/resources/"/>
     </copy>
-    <copy todir="${build.classes.dir}/jdk/nashorn/internal/runtime/resources">
-       <fileset dir="${src.dir}/jdk/nashorn/internal/runtime/resources/"/>
+    <copy todir="${build.classes.dir}/org/codelibs/sai/internal/runtime/resources">
+       <fileset dir="${src.dir}/org/codelibs/sai/internal/runtime/resources/"/>
     </copy>
-    <copy todir="${build.classes.dir}/jdk/nashorn/tools/resources">
-       <fileset dir="${src.dir}/jdk/nashorn/tools/resources/"/>
+    <copy todir="${build.classes.dir}/org/codelibs/sai/tools/resources">
+       <fileset dir="${src.dir}/org/codelibs/sai/tools/resources/"/>
     </copy>
-    <copy file="${src.dir}/jdk/internal/dynalink/support/messages.properties" todir="${build.classes.dir}/jdk/internal/dynalink/support"/>
-    <copy file="${src.dir}/jdk/nashorn/internal/codegen/anchor.properties" todir="${build.classes.dir}/jdk/nashorn/internal/codegen"/>
+    <copy file="${src.dir}/org/codelibs/sai/internal/dynalink/support/messages.properties" todir="${build.classes.dir}/org/codelibs/sai/internal/dynalink/support"/>
+    <copy file="${src.dir}/org/codelibs/sai/internal/codegen/anchor.properties" todir="${build.classes.dir}/org/codelibs/sai/internal/codegen"/>
 
-    <echo message="full=${nashorn.fullversion}" file="${build.classes.dir}/jdk/nashorn/internal/runtime/resources/version.properties"/>
-    <echo file="${build.classes.dir}/jdk/nashorn/internal/runtime/resources/version.properties" append="true">${line.separator}</echo>
-    <echo message="release=${nashorn.version}" file="${build.classes.dir}/jdk/nashorn/internal/runtime/resources/version.properties" append="true"/>
+    <echo message="full=${sai.fullversion}" file="${build.classes.dir}/org/codelibs/sai/internal/runtime/resources/version.properties"/>
+    <echo file="${build.classes.dir}/org/codelibs/sai/internal/runtime/resources/version.properties" append="true">${line.separator}</echo>
+    <echo message="release=${sai.version}" file="${build.classes.dir}/org/codelibs/sai/internal/runtime/resources/version.properties" append="true"/>
   </target>
 
-  <target name="jar" depends="compile, run-nasgen, generate-cc-template" description="Creates nashorn.jar" unless="compile.suppress.jar">
+  <target name="jar" depends="compile, run-saigen, generate-cc-template" description="Creates sai.jar" unless="compile.suppress.jar">
     <jar jarfile="${dist.jar}" manifest="${meta.inf.dir}/MANIFEST.MF" index="true" filesetmanifest="merge">
       <fileset dir="${build.classes.dir}"/>
       <manifest>
@@ -184,17 +184,17 @@
         <attribute name="Build-Jdk" value="${java.runtime.version}"/>
         <attribute name="Built-By" value="n/a"/>
         <attribute name="Created-By" value="Ant jar task"/>
-        <section name="jdk/nashorn/">
-          <attribute name="Implementation-Title" value="${nashorn.product.name}"/>
-          <attribute name="Implementation-Version" value="${nashorn.version}"/>
+        <section name="org/codelibs/sai/">
+          <attribute name="Implementation-Title" value="${sai.product.name}"/>
+          <attribute name="Implementation-Version" value="${sai.version}"/>
         </section>
       </manifest>
     </jar>
   </target>
 
-  <target name="use-promoted-nashorn" depends="init">
-    <delete file="${dist.dir}/nashorn.jar"/>
-    <copy file="${java.home}/lib/ext/nashorn.jar" todir="${dist.dir}"/>
+  <target name="use-promoted-sai" depends="init">
+    <delete file="${dist.dir}/sai.jar"/>
+    <copy file="${java.home}/lib/ext/sai.jar" todir="${dist.dir}"/>
     <property name="compile.suppress.jar" value="defined"/>
   </target>
 
@@ -215,18 +215,18 @@
         <attribute name="Build-Jdk" value="${java.runtime.version}"/>
         <attribute name="Built-By" value="n/a"/>
         <attribute name="Created-By" value="Ant jar task"/>
-        <section name="jdk/nashorn/">
-          <attribute name="Implementation-Title" value="Oracle Nashorn FXShell"/>
-          <attribute name="Implementation-Version" value="${nashorn.version}"/>
+        <section name="org/codelibs/sai/">
+          <attribute name="Implementation-Title" value="Oracle Sai FXShell"/>
+          <attribute name="Implementation-Version" value="${sai.version}"/>
         </section>
       </manifest>
     </jar>
   </target>
 
-  <!-- generate javadoc for all Nashorn and ASM classes -->
+  <!-- generate javadoc for all Sai and ASM classes -->
   <target name="javadoc" depends="jar">
     <javadoc destdir="${dist.javadoc.dir}" use="yes" overview="${src.dir}/overview.html" 
-        extdirs="${nashorn.ext.path}" windowtitle="${nashorn.product.name} ${nashorn.version}"
+        extdirs="${sai.ext.path}" windowtitle="${sai.product.name} ${sai.version}"
         additionalparam="-quiet" failonerror="true" useexternalfile="true">
       <arg value="${javadoc.option}"/>
       <classpath>
@@ -242,10 +242,10 @@
     </javadoc>
   </target>
 
-  <!-- generate javadoc for Nashorn classes -->
+  <!-- generate javadoc for Sai classes -->
   <target name="javadocnh" depends="jar">
     <javadoc destdir="${dist.javadoc.dir}" use="yes" overview="${src.dir}/overview.html"
-        extdirs="${nashorn.ext.path}" windowtitle="${nashorn.product.name} ${nashorn.version}"
+        extdirs="${sai.ext.path}" windowtitle="${sai.product.name} ${sai.version}"
         additionalparam="-quiet" failonerror="true" useexternalfile="true">
       <arg value="${javadoc.option}"/>
       <classpath>
@@ -256,22 +256,22 @@
     </javadoc>
   </target>
 
-  <!-- generate javadoc only for nashorn extension api classes -->
+  <!-- generate javadoc only for sai extension api classes -->
   <target name="javadocapi" depends="jar">
-    <javadoc destdir="${dist.javadoc.dir}" use="yes" extdirs="${nashorn.ext.path}" 
-        windowtitle="${nashorn.product.name}" additionalparam="-quiet" failonerror="true" useexternalfile="true">
+    <javadoc destdir="${dist.javadoc.dir}" use="yes" extdirs="${sai.ext.path}" 
+        windowtitle="${sai.product.name}" additionalparam="-quiet" failonerror="true" useexternalfile="true">
       <arg value="${javadoc.option}"/>
       <classpath>
         <pathelement location="${build.classes.dir}"/>
       </classpath>
-      <fileset dir="${src.dir}" includes="jdk/nashorn/api/**/*.java"/>
+      <fileset dir="${src.dir}" includes="org/codelibs/sai/api/**/*.java"/>
       <link href="http://docs.oracle.com/javase/8/docs/api/"/>
     </javadoc>
   </target>
 
   <!-- generate shell.html for shell tool documentation -->
   <target name="shelldoc" depends="jar">
-    <java classname="${nashorn.shell.tool}" dir="${basedir}" output="${dist.dir}/shell.html" failonerror="true" fork="true">
+    <java classname="${sai.shell.tool}" dir="${basedir}" output="${dist.dir}/shell.html" failonerror="true" fork="true">
       <jvmarg line="${ext.class.path}"/>
       <arg value="-scripting"/>
       <arg value="docs/genshelldoc.js"/>
@@ -281,15 +281,15 @@
   <!-- generate all docs -->
   <target name="docs" depends="javadoc, shelldoc"/>
 
-  <!-- create .zip and .tar.gz for nashorn binaries and scripts. -->
+  <!-- create .zip and .tar.gz for sai binaries and scripts. -->
   <target name="dist" depends="jar">
       <zip destfile="${build.zip}" basedir=".."
-          excludes="nashorn/bin/*.sh" includes="nashorn/bin/** nashorn/dist/**"/>
+          excludes="sai/bin/*.sh" includes="sai/bin/** sai/dist/**"/>
       <tar destfile="${build.gzip}" basedir=".." compression="gzip"
-          excludes="nashorn/bin/*.sh" includes="nashorn/bin/** nashorn/dist/**"/>
+          excludes="sai/bin/*.sh" includes="sai/bin/** sai/dist/**"/>
   </target>
 
-  <target name="compile-test" depends="compile, run-nasgen" if="testng.available">
+  <target name="compile-test" depends="compile, run-saigen" if="testng.available">
     <!-- testng task -->
     <taskdef name="testng" classname="org.testng.TestNGAntTask"
         classpath="${testng.ant.classpath}"/>
@@ -312,21 +312,21 @@
        <fileset dir="${test.src.dir}/META-INF/services/"/>
     </copy>
 
-    <copy todir="${build.test.classes.dir}/jdk/nashorn/internal/runtime/test/resources">
-       <fileset dir="${test.src.dir}/jdk/nashorn/internal/runtime/test/resources"/>
+    <copy todir="${build.test.classes.dir}/org/codelibs/sai/internal/runtime/test/resources">
+       <fileset dir="${test.src.dir}/org/codelibs/sai/internal/runtime/test/resources"/>
     </copy>
 
-    <copy todir="${build.test.classes.dir}/jdk/nashorn/api/scripting/test/resources">
-       <fileset dir="${test.src.dir}/jdk/nashorn/api/scripting/test/resources"/>
+    <copy todir="${build.test.classes.dir}/org/codelibs/sai/api/scripting/test/resources">
+       <fileset dir="${test.src.dir}/org/codelibs/sai/api/scripting/test/resources"/>
     </copy>
 
-    <!-- tests that check nashorn internals and internal API -->
-    <jar jarfile="${nashorn.internal.tests.jar}">
+    <!-- tests that check sai internals and internal API -->
+    <jar jarfile="${sai.internal.tests.jar}">
       <fileset dir="${build.test.classes.dir}" excludes="**/api/**"/>
     </jar>
 
-    <!-- tests that check nashorn script engine (jsr-223) API -->
-    <jar jarfile="${nashorn.api.tests.jar}">
+    <!-- tests that check sai script engine (jsr-223) API -->
+    <jar jarfile="${sai.api.tests.jar}">
       <fileset dir="${build.test.classes.dir}" includes="**/api/**"/>
       <fileset dir="${build.test.classes.dir}" includes="**/META-INF/**"/>
       <fileset dir="${build.test.classes.dir}" includes="**/resources/*.js"/>
@@ -335,13 +335,13 @@
   </target>
 
   <target name="generate-policy-file" depends="prepare">
-    <echo file="${build.dir}/nashorn.policy">
+    <echo file="${build.dir}/sai.policy">
 
-grant codeBase "file:/${toString:dist.path}/nashorn.jar" {
+grant codeBase "file:/${toString:dist.path}/sai.jar" {
     permission java.security.AllPermission;
 };
 
-grant codeBase "file:/${basedir}/${nashorn.internal.tests.jar}" {
+grant codeBase "file:/${basedir}/${sai.internal.tests.jar}" {
     permission java.security.AllPermission;
 };
 
@@ -358,7 +358,7 @@ grant codeBase "file:/${basedir}/${file.reference.snakeyaml.jar}" {
     permission java.security.AllPermission;
 };
 //// in case of absolute path:
-grant codeBase "file:/${nashorn.internal.tests.jar}" {
+grant codeBase "file:/${sai.internal.tests.jar}" {
     permission java.security.AllPermission;
 };
 
@@ -382,35 +382,35 @@ grant codeBase "file:/${basedir}/test/script/trusted/*" {
 
 grant codeBase "file:/${basedir}/test/script/maptests/*" {
     permission java.io.FilePermission "${basedir}/test/script/maptests/*","read";
-    permission java.lang.RuntimePermission "nashorn.debugMode";
+    permission java.lang.RuntimePermission "sai.debugMode";
 };
 
 grant codeBase "file:/${basedir}/test/script/basic/*" {
     permission java.io.FilePermission "${basedir}/test/script/-", "read";
     permission java.io.FilePermission "$${user.dir}", "read";
     permission java.util.PropertyPermission "user.dir", "read";
-    permission java.util.PropertyPermission "nashorn.test.*", "read";
+    permission java.util.PropertyPermission "sai.test.*", "read";
 };
 
 grant codeBase "file:/${basedir}/test/script/basic/apply_to_call/*" {
     permission java.io.FilePermission "${basedir}/test/script/-", "read";
     permission java.io.FilePermission "$${user.dir}", "read";
     permission java.util.PropertyPermission "user.dir", "read";
-    permission java.util.PropertyPermission "nashorn.test.*", "read";
+    permission java.util.PropertyPermission "sai.test.*", "read";
 };
 
 grant codeBase "file:/${basedir}/test/script/basic/parser/*" {
     permission java.io.FilePermission "${basedir}/test/script/-", "read";
     permission java.io.FilePermission "$${user.dir}", "read";
     permission java.util.PropertyPermission "user.dir", "read";
-    permission java.util.PropertyPermission "nashorn.test.*", "read";
+    permission java.util.PropertyPermission "sai.test.*", "read";
 };
 
 grant codeBase "file:/${basedir}/test/script/basic/es6/*" {
     permission java.io.FilePermission "${basedir}/test/script/-", "read";
     permission java.io.FilePermission "$${user.dir}", "read";
     permission java.util.PropertyPermission "user.dir", "read";
-    permission java.util.PropertyPermission "nashorn.test.*", "read";
+    permission java.util.PropertyPermission "sai.test.*", "read";
 };
 
 grant codeBase "file:/${basedir}/test/script/basic/JDK-8010946-privileged.js" {
@@ -418,7 +418,7 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8010946-privileged.js" {
 };
 
 grant codeBase "file:/${basedir}/test/script/basic/classloader.js" {
-    permission java.lang.RuntimePermission "nashorn.JavaReflection";
+    permission java.lang.RuntimePermission "sai.JavaReflection";
 };
 
 grant codeBase "file:/${basedir}/test/script/markdown.js" {
@@ -426,13 +426,13 @@ grant codeBase "file:/${basedir}/test/script/markdown.js" {
 };
 
 grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
-    permission java.lang.RuntimePermission "nashorn.setConfig";
+    permission java.lang.RuntimePermission "sai.setConfig";
 };
 
     </echo>
 
-    <replace file="${build.dir}/nashorn.policy"><replacetoken>\</replacetoken><replacevalue>/</replacevalue></replace>    <!--hack for Windows - to make URLs with normal path separators -->
-    <replace file="${build.dir}/nashorn.policy"><replacetoken>//</replacetoken><replacevalue>/</replacevalue></replace>   <!--hack for Unix - to avoid leading // in URLs -->
+    <replace file="${build.dir}/sai.policy"><replacetoken>\</replacetoken><replacevalue>/</replacevalue></replace>    <!--hack for Windows - to make URLs with normal path separators -->
+    <replace file="${build.dir}/sai.policy"><replacetoken>//</replacetoken><replacevalue>/</replacevalue></replace>   <!--hack for Unix - to avoid leading // in URLs -->
 
   </target>
 
@@ -481,9 +481,9 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
        verbose="${testng.verbose}" haltonfailure="true" useDefaultListeners="false" listeners="${testng.listeners}" workingDir="${basedir}">
       <jvmarg line="${ext.class.path}"/>
       <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} -Dbuild.dir=${build.dir}"/>
-      <sysproperty key="nashorn.jar" value="${dist.dir}/nashorn.jar"/>
+      <sysproperty key="sai.jar" value="${dist.dir}/sai.jar"/>
       <propertyset>
-        <propertyref prefix="nashorn."/>
+        <propertyref prefix="sai."/>
       </propertyset>
       <propertyset>
         <propertyref prefix="test-sys-prop-no-security."/>
@@ -498,7 +498,7 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
 
   <!-- only to be invoked as dependency of "test" target -->
   <target name="-test-security">
-    <delete dir="${build.dir}/nashorn_code_cache"/>
+    <delete dir="${build.dir}/sai_code_cache"/>
     <property name="debug.test.jvmargs" value=""/>
     <testng outputdir="${build.test.results.dir}/${testResultsSubDir}" classfilesetref="test.classes"
 	    verbose="${testng.verbose}" haltonfailure="true" useDefaultListeners="false" listeners="${testng.listeners}" workingDir="${basedir}">
@@ -506,7 +506,7 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
       <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} ${run.test.jvmsecurityargs} -Dbuild.dir=${build.dir}"/>
       <jvmarg line="${debug.test.jvmargs}"/>
       <propertyset>
-        <propertyref prefix="nashorn."/>
+        <propertyref prefix="sai."/>
       </propertyset>
       <propertyset>
         <propertyref prefix="test-sys-prop."/>
@@ -607,7 +607,7 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
       <jvmarg line="${ext.class.path}"/>
       <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} ${run.test.jvmsecurityargs} -Dbuild.dir=${build.dir}"/>
       <propertyset>
-        <propertyref prefix="nashorn."/>
+        <propertyref prefix="sai."/>
       </propertyset>
       <propertyset>
         <propertyref prefix="test262-test-sys-prop."/>
@@ -627,7 +627,7 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
       <jvmarg line="${ext.class.path}"/>
       <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} ${run.test.jvmsecurityargs} -Dbuild.dir=${build.dir}"/>
       <!-- avoid too many typeinfo cache files. Each script is run only once anyway -->
-      <jvmarg line="-Dnashorn.typeInfo.disabled=true"/>
+      <jvmarg line="-Dsai.typeInfo.disabled=true"/>
       <classpath>
           <pathelement path="${run.test.classpath}"/>
       </classpath>
@@ -659,11 +659,11 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
   </target>
 
   <target name="all" depends="test, docs"
-      description="Build, test and generate docs for nashorn"/>
+      description="Build, test and generate docs for sai"/>
 
   <target name="run" depends="jar"
       description="Run the shell with a sample script">
-    <java classname="${nashorn.shell.tool}" fork="true" dir="samples">
+    <java classname="${sai.shell.tool}" fork="true" dir="samples">
         <jvmarg line="${ext.class.path}"/>
         <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx}"/>
         <arg value="-dump-on-error"/>
@@ -673,13 +673,13 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
 
   <target name="debug" depends="jar"
       description="Debug the shell with a sample script">
-    <java classname="${nashorn.shell.tool}" fork="true" dir="samples">
+    <java classname="${sai.shell.tool}" fork="true" dir="samples">
         <jvmarg line="${ext.class.path}"/>
         <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx}"/>
         <arg value="--print-code"/>
         <arg value="--verify-code"/>
         <arg value="--print-symbols"/>
-        <jvmarg value="-Dnashorn.codegen.debug=true"/>
+        <jvmarg value="-Dsai.codegen.debug=true"/>
         <arg value="test.js"/>
     </java>
   </target>

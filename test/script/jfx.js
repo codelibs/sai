@@ -22,7 +22,7 @@
  */
 
 /**
- * Base library for JavaFX canvas run by Nashorn testing.
+ * Base library for JavaFX canvas run by Sai testing.
  * @subtest
  * 
  * 

@@ -32,15 +32,15 @@ var DriverManager = Java.type("java.sql.DriverManager");
 var e = DriverManager.getDrivers();
 
 var driverFound = false;
-// check for Nashorn SQL driver
+// check for Sai SQL driver
 while (e.hasMoreElements()) {
     var driver = e.nextElement();
-    if (driver.acceptsURL("jdbc:nashorn:")) {
+    if (driver.acceptsURL("jdbc:sai:")) {
         driverFound = true;
         break;
     }
 }
 
 if (! driverFound) {
-    fail("Nashorn JDBC Driver not found!");
+    fail("Sai JDBC Driver not found!");
 }

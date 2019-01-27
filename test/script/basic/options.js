@@ -22,7 +22,7 @@
  */
 
 /**
- * Access nashorn command line options.
+ * Access sai command line options.
  *
  * @test
  * @option -scripting

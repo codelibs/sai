@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8031106: Nashorn: IndexOutOfBoundsException in NashornCallSiteDescriptor.getNameToken()
+ * JDK-8031106: Sai: IndexOutOfBoundsException in SaiCallSiteDescriptor.getNameToken()
  *
  * @test
  * @run

@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8050432: javax.script.filename variable should not be enumerable with nashorn engine's ENGINE_SCOPE bindings
+ * JDK-8050432: javax.script.filename variable should not be enumerable with sai engine's ENGINE_SCOPE bindings
  *
  * @test
  * @run
@@ -30,7 +30,7 @@
 
 var ScriptEngine = javax.script.ScriptEngine;
 var m = new javax.script.ScriptEngineManager();
-var engine = m.getEngineByName("nashorn");
+var engine = m.getEngineByName("sai");
 
 engine.put(ScriptEngine.FILENAME, "foo");
 var desc = engine.eval("Object.getOwnPropertyDescriptor(this, '"

@@ -29,7 +29,7 @@
  * @option -scripting
  */
 
-load("nashorn:mozilla_compat.js");
+load("sai:mozilla_compat.js");
 
 if (this.non_existent_foo !== undefined) {
     fail("this.non_existent_foo is defined!");
@@ -47,9 +47,9 @@ try {
 // try the same via script engine
 
 var ScriptEngineManager = Java.type("javax.script.ScriptEngineManager");
-var engine = new ScriptEngineManager().getEngineByName("nashorn");
+var engine = new ScriptEngineManager().getEngineByName("sai");
 
-engine.eval("load('nashorn:mozilla_compat.js')");
+engine.eval("load('sai:mozilla_compat.js')");
 
 if (! engine.eval("this.non_existent_foo === undefined")) {
     fail("this.non_existent_foo is not undefined");

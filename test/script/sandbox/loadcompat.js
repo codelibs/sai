@@ -22,14 +22,14 @@
  */
 
 /**
- * Check that nashorn mozilla compatibility script can be loaded in sandbox.
+ * Check that sai mozilla compatibility script can be loaded in sandbox.
  *
  * @test
  * @run
  * @security
  */
 
-load("nashorn:mozilla_compat.js");
+load("sai:mozilla_compat.js");
 
 var obj = {};
 if (obj.__proto__ !== Object.prototype) {

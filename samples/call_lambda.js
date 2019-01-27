@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// nashorn allows you treat every Java8 lambda as a function
+// sai allows you treat every Java8 lambda as a function
 
 var JFunction = Java.type("java.util.function.Function");
 var obj = new JFunction() {

@@ -21,10 +21,10 @@
  or visit www.oracle.com if you need additional information or have any
  questions.
 -->
-<project basedir=".." name="nashorn-IDE">
+<project basedir=".." name="sai-IDE">
     <target name="debug-selected-file-in-src">
         <fail unless="test.class">Must set property 'debug.class'</fail>
-        <nbjpdastart addressproperty="jpda.address" name="nashorn" transport="dt_socket">
+        <nbjpdastart addressproperty="jpda.address" name="sai" transport="dt_socket">
             <classpath path="${run.test.classpath}"/>
         </nbjpdastart>
         <ant antfile="build.xml" inheritall="false" target="test">

@@ -1,12 +1,12 @@
-class javax.script.ScriptContext$$NashornJavaAdapter
-TypeError: Java.extend needs at least one type argument. in nashorn:mozilla_compat.js at line number 41
-class jdk.nashorn.javaadapters.java.util.ArrayList
-class jdk.nashorn.javaadapters.java.util.ArrayList
+class javax.script.ScriptContext$$SaiJavaAdapter
+TypeError: Java.extend needs at least one type argument. in sai:mozilla_compat.js at line number 41
+class org.codelibs.sai.javaadapters.java.util.ArrayList
+class org.codelibs.sai.javaadapters.java.util.ArrayList
 [JavaClass java.lang.Integer]
-TypeError: [object JavaPackage] is not a Java class in nashorn:mozilla_compat.js at line number 375 at column number 16
+TypeError: [object JavaPackage] is not a Java class in sai:mozilla_compat.js at line number 375 at column number 16
 [JavaClass java.util.HashSet]
 [JavaClass java.util.HashSet]
 [JavaClass java.lang.Integer]
-ReferenceError: "Integer" is not defined in nashorn:mozilla_compat.js at line number 69
+ReferenceError: "Integer" is not defined in sai:mozilla_compat.js at line number 69
 [JavaClass java.util.HashMap]
 [JavaClass java.util.HashMap]

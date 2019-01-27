@@ -22,7 +22,7 @@
  */
 
 /**
- * NASHORN-8008814: it's not a compile time error to have a nested function declaration when warnings are reported
+ * SAI-8008814: it's not a compile time error to have a nested function declaration when warnings are reported
  *
  * @option --function-statement-warning
  * @test

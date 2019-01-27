@@ -22,7 +22,7 @@
  */
 
 /**
- * NASHORN-154: Early error reporting.
+ * SAI-154: Early error reporting.
  *
  * Errors in regular expression literals that are not implementation-defined
  * syntax extensions.
@@ -39,7 +39,7 @@ for (var i = 0; i < flags.length; i++) {
     try {
         // because regexp literal errors are early errors, we should not see
         // any output from print calls.
-        eval("print(__FILE__); var x = /nashorn/" + flags[i]);
+        eval("print(__FILE__); var x = /sai/" + flags[i]);
         fail("SyntaxError not thrown for regexp flag " + flags[i]);
     } catch (e) {
         if (! (e instanceof SyntaxError)) {

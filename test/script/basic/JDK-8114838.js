@@ -40,7 +40,7 @@ if (typeof func != 'function') {
 }
 
 var ScriptEngineManager = Java.type("javax.script.ScriptEngineManager");
-var engine = new ScriptEngineManager().getEngineByName("nashorn");
+var engine = new ScriptEngineManager().getEngineByName("sai");
 var func2 = engine.eval("function() {}");
 if (typeof func2 != 'function') {
     throw new Error("eval of anonymous function does not work from script engine!");

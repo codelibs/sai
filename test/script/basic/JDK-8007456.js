@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8007456: Nashorn test framework argument does not handle quoted strings
+ * JDK-8007456: Sai test framework argument does not handle quoted strings
  *
  * @test
  * @argument "hello world"

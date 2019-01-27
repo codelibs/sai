@@ -30,7 +30,7 @@
 
 
 var m = new javax.script.ScriptEngineManager();
-var e = m.getEngineByName("nashorn");
+var e = m.getEngineByName("sai");
 
 var obj = {
     func: function(str) {
@@ -51,11 +51,11 @@ if (e.eval("obj.func('hello')") == null) {
 
 // try to invoke a script method from here but callback is from this engine
 var res = e.invokeMethod(e.get("foo"), "callMe", function() {
-    return /nashorn/;
+    return /sai/;
 });
 
-if (! res.exec("nashorn")) {
-    fail("FAILED: #2 /nashorn/ does not match 'nashorn'");
+if (! res.exec("sai")) {
+    fail("FAILED: #2 /sai/ does not match 'sai'");
 }
 
 // invoke a script method from here with callback from this engine.

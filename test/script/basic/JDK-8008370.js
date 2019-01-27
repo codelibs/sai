@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8008370: coffee script compiler doesn't work with Nashorn
+ * JDK-8008370: coffee script compiler doesn't work with Sai
  *
  * @test
  * @run

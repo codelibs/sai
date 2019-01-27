@@ -32,7 +32,7 @@
 // results in ReferenceError even when 'with' expression has
 // the property
 
-load("nashorn:mozilla_compat.js")
+load("sai:mozilla_compat.js")
 
 function func(locals) {
     with (locals) {

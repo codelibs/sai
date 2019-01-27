@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8057678: Tests for let&const keywords in Nashorn
+ * JDK-8057678: Tests for let&const keywords in Sai
  *
  * @test
  * @run

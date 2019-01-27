@@ -37,7 +37,7 @@ import javax.script.ScriptEngineManager;
 public class RunnableImplObject {
     public static void main(final String[] args) throws Exception {
         final ScriptEngineManager manager = new ScriptEngineManager();
-        final ScriptEngine engine = manager.getEngineByName("nashorn");
+        final ScriptEngine engine = manager.getEngineByName("sai");
 
         // JavaScript code in a String
         final String script = "var obj = new Object(); obj.run = function() { print('run method called'); }";

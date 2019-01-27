@@ -35,7 +35,7 @@ function r(x) { return x } // "read"
 (function() {
   try { // Try creates control flow edges from assignments into catch blocks.
     // Lexically scoped, never read int variable (undefined at catch block) but still with a cf edge into catch block.
-    // Since it's never read, it's not written either (Nashorn optimizes some dead writes).
+    // Since it's never read, it's not written either (Sai optimizes some dead writes).
     let x = 0; 
     if (p()) { throw {}; } // We need `p()` so this block doesn't get optimized away, for possibility of a `throw` 
     x = 0.0; // change the type of x to double

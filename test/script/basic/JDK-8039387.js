@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8039387: Nashorn supports indexed access of List elements, but length property is not supported
+ * JDK-8039387: Sai supports indexed access of List elements, but length property is not supported
  *
  * @test
  * @run
@@ -30,7 +30,7 @@
 
 var ArrayList = Java.type("java.util.ArrayList")
 var list = new ArrayList(3)
-list.add("nashorn")
+list.add("sai")
 list.add("js")
 list.add("ecmascript")
 var len = list.length

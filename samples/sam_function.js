@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// nashorn supports passing script functions whenever
+// sai supports passing script functions whenever
 // a SAM (single abstract method) type object is expected
 
 var System = Java.type("java.lang.System");
@@ -38,7 +38,7 @@ var timer = new Timer();
 
 // schedule method accepts java.util.TimerTask
 // which is a single-abstract-method type. you
-// can pass a script function and nashorn will
+// can pass a script function and sai will
 // wrap it as SAM implementor.
 
 timer.schedule(function() {

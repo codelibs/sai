@@ -31,5 +31,5 @@
 Object.prototype.func = function() {}
 
 function identity(k, v) { return v };
-var obj = JSON.parse('{\"name\" : \"nashorn\"}', identity);
-Assert.assertTrue(obj.name, "nashorn");
+var obj = JSON.parse('{\"name\" : \"sai\"}', identity);
+Assert.assertTrue(obj.name, "sai");

@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @option -Dnashorn.debug=true
+ * @option -Dsai.debug=true
  * @fork
  */
 

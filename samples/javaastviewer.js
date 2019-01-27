@@ -88,7 +88,7 @@ function javaASTToScriptObject(args) {
 
         defaultAction: function (node, p) {
             var resultObj = {};
-            // Nashorn does not iterate properties and methods of Java objects
+            // Sai does not iterate properties and methods of Java objects
             // But, we can bind properties of any object (including java objects)
             // to a script object and iterate it!
             var obj = {};

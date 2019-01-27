@@ -25,7 +25,7 @@
  * Test various scripts with low splitter threshold
  *
  * @test
- * @option -Dnashorn.compiler.splitter.threshold=200
+ * @option -Dsai.compiler.splitter.threshold=200
  * @runif external.yui
  * @fork
  */

@@ -24,15 +24,15 @@
 /**
  * JDK-8050964: OptimisticTypesPersistence.java should use java.util.Date instead of java.sql.Date
  *
- * Make sure that nashorn.jar has only 'compact1' dependency.
+ * Make sure that sai.jar has only 'compact1' dependency.
  *
  * @test
  * @option -scripting
  * @run
  */
 
-// assume that this script is run with "nashorn.jar" System
-// property set to relative path of nashorn.jar from the current
+// assume that this script is run with "sai.jar" System
+// property set to relative path of sai.jar from the current
 // directory of test execution.
 
 if (typeof fail != 'function') {
@@ -41,17 +41,17 @@ if (typeof fail != 'function') {
 
 var System = java.lang.System;
 var File = java.io.File;
-var nashornJar = new File(System.getProperty("nashorn.jar"));
-if (! nashornJar.isAbsolute()) {
-    nashornJar = new File(".", nashornJar);
+var saiJar = new File(System.getProperty("sai.jar"));
+if (! saiJar.isAbsolute()) {
+    saiJar = new File(".", saiJar);
 }
 
 var javahome = System.getProperty("java.home");
 var jdepsPath = javahome + "/../bin/jdeps".replace(/\//g, File.separator);
 
-// run jdep on nashorn.jar - only summary but print profile info
+// run jdep on sai.jar - only summary but print profile info
 $ENV.PWD=System.getProperty("user.dir") // to avoid RE on Cygwin
-`${jdepsPath} -s -P ${nashornJar.absolutePath}`
+`${jdepsPath} -s -P ${saiJar.absolutePath}`
 
 // check for "(compact1)" in output from jdep tool
 if (! /(compact1)/.test($OUT)) {

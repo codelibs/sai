@@ -22,7 +22,7 @@
  */
 
 /**
- * NASHORN-8008814: it's a compile time error to have a nested function declaration in strict mode
+ * SAI-8008814: it's a compile time error to have a nested function declaration in strict mode
  *
  * @test/compile-error
  */

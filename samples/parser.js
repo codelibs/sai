@@ -34,7 +34,7 @@
  * Simple sample demonstrating parser API.
  */
 
-load("nashorn:parser.js");
+load("sai:parser.js");
 try {
     var json = parse("print('hello')");
     print(JSON.stringify(json));

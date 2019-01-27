@@ -30,7 +30,7 @@
  */
 
 /*
- * Simple unzip tool using #nashorn and #java
+ * Simple unzip tool using #sai and #java
  * zip fs file system interface.
  */
  

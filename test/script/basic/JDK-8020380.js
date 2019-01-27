@@ -28,7 +28,7 @@
  * @run
  */
 
-load("nashorn:mozilla_compat.js");
+load("sai:mozilla_compat.js");
 
 var desc = Object.getOwnPropertyDescriptor(this, "__noSuchProperty__");
 if (typeof desc.enumerable != 'boolean' || desc.enumerable != false) {

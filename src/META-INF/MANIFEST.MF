@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
-Main-Class: jdk.nashorn.tools.Shell
+Main-Class: org.codelibs.sai.tools.Shell
 
-Name: jdk/nashorn/
+Name: org.codelibs.sai
 Implementation-Vendor: Oracle Corporation

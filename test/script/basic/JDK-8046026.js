@@ -23,7 +23,7 @@
 
 /**
  * JDK-8046026: CompiledFunction.relinkComposableInvoker assert is being hit
- * JDK-8044770: crash with jdk9-dev/nashorn during global object initialization from MT test
+ * JDK-8044770: crash with jdk9-dev/sai during global object initialization from MT test
  * JDK-8047770: NPE in deoptimizing recompilation in multithreaded
  *
  * @test

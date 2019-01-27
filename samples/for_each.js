@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// nashorn supports for..each extension supported
+// sai supports for..each extension supported
 // by Mozilla. See also
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for_each...in
 

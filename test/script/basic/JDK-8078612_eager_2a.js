@@ -28,8 +28,8 @@
  * @runif external.yui
  * @option -pcc
  * @option --lazy-compilation=false
- * @option -Dnashorn.persistent.code.cache=build/nashorn_code_cache
- * @option -Dnashorn.options.allowEagerCompilationSilentOverride
+ * @option -Dsai.persistent.code.cache=build/sai_code_cache
+ * @option -Dsai.options.allowEagerCompilationSilentOverride
  * @fork
  */
 

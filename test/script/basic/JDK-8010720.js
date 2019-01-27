@@ -28,7 +28,7 @@
  * @run
  */
 
-var s = new java.lang.String("nashorn");
+var s = new java.lang.String("sai");
 
 if (s.length() != 7) {
     fail("s.length() does not return expected value");

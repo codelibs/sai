@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8068872:  Nashorn JSON.parse drops numeric keys
+ * JDK-8068872:  Sai JSON.parse drops numeric keys
  *
  * @test
  * @run

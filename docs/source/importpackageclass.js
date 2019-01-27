@@ -30,7 +30,7 @@
  */
 
 // load compatibility script
-load("nashorn:mozilla_compat.js");
+load("sai:mozilla_compat.js");
 
 // Import Java packages and classes
 // like import package.*; in Java

@@ -29,7 +29,7 @@
  */
 
 var m = new javax.script.ScriptEngineManager();
-var e = m.getEngineByName("nashorn");
+var e = m.getEngineByName("sai");
 
 function func(x) {
    print("func: " + x);

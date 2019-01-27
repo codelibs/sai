@@ -29,10 +29,10 @@
  * @run
  */
 
-var Factory = Java.type("jdk.nashorn.api.scripting.NashornScriptEngineFactory");
+var Factory = Java.type("org.codelibs.sai.api.scripting.SaiScriptEngineFactory");
 var fac = new Factory();
 
-// This script has to be given RuntimePermission("nashorn.setConfig")
+// This script has to be given RuntimePermission("sai.setConfig")
 var e = fac["getScriptEngine(java.lang.ClassLoader)"](null);
 
 print(e.eval("java.lang.System"));
@@ -76,16 +76,16 @@ try {
 
 // should throw SecurityException!
 try {
-    e.eval("Java.type('jdk.nashorn.internal.Context')");
+    e.eval("Java.type('org.codelibs.sai.internal.Context')");
 } catch (ex) {
     print(ex);
 }
 
 // should throw ClassNotFoundException as null is script
-// "app loader" [and not platform loader which loads nashorn]
+// "app loader" [and not platform loader which loads sai]
 e.eval(<<EOF
 try {
-    Java.type('jdk.nashorn.api.scripting.JSObject');
+    Java.type('org.codelibs.sai.api.scripting.JSObject');
 } catch (ex) {
     output(ex);
 }

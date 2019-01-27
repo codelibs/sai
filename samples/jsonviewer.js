@@ -41,8 +41,8 @@ if (! $OPTIONS._fx) {
 // This example downloads a JSON file from a URL and
 // shows the same as a JavaFX tree view.
 
-// Using JavaFX from Nashorn. See also:
-// http://docs.oracle.com/javase/8/docs/technotes/guides/scripting/nashorn/javafx.html
+// Using JavaFX from Sai. See also:
+// http://docs.oracle.com/javase/8/docs/technotes/guides/scripting/sai/javafx.html
 
 // JavaFX classes used
 var StackPane = Java.type("javafx.scene.layout.StackPane");

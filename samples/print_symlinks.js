@@ -32,7 +32,7 @@
 // Print all symbolic links in user's home directory
 
 // JavaImporter and "with" to simulate "import" statements in Java.
-// See https://wiki.openjdk.java.net/display/Nashorn/Nashorn+extensions
+// See https://wiki.openjdk.java.net/display/Sai/Sai+extensions
 
 with (new JavaImporter(java.nio.file, java.lang)) {
 

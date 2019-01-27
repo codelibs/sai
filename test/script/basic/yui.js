@@ -22,7 +22,7 @@
  */
 
 /**
- * NASHORN-469 : corpus parse test for yahoo ui library / yahoo ui library min
+ * SAI-469 : corpus parse test for yahoo ui library / yahoo ui library min
  *
  * @test
  * @runif external.yui

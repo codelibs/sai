@@ -29,18 +29,18 @@
  */
 
 var compare = java.util.Comparator.naturalOrder()
-Assert.assertTrue(compare("nashorn", "ecmascript") > 0)
+Assert.assertTrue(compare("sai", "ecmascript") > 0)
 Assert.assertTrue(compare("abc", "xyz") < 0)
 Assert.assertTrue(compare("hello", "hello") == 0)
 
 var rcompare = java.util.Comparator.reverseOrder()
-Assert.assertTrue(rcompare("nashorn", "ecmascript") < 0)
+Assert.assertTrue(rcompare("sai", "ecmascript") < 0)
 Assert.assertTrue(rcompare("abc", "xyz") > 0)
 Assert.assertTrue(rcompare("hello", "hello") == 0)
 
-var arr = [ "nashorn", "JavaScript", "ECMAScript", "ecmascript", "js" ]
+var arr = [ "sai", "JavaScript", "ECMAScript", "ecmascript", "js" ]
 Assert.assertEquals(arr.sort(compare).join(),
-    "ECMAScript,JavaScript,ecmascript,js,nashorn")
+    "ECMAScript,JavaScript,ecmascript,js,sai")
 Assert.assertEquals(arr.sort(rcompare).join(),
-    "nashorn,js,ecmascript,JavaScript,ECMAScript")
+    "sai,js,ecmascript,JavaScript,ECMAScript")
 

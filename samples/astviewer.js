@@ -36,8 +36,8 @@ if (!$OPTIONS._fx) {
     exit(1);
 }
 
-// Using JavaFX from Nashorn. See also:
-// http://docs.oracle.com/javase/8/docs/technotes/guides/scripting/nashorn/javafx.html
+// Using JavaFX from Sai. See also:
+// http://docs.oracle.com/javase/8/docs/technotes/guides/scripting/sai/javafx.html
 
 // This example shows AST of a script file as a JavaFX
 // tree view in a window. If no file is specified, AST of
@@ -79,8 +79,8 @@ function treeItemForASTNode(ast, name) {
 // do we have a script file passed? if not, use current script
 var sourceName = arguments.length == 0? __FILE__ : arguments[0];
 
-// load parser.js from nashorn resources
-load("nashorn:parser.js");
+// load parser.js from sai resources
+load("sai:parser.js");
 
 // read the full content of the file and parse it
 // to get AST of the script specified

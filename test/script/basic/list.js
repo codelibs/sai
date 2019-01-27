@@ -22,7 +22,7 @@
  */
 
 /**
- * Tests for java.util.List behavior in Nashorn
+ * Tests for java.util.List behavior in Sai
  *
  * @test
  * @run

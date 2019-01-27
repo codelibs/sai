@@ -38,7 +38,7 @@ var HashMap = Java.type("java.util.HashMap");
 var map = new HashMap();
 
 // map key-value access by java get/put method calls
-map.put('js', 'nashorn');
+map.put('js', 'sai');
 print(map.get('js'));
 
 // access keys of map as properties

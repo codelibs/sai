@@ -38,7 +38,7 @@ import java.io.StringWriter;
 public class PrintToString {
   public static void main(String[] args) throws ScriptException {
     ScriptEngineManager m = new ScriptEngineManager();
-    ScriptEngine e = m.getEngineByName("nashorn");
+    ScriptEngine e = m.getEngineByName("sai");
     StringWriter sw = new StringWriter();
     e.getContext().setWriter(sw);
     e.eval("print('hello world')");

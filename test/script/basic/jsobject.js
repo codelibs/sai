@@ -29,7 +29,7 @@
  */
 
 var m = new javax.script.ScriptEngineManager();
-var e = m.getEngineByName("nashorn");
+var e = m.getEngineByName("sai");
 
 e.eval("obj = { foo:'hello', 0: 'world', func: function(x) { return x.toUpperCase() } } ");
 var obj = e.get("obj");
@@ -62,7 +62,7 @@ function checkPropSetter(obj, prop, newValue) {
     checkPropGetter(obj, prop, newValue);
 }
 
-checkPropSetter(obj, "foo", "NASHORN");
+checkPropSetter(obj, "foo", "SAI");
 checkPropSetter(obj, 0, "ECMASCRIPT");
 checkPropSetter(obj, "0", "CHANGED");
 
@@ -72,7 +72,7 @@ function callFunc(input, expected) {
    }
 }
 
-callFunc("nashorn", "NASHORN");
+callFunc("sai", "SAI");
 callFunc("javascript", "JAVASCRIPT");
 callFunc("hello", "HELLO");
 
@@ -84,6 +84,6 @@ function callWithoutObject(input, expected) {
    }
 }
 
-callWithoutObject("nashorn", "NASHORN");
+callWithoutObject("sai", "SAI");
 callWithoutObject("javascript", "JAVASCRIPT");
 callWithoutObject("hello", "HELLO");

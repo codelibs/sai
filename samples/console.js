@@ -30,7 +30,7 @@
  */
 
 /**
- * Simple Web Console-like support for Nashorn. In addition to
+ * Simple Web Console-like support for Sai. In addition to
  * Web console object methods, this console add methods of
  * java.io.Console as well. Note:not all web console methods are 
  * implemented but useful subset is implemented.

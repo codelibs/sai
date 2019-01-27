@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8055762: Nashorn misses linker for netscape.javascript.JSObject instances
+ * JDK-8055762: Sai misses linker for netscape.javascript.JSObject instances
  *
  * @test
  * @option -scripting

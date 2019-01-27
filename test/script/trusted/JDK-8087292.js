@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8087292: nashorn should have a "fail-fast" option for scripting, analog to bash "set -e"
+ * JDK-8087292: sai should have a "fail-fast" option for scripting, analog to bash "set -e"
  *
  * @test
  * @option -scripting

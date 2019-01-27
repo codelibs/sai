@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8080087: Nashorn $ENV.PWD is originally undefined
+ * JDK-8080087: Sai $ENV.PWD is originally undefined
  *
  * This is to ensure that $ENV.PWD is correctly set on Windows as well as on all
  * other platforms.

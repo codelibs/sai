@@ -30,10 +30,10 @@
  */
 
 var SM = Java.type("javax.script.ScriptEngineManager");
-var AJSO = Java.type("jdk.nashorn.api.scripting.AbstractJSObject");
+var AJSO = Java.type("org.codelibs.sai.api.scripting.AbstractJSObject");
 var Supplier = Java.type("java.util.function.Supplier");
 
-var engine = new SM().getEngineByName("nashorn");
+var engine = new SM().getEngineByName("sai");
 
 // JSON stringify ScriptObjectMirror instances
 print(JSON.stringify(engine.eval("({ foo : 42 })")));
@@ -47,7 +47,7 @@ EOF
 
 print(JSON.stringify(engine.eval(<<EOF
 obj = {
-    name: 'nashorn',
+    name: 'sai',
     versions: [ 'es5.1', 'es6' ]
 }
 EOF

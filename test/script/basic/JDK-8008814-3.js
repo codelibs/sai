@@ -22,7 +22,7 @@
  */
 
 /**
- * NASHORN-8008814: it's not a compile time error to have a nested strict function declaration when the outer one is not strict
+ * SAI-8008814: it's not a compile time error to have a nested strict function declaration when the outer one is not strict
  *
  * @test
  * @run

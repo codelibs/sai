@@ -25,9 +25,9 @@
  * JDK-8141537: Megamorphic invoke should use CompiledFunction variants without any LinkLogic
  *
  * @test
- * @option -Dnashorn.unstable.relink.threshold=1
+ * @option -Dsai.unstable.relink.threshold=1
  * @fork
  * @run
  */
 
-load(__DIR__ + "NASHORN-421.js")
+load(__DIR__ + "SAI-421.js")

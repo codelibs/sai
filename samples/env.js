@@ -31,7 +31,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// In nashorn -scripting mode,
+// In sai -scripting mode,
 // "$ENV" object exposes process
 // environment variables
 

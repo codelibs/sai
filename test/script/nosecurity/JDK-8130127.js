@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8130127: streamline input parameter of Nashorn scripting $EXEC function
+ * JDK-8130127: streamline input parameter of Sai scripting $EXEC function
  *
  * Test different variants of stdin passing to $EXEC.
  *

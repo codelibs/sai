@@ -30,7 +30,7 @@
  */
 
 // Simple sample to demonstrate openjdk asmtools assembler with
-// nashorn dynalink linker in a invokedynamic instruction.
+// sai dynalink linker in a invokedynamic instruction.
 //
 // To assemble this file, use the following command:
 //
@@ -38,7 +38,7 @@
 //
 // See also: https://wiki.openjdk.java.net/display/CodeTools/asmtools
 //
-// NOTE: Uses nashorn internals and so *may* break with later nashorn!
+// NOTE: Uses sai internals and so *may* break with later sai!
 
 super public class Main
 	version 52:0
@@ -90,10 +90,10 @@ private static Method printLength:"(Ljava/lang/Object;)V"
 		getstatic	Field java/lang/System.out:"Ljava/io/PrintStream;";
 		aload_0;
 
-                // Using nashorn embedded dynalink linker with the following invokedynamic
+                // Using sai embedded dynalink linker with the following invokedynamic
                 // 'length' property on a bean - arrays, lists supported
 
-                invokedynamic   InvokeDynamic REF_invokeStatic:jdk/nashorn/internal/runtime/linker/Bootstrap.bootstrap:"(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;I)Ljava/lang/invoke/CallSite;":"dyn:getProp|getElem|getMethod:length":"(Ljava/lang/Object;)Ljava/lang/Object;" int 0;
+                invokedynamic   InvokeDynamic REF_invokeStatic:org/codelibs/sai/internal/runtime/linker/Bootstrap.bootstrap:"(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;I)Ljava/lang/invoke/CallSite;":"dyn:getProp|getElem|getMethod:length":"(Ljava/lang/Object;)Ljava/lang/Object;" int 0;
 
                 // print 'length' value
 		invokevirtual	Method java/io/PrintStream.println:"(Ljava/lang/Object;)V";

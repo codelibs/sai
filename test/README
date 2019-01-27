@@ -1,4 +1,4 @@
-Nashorn tests are TestNG based. Running tests requires downloading the TestNG
+Sai tests are TestNG based. Running tests requires downloading the TestNG
 library and placing its jar file into the lib subdirectory:
 
    # download and install TestNG

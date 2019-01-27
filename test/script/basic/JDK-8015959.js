@@ -49,6 +49,6 @@ check(loadWithNewGlobal({
 
 print("check with script engine");
 var m = new javax.script.ScriptEngineManager();
-var e = m.getEngineByName('nashorn');
+var e = m.getEngineByName('sai');
 check(e.eval("function Point(x, y) { this.x = x; this.y = y }; this"));
 

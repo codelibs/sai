@@ -30,5 +30,5 @@
  */
 
 var mgr = new javax.script.ScriptEngineManager();
-var engine = mgr.getEngineByName("nashorn");
+var engine = mgr.getEngineByName("sai");
 print(engine.eval("'hello' + ' world'"));

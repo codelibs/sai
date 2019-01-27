@@ -22,17 +22,17 @@
  */
 
 /**
- * JDK-8060688: Nashorn: Generated script class name fails --verify-code for names with special chars
+ * JDK-8060688: Sai: Generated script class name fails --verify-code for names with special chars
  *
  * @test
  * @run
  */
 
-var NashornEngineFactory = Java.type("jdk.nashorn.api.scripting.NashornScriptEngineFactory");
+var SaiEngineFactory = Java.type("org.codelibs.sai.api.scripting.SaiScriptEngineFactory");
 var ScriptEngine = Java.type("javax.script.ScriptEngine");
 var ScriptContext = Java.type("javax.script.ScriptContext");
 
-var factory = new NashornEngineFactory();
+var factory = new SaiEngineFactory();
 
 var e = factory.getScriptEngine("--verify-code");
 

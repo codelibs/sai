@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8030202: Nashorn: Multiple RegExp#ignoreCase issues
+ * JDK-8030202: Sai: Multiple RegExp#ignoreCase issues
  *
  * @test
  * @run

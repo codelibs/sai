@@ -25,15 +25,15 @@
     <type>org.netbeans.modules.ant.freeform</type>
     <configuration>
         <general-data xmlns="http://www.netbeans.org/ns/freeform-project/1">
-            <name>nashorn</name>
+            <name>sai</name>
         </general-data>
         <general-data xmlns="http://www.netbeans.org/ns/freeform-project/2">
             <!-- Do not use Project Properties customizer when editing this file manually. -->
-            <name>nashorn</name>
+            <name>sai</name>
             <properties/>
             <folders>
                 <source-folder>
-                    <label>nashorn</label>
+                    <label>sai</label>
                     <location>.</location>
                     <encoding>UTF-8</encoding>
                 </source-folder>
@@ -46,8 +46,8 @@
                     <location>../test/src</location>
                 </source-folder>
                 <source-folder>
-                    <label>../buildtools/nasgen/src</label>
-                    <location>../buildtools/nasgen/src</location>
+                    <label>../buildtools/saigen/src</label>
+                    <location>../buildtools/saigen/src</location>
                 </source-folder>
                 <source-folder>
                     <label>../test/src</label>
@@ -62,9 +62,9 @@
                     <encoding>UTF-8</encoding>
                 </source-folder>
                 <source-folder>
-                    <label>../buildtools/nasgen/src</label>
+                    <label>../buildtools/saigen/src</label>
                     <type>java</type>
-                    <location>../buildtools/nasgen/src</location>
+                    <location>../buildtools/saigen/src</location>
                     <encoding>UTF-8</encoding>
                 </source-folder>
             </folders>
@@ -136,8 +136,8 @@
                         <location>../src</location>
                     </source-folder>
                     <source-folder style="packages">
-                        <label>../buildtools/nasgen/src</label>
-                        <location>../buildtools/nasgen/src</location>
+                        <label>../buildtools/saigen/src</label>
+                        <location>../buildtools/saigen/src</location>
                     </source-folder>
                     <source-file>
                         <location>build.xml</location>
@@ -167,7 +167,7 @@
                 <source-level>1.7</source-level>
             </compilation-unit>
             <compilation-unit>
-                <package-root>../buildtools/nasgen/src</package-root>
+                <package-root>../buildtools/saigen/src</package-root>
                 <classpath mode="compile">../build/classes:../src</classpath>
                 <source-level>1.7</source-level>
             </compilation-unit>

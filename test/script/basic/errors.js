@@ -51,7 +51,7 @@ try {
     print(e instanceof Error);
     print(e.message);
     print(e.name);
-    var ne = e.nashornException;
+    var ne = e.saiException;
     if (ne != undefined) {
         if (ne.fileName !== __FILE__) {
             fail("incorrect filename in error");

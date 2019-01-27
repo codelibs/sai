@@ -31,13 +31,13 @@
 
 /**
  * This file can be run along with any script you want to run
- * to print aggregate stat counters from nashorn.
+ * to print aggregate stat counters from sai.
  *
- * Usage:  jjs -J-Dnashorn.debug <your-file.js> counters.js
+ * Usage:  jjs -J-Dsai.debug <your-file.js> counters.js
  */
 
-if (java.lang.System.getProperty("nashorn.debug") == null) {
-    print("Usage: jjs -J-Dnashorn.debug <your-file.js> counters.js");
+if (java.lang.System.getProperty("sai.debug") == null) {
+    print("Usage: jjs -J-Dsai.debug <your-file.js> counters.js");
 } else {
     Debug.dumpCounters();
 }

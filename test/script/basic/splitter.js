@@ -25,10 +25,10 @@
  * Test various scripts with low splitter threshold
  *
  * @test
- * @option -Dnashorn.compiler.splitter.threshold=200
+ * @option -Dsai.compiler.splitter.threshold=200
  * @run
  * @fork
  */
 
-load(__DIR__ + 'NASHORN-689.js');
-load(__DIR__ + 'NASHORN-58.js');
+load(__DIR__ + 'SAI-689.js');
+load(__DIR__ + 'SAI-58.js');

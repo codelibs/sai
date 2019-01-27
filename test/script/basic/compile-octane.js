@@ -31,7 +31,7 @@
  * This means that if you use this subtest as a compilation test
  * harness, pass the arguments:
  *
- * -scripting -Dnashorn.typeInfo.disabled=true --class-cache-size=0
+ * -scripting -Dsai.typeInfo.disabled=true --class-cache-size=0
  * --persistent-code-cache=false
  *
  * @subtest

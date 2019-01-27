@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8030199: Nashorn: Uint8ClampedArray - Incorrect ToUint8Clamp implementation
+ * JDK-8030199: Sai: Uint8ClampedArray - Incorrect ToUint8Clamp implementation
  *
  * @test
  * @run

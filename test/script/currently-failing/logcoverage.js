@@ -37,11 +37,11 @@
 
 function runScriptEngine(opts, name) {
     var imports = new JavaImporter(
-        Packages.jdk.nashorn.api.scripting,
+        Packages.org.codelibs.sai.api.scripting,
         java.io, java.lang, java.util);
 
     with(imports) {
-        var fac = new NashornScriptEngineFactory();
+        var fac = new SaiScriptEngineFactory();
         // get current System.err
         var oldErr = System.err;
     var oldOut = System.out;
@@ -98,7 +98,7 @@ function check(str, strs) {
     print("check ok!");
 }
 
-str = runScriptEngine([ "--log=codegen,compiler=finest,methodhandles=finest,fields=finest" ], __DIR__ + "../basic/NASHORN-19.js");
+str = runScriptEngine([ "--log=codegen,compiler=finest,methodhandles=finest,fields=finest" ], __DIR__ + "../basic/SAI-19.js");
 str += runScriptEngine([ "--log=codegen,compiler=finest,methodhandles=finest,fields=finest" ], __DIR__ + "../basic/varargs.js");
 
 check(str, methodsCalled);

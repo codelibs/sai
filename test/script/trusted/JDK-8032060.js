@@ -25,7 +25,7 @@
  * JDK-8032060: PropertyMap of Error objects is not stable
  *
  * @test
- * @option -Dnashorn.debug=true
+ * @option -Dsai.debug=true
  * @fork
  * @run
  */

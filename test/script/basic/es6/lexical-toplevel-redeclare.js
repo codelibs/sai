@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8057691: Nashorn: let & const declarations are not shared between scripts
+ * JDK-8057691: Sai: let & const declarations are not shared between scripts
  *
  * @test
  * @run

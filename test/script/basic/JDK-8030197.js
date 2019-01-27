@@ -23,7 +23,7 @@
 
 
 /**
- * JDK-8030197: Nashorn: Object.defineProperty() can be lured to change fixed NaN property
+ * JDK-8030197: Sai: Object.defineProperty() can be lured to change fixed NaN property
  *
  * @test
  * @run

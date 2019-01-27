@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8010731: Nashorn exposes internal symbols such as __callee__, __scope__ to scripts
+ * JDK-8010731: Sai exposes internal symbols such as __callee__, __scope__ to scripts
  *
  * @test
  * @run

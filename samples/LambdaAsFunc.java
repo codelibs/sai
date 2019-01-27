@@ -37,7 +37,7 @@ import java.util.function.*;
 public class LambdaAsFunc {
     public static void main(String[] args) throws Exception {
         ScriptEngineManager m = new ScriptEngineManager();
-        ScriptEngine e = m.getEngineByName("nashorn");
+        ScriptEngine e = m.getEngineByName("sai");
 
         // expose a lambda as top-level script function
         e.put("upper", (Function<String, String>) String::toUpperCase);

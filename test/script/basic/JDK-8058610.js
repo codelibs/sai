@@ -44,7 +44,7 @@ print(self_mul({foo: 17179869184, bar: 2147483647})); // 2^34
 
 // We'll need to use this function to obtain long values larger in 
 // magnitude than those precisely representable in a double (2^53), 
-// as Nashorn's parser will reify such literals as a double. For 
+// as Sai's parser will reify such literals as a double. For 
 // overflow on add and sub we need (2^63)-1.
 var parseLong = Java.type("java.lang.Long").parseLong;
 

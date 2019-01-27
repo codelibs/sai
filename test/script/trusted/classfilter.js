@@ -28,9 +28,9 @@
  * @run
  */
 
-var NashornScriptEngineFactory = Java.type("jdk.nashorn.api.scripting.NashornScriptEngineFactory");
+var SaiScriptEngineFactory = Java.type("org.codelibs.sai.api.scripting.SaiScriptEngineFactory");
 
-var fac = new NashornScriptEngineFactory();
+var fac = new SaiScriptEngineFactory();
 // allow only "java.*" classes to be accessed
 var e = fac.getScriptEngine(
     function(name) name.startsWith("java."));

@@ -27,7 +27,7 @@
  * @test
  * @run
  * @fork
- * @option -Dnashorn.debug=true
+ * @option -Dsai.debug=true
  */
 
 function printArrayDataClass(x) {

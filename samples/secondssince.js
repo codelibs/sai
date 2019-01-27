@@ -31,7 +31,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// Number of seconds elapsed since the specified Instance #nashorn #javascript #java
+// Number of seconds elapsed since the specified Instance #sai #javascript #java
 // Input date and time in ISO 8601 format
 // Example: 2001-01-01T00:00:00Z for 1 Jan 2001, 0 GMT
 

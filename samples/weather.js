@@ -31,7 +31,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// Simple nashorn example showing back-quote exec process,
+// Simple sai example showing back-quote exec process,
 // JSON and Java8 streams
 
 var Arrays = Java.type("java.util.Arrays");

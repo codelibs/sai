@@ -38,7 +38,7 @@ var manager = new ScriptEngineManager();
 var engine = manager.getEngineByName("js");
 
 // expose variable to engine
-engine.put("name", "Nashorn");
+engine.put("name", "Sai");
 
 // access it from script
 engine.eval("print('Hello, ' + name)");

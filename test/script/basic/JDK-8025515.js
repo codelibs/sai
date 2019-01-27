@@ -33,7 +33,7 @@
 function getFirstScriptFrame(stack) {
     for (frameNum in stack) {
         var frame = stack[frameNum];
-        if (frame.className.startsWith("jdk.nashorn.internal.scripts.Script$")) {
+        if (frame.className.startsWith("org.codelibs.sai.internal.scripts.Script$")) {
             return frame;
         }
     }
@@ -44,7 +44,7 @@ function testMethodName(f, expected) {
         f();
         fail("expected error");
     } catch (e) {
-        var stack = e.nashornException.getStackTrace();
+        var stack = e.saiException.getStackTrace();
         var name = getFirstScriptFrame(stack).methodName;
         if (name !== expected) {
             fail("got " + name + ", expected " + expected);

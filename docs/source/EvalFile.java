@@ -38,7 +38,7 @@ public class EvalFile {
         // create a script engine manager
         final ScriptEngineManager factory = new ScriptEngineManager();
         // create JavaScript engine
-        final ScriptEngine engine = factory.getEngineByName("nashorn");
+        final ScriptEngine engine = factory.getEngineByName("sai");
         // evaluate JavaScript code from given file - specified by first argument
         engine.eval(new java.io.FileReader(args[0]));
     }

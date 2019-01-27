@@ -45,4 +45,4 @@ engine.eval("function func(name) { print('I am func, hello ' + name) }");
 // from javax.script.Invocable interface. But, hey,
 // calling code is JavaScript and don't worry about types :)
 
-engine.invokeFunction("func", "Nashorn");
+engine.invokeFunction("func", "Sai");

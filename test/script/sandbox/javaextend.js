@@ -27,7 +27,7 @@
  */
 
 function model(n) {
-  return Java.type("jdk.nashorn.test.models." + n)
+  return Java.type("org.codelibs.sai.test.models." + n)
 }
 
 // Can't extend a final class

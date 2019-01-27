@@ -22,7 +22,7 @@
  */
 
 /**
- * 8062132: Nashorn incorrectly binds "this" for constructor created by another function
+ * 8062132: Sai incorrectly binds "this" for constructor created by another function
  *
  * @test
  * @run

@@ -30,8 +30,8 @@
  *     jjs -scripting genshelldoc.js > shell.html
  */
 
-var Options = Packages.jdk.nashorn.internal.runtime.options.Options;
-var title = "Nashorn command line shell tool";
+var Options = Packages.org.codelibs.sai.internal.runtime.options.Options;
+var title = "Sai command line shell tool";
 
 print(<<PREFIX
 <html>

@@ -1,4 +1,4 @@
-#nashorn word histogram of a file
+#sai word histogram of a file
 
 /*
  * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.

@@ -32,8 +32,8 @@
  * @runif external.octane
  * @fork
  * @option -scripting
- * @option -Dnashorn.compiler.splitter.threshold=1000
- * @option -Dnashorn.typeInfo.disabled=true
+ * @option -Dsai.compiler.splitter.threshold=1000
+ * @option -Dsai.typeInfo.disabled=true
  * @option --class-cache-size=0
  * @option --persistent-code-cache=false
  */

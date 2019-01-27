@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// Converting between #javascript Date and #java8 LocalDateTime with #nashorn
+// Converting between #javascript Date and #java8 LocalDateTime with #sai
 
 // JavaScript Date with current time
 var d = new Date();

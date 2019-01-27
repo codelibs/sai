@@ -22,7 +22,7 @@
  */
 
 /**
- * Tests for java.util.Map behavior in Nashorn
+ * Tests for java.util.Map behavior in Sai
  *
  * @test
  * @run

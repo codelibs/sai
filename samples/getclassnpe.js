@@ -36,7 +36,7 @@
  * obfuscating Object.getClass() check relies on non-related intrinsic
  * performance, which is potentially not available everywhere.
  * See also http://cr.openjdk.java.net/~shade/scratch/NullChecks.java
- * This nashorn script checks for such uses in your .java files in the
+ * This sai script checks for such uses in your .java files in the
  * given directory (recursively).
  */
 

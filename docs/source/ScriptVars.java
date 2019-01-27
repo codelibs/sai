@@ -37,7 +37,7 @@ import javax.script.ScriptEngineManager;
 public class ScriptVars {
     public static void main(final String[] args) throws Exception {
         final ScriptEngineManager manager = new ScriptEngineManager();
-        final ScriptEngine engine = manager.getEngineByName("nashorn");
+        final ScriptEngine engine = manager.getEngineByName("sai");
 
         final File f = new File("test.txt");
         // expose File object as variable to script

@@ -38,7 +38,7 @@ var list = new ArrayList();
 // add elements to list by List's add method calls
 list.add("js");
 list.add("ecmascript");
-list.add("nashorn");
+list.add("sai");
 
 // get by List's get(int) method
 print(list[0]);

@@ -22,11 +22,11 @@
  */
 
 /**
- * JDK-8044851: nashorn properties leak memory
+ * JDK-8044851: sai properties leak memory
  *
  * @test
  * @run
- * @option -Dnashorn.debug=true
+ * @option -Dsai.debug=true
  * @fork
  */
 

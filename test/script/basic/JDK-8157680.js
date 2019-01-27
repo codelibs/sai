@@ -30,7 +30,7 @@
  */
 
 var SM = Java.type("javax.script.ScriptEngineManager")
-var engine = new SM().getEngineByName("nashorn")
+var engine = new SM().getEngineByName("sai")
 
 engine.put("output", print);
 var reviver = engine.eval(<<EOF
@@ -44,9 +44,9 @@ EOF)
 // reviver function from mirror world!
 JSON.parse('{ "foo" : 44, "bar" : "hello" }', reviver)
 
-var AJO = Java.type("jdk.nashorn.api.scripting.AbstractJSObject")
+var AJO = Java.type("org.codelibs.sai.api.scripting.AbstractJSObject")
 // reviver function as a JSObject function
-JSON.parse('{ "nashorn" : "hello" }', new AJO() {
+JSON.parse('{ "sai" : "hello" }', new AJO() {
     isFunction: function() true,
     call: function(thiz, args) {
         var name = args[0], value = args[1]

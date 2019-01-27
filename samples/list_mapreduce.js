@@ -41,7 +41,7 @@
 
 var ArrayList = Java.type("java.util.ArrayList");
 var list = new ArrayList();
-list.add("nashorn");
+list.add("sai");
 list.add("ecmascript");
 list.add("javascript");
 list.add("js");

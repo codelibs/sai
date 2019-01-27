@@ -29,13 +29,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// Nashorn extension: __noSuchMethod__
-// See also: https://wiki.openjdk.java.net/display/Nashorn/Nashorn+extensions#Nashornextensions-__noSuchMethod__
+// Sai extension: __noSuchMethod__
+// See also: https://wiki.openjdk.java.net/display/Sai/Sai+extensions#Saiextensions-__noSuchMethod__
  
 Object.prototype.__noSuchMethod__ = function(name) {
     print(name + " function is not defined in " + this);
  
-    // Nashorn extension: stack property
+    // Sai extension: stack property
     // gives stack trace as a string
     print(new Error().stack);
 }

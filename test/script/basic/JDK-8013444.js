@@ -32,7 +32,7 @@
 var type = typeof JSON.parse('{}',function(){})
 print("type is " + type);
 
-var obj = JSON.parse('{"name": "nashorn"}',
+var obj = JSON.parse('{"name": "sai"}',
     function(k, v) {
         if (k === "") return v;
         return v.toUpperCase();

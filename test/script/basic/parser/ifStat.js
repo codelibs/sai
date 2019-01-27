@@ -30,5 +30,5 @@
 
 load(__DIR__ + "util.js");
 
-printParse("if (js) { nashorn() }");
-printParse("if (js) { nashorn() } else { java() }");
+printParse("if (js) { sai() }");
+printParse("if (js) { sai() } else { java() }");

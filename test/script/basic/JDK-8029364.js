@@ -22,23 +22,23 @@
  */
 
 /**
- * JDK-8029364: NashornException to expose thrown object
+ * JDK-8029364: SaiException to expose thrown object
  *
  * @test
  * @run
  */
 
 var m = new javax.script.ScriptEngineManager();
-var e = m.getEngineByName("nashorn");
+var e = m.getEngineByName("sai");
 var g = e.eval("this");
 try {
     e.eval("var e = new Error('foo'); e.bar = 33; throw e");
 } catch (se) {
-    // ScriptException instance's cause is a NashornException
+    // ScriptException instance's cause is a SaiException
     print(se.getClass());
     var cause = se.cause;
     print(cause.getClass());
-    // NashornException instance has 'ecmaError' bean getter
+    // SaiException instance has 'ecmaError' bean getter
     print(cause.ecmaError);
     // access to underlying ECMA Error object
     print(cause.ecmaError instanceof g.Error);

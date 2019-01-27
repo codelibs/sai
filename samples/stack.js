@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// nashorn supports 'stack' property on ECMAScript
+// sai supports 'stack' property on ECMAScript
 // error objects. This property's value is a string
 // that shows script stack trace.
 

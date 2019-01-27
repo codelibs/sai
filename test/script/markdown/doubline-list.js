@@ -22,7 +22,7 @@
  */
 
 /**
- * Test for Showdown markdown parser work with Nashorn.
+ * Test for Showdown markdown parser work with Sai.
  *
  * @test
  * @run

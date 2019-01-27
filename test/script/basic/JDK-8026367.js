@@ -29,7 +29,7 @@
  */
 
 if (typeof sync === "undefined") {
-    load("nashorn:mozilla_compat.js");
+    load("sai:mozilla_compat.js");
 }
 
 var obj = {

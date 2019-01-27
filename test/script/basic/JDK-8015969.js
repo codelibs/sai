@@ -30,7 +30,7 @@
  */
 
 var m = new javax.script.ScriptEngineManager();
-var e = m.getEngineByName("nashorn");
+var e = m.getEngineByName("sai");
 
 e.put("fail", fail);
 e.eval(<<EOF

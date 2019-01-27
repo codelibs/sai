@@ -47,7 +47,7 @@ var filter = Array.prototype.filter;
 var reduce = Array.prototype.reduce;
 
 var jarr = new StringArray(5);
-jarr[0] = "nashorn";
+jarr[0] = "sai";
 jarr[1] = "ecmascript";
 jarr[2] = "javascript";
 jarr[3] = "js";

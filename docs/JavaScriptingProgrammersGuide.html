@@ -170,7 +170,7 @@ public class EvalScript {
         // create a script engine manager
         <span class="classref">ScriptEngineManager</span> factory = new ScriptEngineManager();
         // create a JavaScript engine
-        <span class="classref">ScriptEngine</span> engine = factory.<span class="methodref">getEngineByName</span>("nashorn");
+        <span class="classref">ScriptEngine</span> engine = factory.<span class="methodref">getEngineByName</span>("sai");
         // evaluate JavaScript code from String
         engine.<span class="methodref">eval</span>("print('Hello, World')");
     }
@@ -196,7 +196,7 @@ public class EvalFile {
         // create a script engine manager
         <span class="classref">ScriptEngineManager</span> factory = new ScriptEngineManager();
         // create JavaScript engine
-        <span class="classref">ScriptEngine</span> engine = factory.<span class="methodref">getEngineByName</span>("nashorn");
+        <span class="classref">ScriptEngine</span> engine = factory.<span class="methodref">getEngineByName</span>("sai");
         // evaluate JavaScript code from given file - specified by first argument
         engine.<span class="methodref">eval</span>(new java.io.FileReader(args[0]));
     }
@@ -228,11 +228,11 @@ it. Note that the syntax to access Java objects, methods and fields
 is dependent on the scripting language. JavaScript supports the
 most "natural" Java-like syntax.</p>
 <p>
-Nashorn script engine pre-defines two global variables named "context"
+Sai script engine pre-defines two global variables named "context"
 and "engine". The "context" variable is of type javax.script.ScriptContext
 and refers to the current ScriptContext instance passed to script engine's
 eval method. The "engine" variable is of type javax.script.ScriptEngine and
-refers to the current nashorn script engine instance evaluating the script.
+refers to the current sai script engine instance evaluating the script.
 Both of these variables are non-writable, non-enumerable and non-configurable
 - which implies script code can not write overwrite the value, for..loop iteration
 on global object will not iterate these variables and these variables can not be
@@ -246,7 +246,7 @@ import java.io.*;
 public class ScriptVars { 
     public static void main(String[] args) throws Exception {
         ScriptEngineManager manager = new ScriptEngineManager();
-        ScriptEngine engine = manager.getEngineByName("nashorn");
+        ScriptEngine engine = manager.getEngineByName("sai");
 
         File f = new File("test.txt");
         // expose File object as variable to script
@@ -277,7 +277,7 @@ import javax.script.*;
 public class InvokeScriptFunction {
     public static void main(String[] args) throws Exception {
         ScriptEngineManager manager = new ScriptEngineManager();
-        ScriptEngine engine = manager.getEngineByName("nashorn");
+        ScriptEngine engine = manager.getEngineByName("sai");
 
         // JavaScript code in a String
         String script = "function hello(name) { print('Hello, ' + name); }";
@@ -307,7 +307,7 @@ import javax.script.*;
 public class InvokeScriptMethod {
     public static void main(String[] args) throws Exception {
         ScriptEngineManager manager = new ScriptEngineManager();
-        ScriptEngine engine = manager.getEngineByName("nashorn");
+        ScriptEngine engine = manager.getEngineByName("sai");
 
         // JavaScript code in a String. This code defines a script object 'obj'
         // with one method called 'hello'.        
@@ -348,7 +348,7 @@ import javax.script.*;
 public class RunnableImpl {
     public static void main(String[] args) throws Exception {
         ScriptEngineManager manager = new ScriptEngineManager();
-        ScriptEngine engine = manager.getEngineByName("nashorn");
+        ScriptEngine engine = manager.getEngineByName("sai");
 
         // JavaScript code in a String
         String script = "function run() { print('run called'); }";
@@ -384,7 +384,7 @@ import javax.script.*;
 public class RunnableImplObject {
     public static void main(String[] args) throws Exception {
         ScriptEngineManager manager = new ScriptEngineManager();
-        ScriptEngine engine = manager.getEngineByName("nashorn");
+        ScriptEngine engine = manager.getEngineByName("sai");
 
         // JavaScript code in a String
         String script = "var obj = new Object(); obj.run = function() { print('run method called'); }";
@@ -434,7 +434,7 @@ import javax.script.*;
 public class MultiScopes {
     public static void main(String[] args) throws Exception {
         ScriptEngineManager manager = new ScriptEngineManager();
-        ScriptEngine engine = manager.getEngineByName("nashorn");
+        ScriptEngine engine = manager.getEngineByName("sai");
 
         engine.put("x", "hello");
         // print global variable "x"
@@ -460,7 +460,7 @@ public class MultiScopes {
 <hr>
 <a name="jsengine" id="jsengine"></a>
 <h2>JavaScript Script Engine</h2>
-<p>Oracle's implementation of JDK 8 is co-bundled with the Nashorn ECMAScript
+<p>Oracle's implementation of JDK 8 is co-bundled with the Sai ECMAScript
 script engine.
 <hr>
 <a name="jstojava" id="jstojava"></a>
@@ -527,7 +527,7 @@ In addition to creating new instances, the type objects returned from <code>Java
 static fields and methods of the classes:
 <pre><code>
  var File = Java.type("java.io.File")
- File.createTempFile("nashorn", ".tmp")
+ File.createTempFile("sai", ".tmp")
 </code></pre> 
 <p>
 Methods with names of the form <code>isXxx()</code>, <code>getXxx()</code>, and <code>setXxx()</code> can also be used as properties, for both instances and statics.
@@ -564,7 +564,7 @@ classes.</p>
 // <a href="source/importpackageclass.js">importpackageclass.js</a>
 
 // load compatibility script
-load("nashorn:mozilla_compat.js");
+load("sai:mozilla_compat.js");
 // Import Java packages and classes 
 // like import package.*; in Java
 <span class="functionref">importPackage</span>(java.awt);
@@ -645,7 +645,7 @@ You can use either a string or a type object returned from <code>Java.type()</co
 You can also omit the array type, in which case a <code>Object[]</code> will be created.
 </p>
 <p>
-Given a Java array or Collection, <code>Java.from</code> returns a JavaScript array with a shallow copy of its contents. Note that in most cases, you can use Java arrays and lists natively in Nashorn; in cases where for some reason you need to have an actual JavaScript native array (e.g. to work with the array comprehensions functions), you will want to use this method.
+Given a Java array or Collection, <code>Java.from</code> returns a JavaScript array with a shallow copy of its contents. Note that in most cases, you can use Java arrays and lists natively in Sai; in cases where for some reason you need to have an actual JavaScript native array (e.g. to work with the array comprehensions functions), you will want to use this method.
 </p>
 <pre><code>
 var File = Java.type("java.io.File");
@@ -700,7 +700,7 @@ If a Java class is abstract, you can instantiate an anonymous subclass of it usi
  var task = new TimerTask({ run: function() { print("Hello World!") } })
 </code></pre>
 
-Nashorn supports a syntactic extension where a "new" expression followed by an argument is identical to invoking the constructor and passing the argument to it, so you can write the above example also as:
+Sai supports a syntactic extension where a "new" expression followed by an argument is identical to invoking the constructor and passing the argument to it, so you can write the above example also as:
 
 <pre><code>
  var task = new TimerTask {
@@ -720,14 +720,14 @@ which is very similar to Java anonymous inner class definition. On the other han
 Note that in every one of these cases if you are trying to instantiate an abstract class that has constructors that take some arguments, you can invoke those simply by specifying the arguments after the initial implementation object or function.
 </p>
 <p>
-The use of functions can be taken even further; if you are invoking a Java method that takes a SAM type, you can just pass in a function object, and Nashorn will know what you meant:
+The use of functions can be taken even further; if you are invoking a Java method that takes a SAM type, you can just pass in a function object, and Sai will know what you meant:
 </p>
 <code><pre>
  Java.type("java.util.Timer")
  timer.schedule(function() { print("Hello World!") })
 </code></pre>
 
-Here, <code>Timer.schedule()</code> expects a <code>TimerTask</code> as its argument, so Nashorn creates an instance of a TimerTask subclass and uses the passed function to implement its only abstract method, run(). In this usage though, you can't use non-default constructors; the type must be either an interface, or must have a protected or public no-arg constructor.
+Here, <code>Timer.schedule()</code> expects a <code>TimerTask</code> as its argument, so Sai creates an instance of a TimerTask subclass and uses the passed function to implement its only abstract method, run(). In this usage though, you can't use non-default constructors; the type must be either an interface, or must have a protected or public no-arg constructor.
 
 <hr>
 <a name="jsextendconcrete" id="jsextendconcrete"></a>
@@ -764,7 +764,7 @@ syntactic ambiguity if you just invoke their constructor. Consider this example:
 var t = new java.lang.Thread({ run: function() { print("Hello!") } })
 </code></pre>
 <p>
-If we allowed subclassing of concrete classes with constructor syntax, Nashorn couldn't tell if you're creating a new 
+If we allowed subclassing of concrete classes with constructor syntax, Sai couldn't tell if you're creating a new 
 <code>Thread</code> and passing it a <code>Runnable</code> at this point, or you are subclassing <code>Thread</code> and
 passing it a new implementation for its own <code>run()</code> method.
 </p>
@@ -783,7 +783,7 @@ The methods shown so far for extending Java classes and implementing interfaces 
 or function to a constructor, or using <code>Java.extend</code> with <code>new</code> &ndash; all produce classes that take an
 extra JavaScript object parameter in their constructors that specifies the implementation. The implementation is therefore always bound
 to the actual instance being created with <code>new</code>, and not to the whole class. This has some advantages, for example in the
-memory footprint of the runtime, as Nashorn can just create a single "universal adapter" for every combination of types being implemented.
+memory footprint of the runtime, as Sai can just create a single "universal adapter" for every combination of types being implemented.
 In reality, the below code shows that different instantiations of, say, <code>Runnable</code> have the same class regardless of them having
 different JavaScript implementation objects:
 </p>
@@ -867,7 +867,7 @@ We share the same class: true
 <h3>Overload Resolution</h3>
 <p>Java methods can be overloaded by argument types. In Java,
 overload resolution occurs at compile time (performed by javac).
-When calling Java methods from Nashorn, the appropriate method will be
+When calling Java methods from Sai, the appropriate method will be
 selected based on the argument types at invocation time. You do not need
 to do anything special &ndash; the correct Java method overload variant 
 is selected based automatically. You still have the option of explicitly

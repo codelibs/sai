@@ -37,7 +37,7 @@ import javax.script.ScriptEngineManager;
 public class InvokeScriptMethod {
     public static void main(final String[] args) throws Exception {
         final ScriptEngineManager manager = new ScriptEngineManager();
-        final ScriptEngine engine = manager.getEngineByName("nashorn");
+        final ScriptEngine engine = manager.getEngineByName("sai");
 
         // JavaScript code in a String. This code defines a script object 'obj'
         // with one method called 'hello'.

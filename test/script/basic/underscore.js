@@ -22,7 +22,7 @@
  */
 
 /**
- * NASHORN-466 : corpus parse test for underscore
+ * SAI-466 : corpus parse test for underscore
  *
  * @test
  * @runif external.underscore

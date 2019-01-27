@@ -22,7 +22,7 @@
  */
 
 /**
- * Base library for Showdown markdown engine Nashorn testing.
+ * Base library for Showdown markdown engine Sai testing.
  * @subtest
  *
  *

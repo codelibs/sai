@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8085802: Nashorn -nse option causes parse error on anonymous function definition
+ * JDK-8085802: Sai -nse option causes parse error on anonymous function definition
  *
  * @test
  * @run

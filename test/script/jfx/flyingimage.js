@@ -22,7 +22,7 @@
  */
 
 /**
- * Testing JavaFX canvas run by Nashorn.
+ * Testing JavaFX canvas run by Sai.
  *
  * @test/nocompare
  * @run

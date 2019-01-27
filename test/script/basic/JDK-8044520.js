@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8044520: Nashorn cannot execute node.js's express module
+ * JDK-8044520: Sai cannot execute node.js's express module
  *
  * @test
  * @run
@@ -88,7 +88,7 @@ function checkSetPrototypeOf(proto) {
 checkSetPrototypeOf(undefined);
 checkSetPrototypeOf(43);
 checkSetPrototypeOf(false);
-checkSetPrototypeOf("nashorn");
+checkSetPrototypeOf("sai");
 
 function checkNullSetPrototypeOf() {
     var obj = { };

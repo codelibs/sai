@@ -22,14 +22,14 @@
  */
 
 /**
- * JDK-8010199: javax.script.Invocable implementation for nashorn does not return null when matching functions are missing
+ * JDK-8010199: javax.script.Invocable implementation for sai does not return null when matching functions are missing
  *
  * @test
  * @run
  */
 
 var m = new javax.script.ScriptEngineManager();
-var e = m.getEngineByName("nashorn");
+var e = m.getEngineByName("sai");
 
 var iface = e.getInterface(java.lang.Runnable.class);
 

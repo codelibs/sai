@@ -27,7 +27,7 @@
  * @test
  * @run
  * @fork
- * @option -Dnashorn.debug
+ * @option -Dsai.debug
  */
 
 function createProto(members) {

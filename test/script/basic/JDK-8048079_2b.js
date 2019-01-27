@@ -27,7 +27,7 @@
  * @test
  * @runif external.yui
  * @option -pcc
- * @option -Dnashorn.persistent.code.cache=build/nashorn_code_cache
+ * @option -Dsai.persistent.code.cache=build/sai_code_cache
  * @fork
  */
 

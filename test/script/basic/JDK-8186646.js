@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8186646: Nashorn: "duplicate code" assertion when binding a vararg function that just passes arguments along
+ * JDK-8186646: Sai: "duplicate code" assertion when binding a vararg function that just passes arguments along
  *
  * @test
  * @run

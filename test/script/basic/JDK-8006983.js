@@ -22,7 +22,7 @@
  */
 
 /**
- * 8006983: Introduce a command line option to switch off syntactic extensions of nashorn
+ * 8006983: Introduce a command line option to switch off syntactic extensions of sai
  *
  * @test
  * @option -scripting

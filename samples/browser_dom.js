@@ -72,7 +72,7 @@ EOF, "text/html");
                // DOM manipulation
                var btn = document.createElement("button");
                var n = 0;
-               // attach a button handler - nashorn function!
+               // attach a button handler - sai function!
                btn.onclick = function() {
                    n++; print("You clicked " + n + " time(s)");
                    print("you clicked OK " + wv.engine.executeScript("okCount"));

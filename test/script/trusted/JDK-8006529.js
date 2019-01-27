@@ -30,7 +30,7 @@
  */
 
 /*
- * This test script depends on nashorn Compiler internals. It uses reflection
+ * This test script depends on sai Compiler internals. It uses reflection
  * to get access to private field and many public methods of Compiler and
  * FunctionNode classes. Note that this is trusted code and access to such
  * internal package classes and methods is okay. But, if you modify any
@@ -40,22 +40,22 @@
  */
 
 var forName             = java.lang.Class["forName(String)"];
-var Parser              = forName("jdk.nashorn.internal.parser.Parser").static
-var Compiler            = forName("jdk.nashorn.internal.codegen.Compiler").static
-var CompilationPhases   = forName("jdk.nashorn.internal.codegen.Compiler$CompilationPhases").static;
-var Context             = forName("jdk.nashorn.internal.runtime.Context").static
-var CodeInstaller       = forName("jdk.nashorn.internal.runtime.CodeInstaller").static
-var ScriptEnvironment   = forName("jdk.nashorn.internal.runtime.ScriptEnvironment").static
-var Source              = forName("jdk.nashorn.internal.runtime.Source").static
-var FunctionNode        = forName("jdk.nashorn.internal.ir.FunctionNode").static
-var Block               = forName("jdk.nashorn.internal.ir.Block").static
-var VarNode             = forName("jdk.nashorn.internal.ir.VarNode").static
-var ExpressionStatement = forName("jdk.nashorn.internal.ir.ExpressionStatement").static
-var UnaryNode           = forName("jdk.nashorn.internal.ir.UnaryNode").static
-var BinaryNode          = forName("jdk.nashorn.internal.ir.BinaryNode").static
-var ThrowErrorManager   = forName("jdk.nashorn.internal.runtime.Context$ThrowErrorManager").static
-var ErrorManager        = forName("jdk.nashorn.internal.runtime.ErrorManager").static
-var Debug               = forName("jdk.nashorn.internal.runtime.Debug").static
+var Parser              = forName("org.codelibs.sai.internal.parser.Parser").static
+var Compiler            = forName("org.codelibs.sai.internal.codegen.Compiler").static
+var CompilationPhases   = forName("org.codelibs.sai.internal.codegen.Compiler$CompilationPhases").static;
+var Context             = forName("org.codelibs.sai.internal.runtime.Context").static
+var CodeInstaller       = forName("org.codelibs.sai.internal.runtime.CodeInstaller").static
+var ScriptEnvironment   = forName("org.codelibs.sai.internal.runtime.ScriptEnvironment").static
+var Source              = forName("org.codelibs.sai.internal.runtime.Source").static
+var FunctionNode        = forName("org.codelibs.sai.internal.ir.FunctionNode").static
+var Block               = forName("org.codelibs.sai.internal.ir.Block").static
+var VarNode             = forName("org.codelibs.sai.internal.ir.VarNode").static
+var ExpressionStatement = forName("org.codelibs.sai.internal.ir.ExpressionStatement").static
+var UnaryNode           = forName("org.codelibs.sai.internal.ir.UnaryNode").static
+var BinaryNode          = forName("org.codelibs.sai.internal.ir.BinaryNode").static
+var ThrowErrorManager   = forName("org.codelibs.sai.internal.runtime.Context$ThrowErrorManager").static
+var ErrorManager        = forName("org.codelibs.sai.internal.runtime.ErrorManager").static
+var Debug               = forName("org.codelibs.sai.internal.runtime.Debug").static
 var String              = forName("java.lang.String").static
 var boolean             = Java.type("boolean");
 
@@ -123,7 +123,7 @@ var ParserConstructor = Parser.class.getConstructor(ScriptEnvironment.class, Sou
 var CompilerConstructor = Compiler.class.getMethod("forNoInstallerCompilation", Context.class, Source.class, boolean.class);
 
 // compile(script) -- compiles a script specified as a string with its
-// source code, returns a jdk.nashorn.internal.ir.FunctionNode object
+// source code, returns a org.codelibs.sai.internal.ir.FunctionNode object
 // representing it.
 function compile(source, phases) {
     var source = sourceForMethod.invoke(null, "<no name>", source);

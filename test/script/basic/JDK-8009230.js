@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8009230: Nashorn rejects extended RegExp syntax accepted by all major JS engines
+ * JDK-8009230: Sai rejects extended RegExp syntax accepted by all major JS engines
  *
  * @test
  * @run

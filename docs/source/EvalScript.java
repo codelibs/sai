@@ -38,7 +38,7 @@ public class EvalScript {
         // create a script engine manager
         final ScriptEngineManager factory = new ScriptEngineManager();
         // create a JavaScript engine
-        final ScriptEngine engine = factory.getEngineByName("nashorn");
+        final ScriptEngine engine = factory.getEngineByName("sai");
         // evaluate JavaScript code from String
         engine.eval("print('Hello, World')");
     }

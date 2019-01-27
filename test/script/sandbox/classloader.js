@@ -26,7 +26,7 @@
  *
  * @test
  * @security
- * @bug JDK-8032954: Nashorn: extend Java.extend
+ * @bug JDK-8032954: Sai: extend Java.extend
  */
 
 try {

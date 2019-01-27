@@ -25,7 +25,7 @@
  * JDK-8055107: Extension directives to turn on callsite profiling, tracing, AST print and other debug features locally
  *
  * @test
- * @option -Dnashorn.debug=true
+ * @option -Dsai.debug=true
  * @option -scripting
  * @run
  * @fork
@@ -44,7 +44,7 @@ function runScriptEngine(code) {
         try {
             // set new standard err
             System.setErr(newErr);
-            var engine = m.getEngineByName("nashorn");
+            var engine = m.getEngineByName("sai");
             engine.eval(code);
             newErr.flush();
             return new java.lang.String(baos.toByteArray());
@@ -55,10 +55,10 @@ function runScriptEngine(code) {
     }
 }
 
-// nashorn callsite trace enterexit
+// sai callsite trace enterexit
 var str = runScriptEngine(<<CODE
 function func() {
-   "nashorn callsite trace enterexit";
+   "sai callsite trace enterexit";
    k();
 }
 
@@ -77,9 +77,9 @@ if (!str.contains(" EXIT ")) {
     fail("expected 'EXIT' in trace mode output");
 }
 
-// nashorn callsite trace objects
+// sai callsite trace objects
 var str = runScriptEngine(<<CODE
-"nashorn callsite trace objects";
+"sai callsite trace objects";
 function func(x) {
 }
 
@@ -98,10 +98,10 @@ if (!str.contains("hello")) {
     fail("expected argument to be traced in trace objects mode");
 }
 
-// nashorn callsite trace misses
+// sai callsite trace misses
 str = runScriptEngine(<<CODE
 function f() {
-   "nashorn callsite trace misses";
+   "sai callsite trace misses";
    k();
 }
 
@@ -113,35 +113,35 @@ if (!str.contains(" MISS ")) {
     fail("expected callsite MISS trace messages");
 }
 
-// nashorn print lower ast
+// sai print lower ast
 str = runScriptEngine(<<CODE
 function foo() {
-    "nashorn print lower ast";
+    "sai print lower ast";
     var x = 'hello';
 }
 foo();
 CODE);
 
 if (!str.contains("Lower AST for: 'foo'") ||
-    !str.contains("nashorn print lower ast")) {
+    !str.contains("sai print lower ast")) {
     fail("expected Lower AST to be printed for 'foo'");
 }
 
-// nashorn print ast
+// sai print ast
 str = runScriptEngine(<<CODE
 function foo() {
-  "nashorn print ast";
+  "sai print ast";
 }
 CODE);
 if (!str.contains("[function ") ||
-    !str.contains("nashorn print ast")) {
+    !str.contains("sai print ast")) {
     fail("expected AST to be printed");
 }
 
-// nashorn print symbols
+// sai print symbols
 str = runScriptEngine(<<CODE
 function bar(a) {
-    "nashorn print symbols";
+    "sai print symbols";
     if (a) print(a);
 }
 
@@ -152,21 +152,21 @@ if (!str.contains("[BLOCK in 'Function bar']")) {
     fail("expected symbols to be printed for 'bar'");
 }
 
-// nashorn print parse
+// sai print parse
 str = runScriptEngine(<<CODE
-"nashorn print parse";
+"sai print parse";
 
 function func() {}
 CODE);
 
 if (!str.contains("function func") ||
-    !str.contains("nashorn print parse")) {
-    fail("expected nashorn print parse output");
+    !str.contains("sai print parse")) {
+    fail("expected sai print parse output");
 }
 
-// nashorn print lower parse
+// sai print lower parse
 str = runScriptEngine(<<CODE
-"nashorn print lower parse";
+"sai print lower parse";
 
 function func() {}
 
@@ -174,6 +174,6 @@ func()
 CODE);
 
 if (!str.contains("function {U%}func") ||
-    !str.contains("nashorn print lower parse")) {
-    fail("expected nashorn print lower parse output");
+    !str.contains("sai print lower parse")) {
+    fail("expected sai print lower parse output");
 }

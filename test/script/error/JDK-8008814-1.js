@@ -22,7 +22,7 @@
  */
 
 /**
- * NASHORN-8008814: it's a compile time error to have a nested function declaration when there's an option to treat it as an error
+ * SAI-8008814: it's a compile time error to have a nested function declaration when there's an option to treat it as an error
  *
  * @option --function-statement-error
  * @test/compile-error

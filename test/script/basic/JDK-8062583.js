@@ -42,10 +42,10 @@ try {
     print(e === c1);
     print(e === CustomError.prototype);
     print(e.stack.replace(/\\/g, '/'));
-    print(e.nashornException.toString().replace(/\\/g, '/'));
+    print(e.saiException.toString().replace(/\\/g, '/'));
 }
 
 var c2 = new CustomError();
 Error.captureStackTrace(c2);
 print(c2.stack.replace(/\\/g, '/'));
-print(c2.nashornException.toString().replace(/\\/g, '/'));
+print(c2.saiException.toString().replace(/\\/g, '/'));

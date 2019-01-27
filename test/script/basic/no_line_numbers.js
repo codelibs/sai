@@ -23,7 +23,7 @@
 
 /**
  * no_line_numbers.js - make sure that switching off line number generation
- * doesn't break. Otherwise, this is just NASHORN-73, a unit test particularly
+ * doesn't break. Otherwise, this is just SAI-73, a unit test particularly
  * prone to label bugs in CodeGenerator
  *
  * @test

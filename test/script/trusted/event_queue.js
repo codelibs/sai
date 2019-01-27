@@ -27,7 +27,7 @@
  *
  * @test
  * @fork
- * @option -Dnashorn.debug=true
+ * @option -Dsai.debug=true
  * @option --log=recompile:quiet
  * @option --optimistic-types=true
  */
@@ -36,13 +36,13 @@ print(Debug);
 print();
 
 var forName       = java.lang.Class["forName(String)"];
-var RuntimeEvent  = forName("jdk.nashorn.internal.runtime.events.RuntimeEvent").static;
+var RuntimeEvent  = forName("org.codelibs.sai.internal.runtime.events.RuntimeEvent").static;
 var getValue      = RuntimeEvent.class.getMethod("getValue");
 var getValueClass = RuntimeEvent.class.getMethod("getValueClass");
 
 print(RuntimeEvent);
 
-var RewriteException = forName("jdk.nashorn.internal.runtime.RewriteException").static;
+var RewriteException = forName("org.codelibs.sai.internal.runtime.RewriteException").static;
 var getReturnType    = RewriteException.class.getMethod("getReturnType");
 
 print(RewriteException);

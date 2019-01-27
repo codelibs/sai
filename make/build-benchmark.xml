@@ -25,22 +25,22 @@
 
 
 <project
-    name="nashorn-benchmarks"
+    name="sai-benchmarks"
     default="all"
     basedir=".."
     xmlns:if="ant:if">
 
   <!--
        Below are the octane benchmarks that should be run.
-       The ones that are excluded, as Nashorn currently has
+       The ones that are excluded, as Sai currently has
        some issues with them (functionality or performance)
        are commented out
   -->
 
   <!-- box2d -->
-  <target name="octane-box2d" depends="octane-box2d-nashorn"/>
-  <target name="octane-box2d-nashorn" depends="jar">
-    <run-one cond="octane.benchmark.box2d" runtime="nashorn"/>
+  <target name="octane-box2d" depends="octane-box2d-sai"/>
+  <target name="octane-box2d-sai" depends="jar">
+    <run-one cond="octane.benchmark.box2d" runtime="sai"/>
   </target>
   <target name="octane-box2d-v8" depends="jar">
     <run-one cond="octane.benchmark.box2d" runtime="v8"/>
@@ -50,9 +50,9 @@
   </target>
 
   <!-- code-load -->
-  <target name="octane-code-load" depends="octane-code-load-nashorn"/>
-  <target name="octane-code-load-nashorn" depends="jar">
-    <run-one cond="octane.benchmark.code-load" runtime="nashorn"/>
+  <target name="octane-code-load" depends="octane-code-load-sai"/>
+  <target name="octane-code-load-sai" depends="jar">
+    <run-one cond="octane.benchmark.code-load" runtime="sai"/>
   </target>
   <target name="octane-code-load-v8" depends="jar">
     <run-one cond="octane.benchmark.code-load" runtime="v8"/>
@@ -62,9 +62,9 @@
   </target>
 
   <!-- crypto -->
-  <target name="octane-crypto" depends="octane-crypto-nashorn"/>
-  <target name="octane-crypto-nashorn" depends="jar">
-    <run-one cond="octane.benchmark.crypto" runtime="nashorn"/>
+  <target name="octane-crypto" depends="octane-crypto-sai"/>
+  <target name="octane-crypto-sai" depends="jar">
+    <run-one cond="octane.benchmark.crypto" runtime="sai"/>
   </target>
   <target name="octane-crypto-v8" depends="jar">
     <run-one cond="octane.benchmark.crypto" runtime="v8"/>
@@ -74,9 +74,9 @@
   </target>
 
   <!-- deltablue -->
-  <target name="octane-deltablue" depends="octane-deltablue-nashorn"/>
-  <target name="octane-deltablue-nashorn" depends="jar">
-    <run-one cond="octane.benchmark.deltablue" runtime="nashorn"/>
+  <target name="octane-deltablue" depends="octane-deltablue-sai"/>
+  <target name="octane-deltablue-sai" depends="jar">
+    <run-one cond="octane.benchmark.deltablue" runtime="sai"/>
   </target>
   <target name="octane-deltablue-v8" depends="jar">
     <run-one cond="octane.benchmark.deltablue" runtime="v8"/>
@@ -86,9 +86,9 @@
   </target>
 
   <!-- earley-boyer -->
-  <target name="octane-earley-boyer" depends="octane-earley-boyer-nashorn"/>
-  <target name="octane-earley-boyer-nashorn" depends="jar">
-    <run-one cond="octane.benchmark.earley-boyer" runtime="nashorn"/>
+  <target name="octane-earley-boyer" depends="octane-earley-boyer-sai"/>
+  <target name="octane-earley-boyer-sai" depends="jar">
+    <run-one cond="octane.benchmark.earley-boyer" runtime="sai"/>
   </target>
   <target name="octane-earley-boyer-v8" depends="jar">
     <run-one cond="octane.benchmark.earley-boyer" runtime="v8"/>
@@ -98,9 +98,9 @@
   </target>
   
   <!-- gbemu -->
-  <target name="octane-gbemu" depends="octane-gbemu-nashorn"/>
-  <target name="octane-gbemu-nashorn" depends="jar">
-    <run-one cond="octane.benchmark.gbemu" runtime="nashorn"/>
+  <target name="octane-gbemu" depends="octane-gbemu-sai"/>
+  <target name="octane-gbemu-sai" depends="jar">
+    <run-one cond="octane.benchmark.gbemu" runtime="sai"/>
   </target>
   <target name="octane-gbemu-v8" depends="jar">
     <run-one cond="octane.benchmark.gbemu" runtime="v8"/>
@@ -110,9 +110,9 @@
   </target>
 
   <!-- mandreel -->
-  <target name="octane-mandreel" depends="octane-mandreel-nashorn"/>
-  <target name="octane-mandreel-nashorn" depends="jar">
-    <run-one cond="octane.benchmark.mandreel" runtime="nashorn"/>
+  <target name="octane-mandreel" depends="octane-mandreel-sai"/>
+  <target name="octane-mandreel-sai" depends="jar">
+    <run-one cond="octane.benchmark.mandreel" runtime="sai"/>
   </target>
   <target name="octane-mandreel-v8" depends="jar">
     <run-one cond="octane.benchmark.mandreel" runtime="v8"/>
@@ -122,9 +122,9 @@
   </target>
 
   <!-- navier-stokes -->
-  <target name="octane-navier-stokes" depends="octane-navier-stokes-nashorn"/>
-  <target name="octane-navier-stokes-nashorn" depends="jar">
-    <run-one cond="octane.benchmark.navier-stokes" runtime="nashorn"/>
+  <target name="octane-navier-stokes" depends="octane-navier-stokes-sai"/>
+  <target name="octane-navier-stokes-sai" depends="jar">
+    <run-one cond="octane.benchmark.navier-stokes" runtime="sai"/>
   </target>
   <target name="octane-navier-stokes-v8" depends="jar">
     <run-one cond="octane.benchmark.navier-stokes" runtime="v8"/>
@@ -134,9 +134,9 @@
   </target>
 
   <!-- pdfjs -->
-  <target name="octane-pdfjs" depends="octane-pdfjs-nashorn"/>
-  <target name="octane-pdfjs-nashorn" depends="jar">
-    <run-one cond="octane.benchmark.pdfjs" runtime="nashorn"/>
+  <target name="octane-pdfjs" depends="octane-pdfjs-sai"/>
+  <target name="octane-pdfjs-sai" depends="jar">
+    <run-one cond="octane.benchmark.pdfjs" runtime="sai"/>
   </target>
   <target name="octane-pdfjs-v8" depends="jar">
     <run-one cond="octane.benchmark.pdfjs" runtime="v8"/>
@@ -146,9 +146,9 @@
   </target>
 
   <!-- raytrace -->
-  <target name="octane-raytrace" depends="octane-raytrace-nashorn"/>
-  <target name="octane-raytrace-nashorn" depends="jar">
-    <run-one cond="octane.benchmark.raytrace" runtime="nashorn"/>
+  <target name="octane-raytrace" depends="octane-raytrace-sai"/>
+  <target name="octane-raytrace-sai" depends="jar">
+    <run-one cond="octane.benchmark.raytrace" runtime="sai"/>
   </target>
   <target name="octane-raytrace-v8" depends="jar">
     <run-one cond="octane.benchmark.raytrace" runtime="v8"/>
@@ -158,9 +158,9 @@
   </target>
 
   <!-- regexp -->
-  <target name="octane-regexp" depends="octane-regexp-nashorn"/>
-  <target name="octane-regexp-nashorn" depends="jar">
-    <run-one cond="octane.benchmark.regexp" runtime="nashorn"/>
+  <target name="octane-regexp" depends="octane-regexp-sai"/>
+  <target name="octane-regexp-sai" depends="jar">
+    <run-one cond="octane.benchmark.regexp" runtime="sai"/>
   </target>
   <target name="octane-regexp-v8" depends="jar">
     <run-one cond="octane.benchmark.regexp" runtime="v8"/>
@@ -170,9 +170,9 @@
   </target>
 
   <!-- richards -->
-  <target name="octane-richards" depends="octane-richards-nashorn"/>
-  <target name="octane-richards-nashorn" depends="jar">
-    <run-one cond="octane.benchmark.richards" runtime="nashorn"/>
+  <target name="octane-richards" depends="octane-richards-sai"/>
+  <target name="octane-richards-sai" depends="jar">
+    <run-one cond="octane.benchmark.richards" runtime="sai"/>
   </target>
   <target name="octane-richards-v8" depends="jar">
     <run-one cond="octane.benchmark.richards" runtime="v8"/>
@@ -182,9 +182,9 @@
   </target>
 
   <!-- splay -->
-  <target name="octane-splay" depends="octane-splay-nashorn"/>
-  <target name="octane-splay-nashorn" depends="jar">
-    <run-one cond="octane.benchmark.splay" runtime="nashorn"/>
+  <target name="octane-splay" depends="octane-splay-sai"/>
+  <target name="octane-splay-sai" depends="jar">
+    <run-one cond="octane.benchmark.splay" runtime="sai"/>
   </target>
   <target name="octane-splay-v8" depends="jar">
     <run-one cond="octane.benchmark.splay" runtime="v8"/>
@@ -194,9 +194,9 @@
   </target>
 
   <!-- typescript -->
-  <target name="octane-typescript" depends="octane-typescript-nashorn"/>
-  <target name="octane-typescript-nashorn" depends="jar">
-    <run-one cond="octane.benchmark.typescript" runtime="nashorn"/>
+  <target name="octane-typescript" depends="octane-typescript-sai"/>
+  <target name="octane-typescript-sai" depends="jar">
+    <run-one cond="octane.benchmark.typescript" runtime="sai"/>
   </target>
   <target name="octane-typescript-v8" depends="jar">
     <run-one cond="octane.benchmark.typescript" runtime="v8"/>
@@ -206,9 +206,9 @@
   </target>
 
   <!-- zlib -->
-  <target name="octane-zlib" depends="octane-zlib-nashorn"/>
-  <target name="octane-zlib-nashorn" depends="jar">
-    <run-one cond="octane.benchmark.zlib" runtime="nashorn"/>
+  <target name="octane-zlib" depends="octane-zlib-sai"/>
+  <target name="octane-zlib-sai" depends="jar">
+    <run-one cond="octane.benchmark.zlib" runtime="sai"/>
   </target>
   <target name="octane-zlib-v8" depends="jar">
     <run-one cond="octane.benchmark.zlib" runtime="v8"/>
@@ -274,16 +274,16 @@
 
   <!--
        run 'octane' in single or separate processes based on config
-       This uses nashorn as the default runtime
+       This uses sai as the default runtime
   -->
-  <target name="octane-nashorn" depends="jar">
-    <property name="runtime" value="nashorn"/>
+  <target name="octane-sai" depends="jar">
+    <property name="runtime" value="sai"/>
     <antcall target="octane-process-separate"/>
     <antcall target="octane-process-single"/>
   </target>
 
   <!-- alias for 'octane' -->
-  <target name="octane" depends="octane-nashorn"/>
+  <target name="octane" depends="octane-sai"/>
 
   <!-- run octane benchmarks using octane as runtime -->
   <target name="octane-v8" depends="jar">
@@ -309,23 +309,23 @@
     </sequential>
   </macrodef>
 
-  <target name="run-octane-nashorn">
-    <java classname="${nashorn.shell.tool}"
+  <target name="run-octane-sai">
+    <java classname="${sai.shell.tool}"
           classpath="${run.test.classpath}"
           fork="true"
           dir=".">
       <jvmarg line="${ext.class.path}"/>
       <jvmarg line="${run.test.jvmargs.octane} -Xms${run.test.xms} -Xmx${run.test.xmx}"/>
-      <!-- pass on all properties prefixed with 'nashorn' to the runtime -->
+      <!-- pass on all properties prefixed with 'sai' to the runtime -->
       <syspropertyset>
-        <propertyref prefix="nashorn."/>
+        <propertyref prefix="sai."/>
       </syspropertyset>
       <arg value="${octane-test-sys-prop.test.js.framework}"/>
       <arg value="-scripting"/>
       <arg value="--"/>
       <arg value="${octane-tests}"/>
       <arg value="--runtime"/>
-      <arg value="nashorn"/>
+      <arg value="sai"/>
       <arg value="--verbose"/>
       <arg value="--iterations ${octane.iterations}"/>
     </java>
@@ -379,11 +379,11 @@
 
   <!--- SUNSPIDER JOB BELOW -->
 
-  <!-- run sunspider with Nashorn -->
-  <target name="sunspider" depends="sunspider-nashorn"/>
+  <!-- run sunspider with Sai -->
+  <target name="sunspider" depends="sunspider-sai"/>
 
-  <target name="sunspider-nashorn" depends="sunspider-init">
-    <java classname="${nashorn.shell.tool}"
+  <target name="sunspider-sai" depends="sunspider-init">
+    <java classname="${sai.shell.tool}"
           classpath="${run.test.classpath}"
           fork="true"
           dir=".">

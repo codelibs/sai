@@ -39,7 +39,7 @@ arr = null;
 jarr = null;
 
 // external JSObjects
-var JSObject = Java.type("jdk.nashorn.api.scripting.JSObject");
+var JSObject = Java.type("org.codelibs.sai.api.scripting.JSObject");
 var arr = new JSObject() {
     getMember: function(name) {
         return name == "length"? 4 : undefined;
@@ -76,7 +76,7 @@ arr = null;
 jlist = null;
 
 // external JSObject
-var __array__ =  [ "nashorn", "js" ];
+var __array__ =  [ "sai", "js" ];
 
 var obj = new JSObject() {
 

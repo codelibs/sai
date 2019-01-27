@@ -27,7 +27,7 @@
  * @test
  * @run
  * @fork
- * @option -Dnashorn.fields.objects
+ * @option -Dsai.fields.objects
  */
 
 var m = new javax.script.ScriptEngineManager();

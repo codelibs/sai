@@ -22,15 +22,15 @@
  */
 
 /**
- * JDK-8011578 : -Dnashorn.unstable.relink.threshold=1 causes tests to fail.
+ * JDK-8011578 : -Dsai.unstable.relink.threshold=1 causes tests to fail.
  *
  * @test
- * @option -Dnashorn.unstable.relink.threshold=1
+ * @option -Dsai.unstable.relink.threshold=1
  * @run
  */
 
-load(__DIR__ + "NASHORN-296.js");
-load(__DIR__ + "NASHORN-691.js");
+load(__DIR__ + "SAI-296.js");
+load(__DIR__ + "SAI-691.js");
 load(__DIR__ + "calllink.js");
 load(__DIR__ + "nosuchproperty.js");
 

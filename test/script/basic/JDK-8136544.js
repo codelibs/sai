@@ -26,14 +26,14 @@
  *
  * @test
  * @fork
- * @option -Dnashorn.unstable.relink.threshold=8
+ * @option -Dsai.unstable.relink.threshold=8
  * @run
  */
 
 var ScriptContext = Java.type("javax.script.ScriptContext");
 var ScriptEngineManager = Java.type("javax.script.ScriptEngineManager");
 var m = new ScriptEngineManager();
-var e = m.getEngineByName("nashorn");
+var e = m.getEngineByName("sai");
 
 var scope = e.getBindings(ScriptContext.ENGINE_SCOPE);
 var MYVAR = "myvar";
@@ -48,7 +48,7 @@ function loopupVar() {
 }
 
 // make sure we exercise callsite beyond megamorphic threshold we set
-// in this test via nashorn.unstable.relink.threshold property
+// in this test via sai.unstable.relink.threshold property
 // In each iteration, callsite is exercised twice (two evals)
 // So, LIMIT should be more than 4 to exercise megamorphic callsites.
 

@@ -3,7 +3,7 @@ debugging and instrumentation purposes, along with the system loggers,
 which are used for the same thing.
 
 This document is intended as a developer resource, and it is not
-needed as Nashorn documentation for normal usage. Flags and system
+needed as Sai documentation for normal usage. Flags and system
 properties described herein are subject to change without notice.
 
 =====================================
@@ -13,27 +13,27 @@ properties described herein are subject to change without notice.
 This documentation of the system property flags assume that the
 default value of the flag is false, unless otherwise specified.
 
-SYSTEM PROPERTY: -Dnashorn.args=<string>
+SYSTEM PROPERTY: -Dsai.args=<string>
 
-This property takes as its value a space separated list of Nashorn
-command line options that should be passed to Nashorn. This might be
-useful in environments where it is hard to tell how a nashorn.jar is
+This property takes as its value a space separated list of Sai
+command line options that should be passed to Sai. This might be
+useful in environments where it is hard to tell how a sai.jar is
 launched.
 
 Example:
 
-> java -Dnashorn.args="--lazy-complation --log=compiler" large-java-app-with-nashorn.jar 
-> ant -Dnashorn.args="--log=codegen" antjob
+> java -Dsai.args="--lazy-complation --log=compiler" large-java-app-with-sai.jar 
+> ant -Dsai.args="--log=codegen" antjob
 
-SYSTEM PROPERTY: -Dnashorn.args.prepend=<string>
+SYSTEM PROPERTY: -Dsai.args.prepend=<string>
 
-This property behaves like nashorn.args, but adds the given arguments
+This property behaves like sai.args, but adds the given arguments
 before the existing ones instead of after them. Later arguments will
 overwrite earlier ones, so this is useful for setting default arguments
 that can be overwritten.
 
 
-SYSTEM PROPERTY: -Dnashorn.unstable.relink.threshold=x
+SYSTEM PROPERTY: -Dsai.unstable.relink.threshold=x
 
 This property controls how many call site misses are allowed before a 
 callsite is relinked with "apply" semantics to never change again. 
@@ -43,14 +43,14 @@ has a default value (currently 8 relinks) for this property if it
 is not explicitly set.
 
 
-SYSTEM PROPERTY: -Dnashorn.compiler.splitter.threshold=x
+SYSTEM PROPERTY: -Dsai.compiler.splitter.threshold=x
 
 This will change the node weight that requires a subgraph of the IR to
 be split into several classes in order not to run out of bytecode space.
 The default value is 0x8000 (32768).
 
 
-SYSTEM PROPERTY: -Dnashorn.serialize.compression=<x>
+SYSTEM PROPERTY: -Dsai.serialize.compression=<x>
 
 This property sets the compression level used when deflating serialized
 AST structures of anonymous split functions. Valid values range from 0 to 9,
@@ -58,22 +58,22 @@ the default value is 4. Higher values will reduce memory size of serialized
 AST but increase CPU usage required for compression.
 
 
-SYSTEM PROPERTY: -Dnashorn.codegen.debug.trace=<x>
+SYSTEM PROPERTY: -Dsai.codegen.debug.trace=<x>
 
 See the description of the codegen logger below.
 
 
-SYSTEM PROPERTY: -Dnashorn.fields.objects, -Dnashorn.fields.dual
+SYSTEM PROPERTY: -Dsai.fields.objects, -Dsai.fields.dual
 
-When the nashorn.fields.objects property is true, Nashorn will always
+When the sai.fields.objects property is true, Sai will always
 use object fields for AccessorProperties, requiring boxing for all
-primitive property values. When nashorn.fields.dual is set, Nashorn
+primitive property values. When sai.fields.dual is set, Sai
 will always use dual long/object fields, which allows primitives to be
-stored without boxing. When neither system property is set, Nashorn
+stored without boxing. When neither system property is set, Sai
 chooses a setting depending on the optimistic types setting (dual
 fields when optimistic types are enabled, object-only fields otherwise).
 
-With dual fields, Nashorn uses long fields to store primitive values.
+With dual fields, Sai uses long fields to store primitive values.
 Ints are represented as the 32 low bits of the long fields. Doubles
 are represented as the doubleToLongBits of their value. This way a
 single field can be used for all primitive types. Packing and
@@ -86,8 +86,8 @@ mailing list. TaggedArrays are basically a way to share data space
 between primitives and references, and have the GC understand this.
 
 
-SYSTEM PROPERTY: -Dnashorn.compiler.symbol.trace=[<x>[,*]], 
-  -Dnashorn.compiler.symbol.stacktrace=[<x>[,*]]
+SYSTEM PROPERTY: -Dsai.compiler.symbol.trace=[<x>[,*]], 
+  -Dsai.compiler.symbol.stacktrace=[<x>[,*]]
 
 When this property is set, creation and manipulation of any symbol
 named "x" will show information about when the compiler changes its
@@ -107,7 +107,7 @@ traces will be displayed upon symbol changes according to the same
 semantics.
 
 
-SYSTEM PROPERTY: -Dnashorn.lexer.xmlliterals
+SYSTEM PROPERTY: -Dsai.lexer.xmlliterals
 
 If this property it set, it means that the Lexer should attempt to
 parse XML literals, which would otherwise generate syntax
@@ -118,9 +118,9 @@ XML literals, when this is enabled, end up as standard LiteralNodes in
 the IR.
 
 
-SYSTEM_PROPERTY: -Dnashorn.debug
+SYSTEM_PROPERTY: -Dsai.debug
 
-If this property is set to true, Nashorn runs in Debug mode. Debug
+If this property is set to true, Sai runs in Debug mode. Debug
 mode is slightly slower, as for example statistics counters are enabled
 during the run. Debug mode makes available a NativeDebug instance
 called "Debug" in the global space that can be used to print property
@@ -167,7 +167,7 @@ Finally we count callsite misses on a per callsite bases, which occur
 when a callsite has to be relinked, due to a previous assumption of
 object layout being invalidated.
 
-"getContext" - return the current Nashorn context.
+"getContext" - return the current Sai context.
 
 "equalWithoutType" - Returns true if if the two objects are both
 property maps, and they have identical properties in the same order,
@@ -191,7 +191,7 @@ script object.
 "setEventQueueCapacity" - Set the event queue capacity.
 
 "addRuntimeEvent" - Add a runtime event to the runtime event queue.
-The queue has a fixed size (see -Dnashorn.runtime.event.queue.size)
+The queue has a fixed size (see -Dsai.runtime.event.queue.size)
 and the oldest entry will be thrown out of the queue is about to overflow.
 
 "expandEventQueueCapacity" - Expands the event queue capacity,
@@ -207,7 +207,7 @@ the newest entries are kept.
 "getLastRuntimeEvent" - Return the last runtime event in the queue.
 
 
-SYSTEM PROPERTY: -Dnashorn.methodhandles.debug.stacktrace
+SYSTEM PROPERTY: -Dsai.methodhandles.debug.stacktrace
 
 This enhances methodhandles logging (see below) to also dump the
 stack trace for every instrumented method handle operation.
@@ -215,37 +215,37 @@ Warning: This is enormously verbose, but provides a pretty
 decent "grep:able" picture of where the calls are coming from.
 
 
-SYSTEM PROPERTY: -Dnashorn.cce
+SYSTEM PROPERTY: -Dsai.cce
 
-Setting this system property causes the Nashorn linker to rely on
+Setting this system property causes the Sai linker to rely on
 ClassCastExceptions for triggering a callsite relink. If not set, the linker
 will add an explicit instanceof guard.
 
 
-SYSTEM PROPERTY: -Dnashorn.spill.threshold=<x>
+SYSTEM PROPERTY: -Dsai.spill.threshold=<x>
 
 This property sets the number of fields in an object from which to use
 generic array based spill storage instead of Java fields. The default value
 is 256.
 
 
-SYSTEM PROPERTY: -Dnashorn.tcs.miss.samplePercent=<x>
+SYSTEM PROPERTY: -Dsai.tcs.miss.samplePercent=<x>
 
-When running with the trace callsite option (-tcs), Nashorn will count
+When running with the trace callsite option (-tcs), Sai will count
 and instrument any callsite misses that require relinking. As the
 number of relinks is large and usually produces a lot of output, this
 system property can be used to constrain the percentage of misses that
 should be logged. Typically this is set to 1 or 5 (percent). 1% is the
 default value.
 
-SYSTEM PROPERTY: -Dnashorn.persistent.code.cache
+SYSTEM PROPERTY: -Dsai.persistent.code.cache
 
-This property can be used to set the directory where Nashorn stores
+This property can be used to set the directory where Sai stores
 serialized script classes generated with the -pcc/--persistent-code-cache
-option. The default directory name is "nashorn_code_cache".
+option. The default directory name is "sai_code_cache".
 
 
-SYSTEM PROPERTY: -Dnashorn.typeInfo.maxFiles
+SYSTEM PROPERTY: -Dsai.typeInfo.maxFiles
 
 Maximum number of files to store in the type info cache. The type info cache
 is used to cache type data of JavaScript functions when running with
@@ -257,47 +257,47 @@ to something like 20000 is probably good enough for most applications and
 will usually cap the cache directory to about 80MB presuming a 4kB
 filesystem allocation unit. Set this to "unlimited" to run without limit.
 
-If the value is not 0 or "unlimited", Nashorn will spawn a cleanup thread
+If the value is not 0 or "unlimited", Sai will spawn a cleanup thread
 that makes sure the number of files in the cache does not exceed the given
 value by deleting the least recently modified files.
 
 
-SYSTEM PROPERTY: -Dnashorn.typeInfo.cacheDir
+SYSTEM PROPERTY: -Dsai.typeInfo.cacheDir
 
-This property can be used to set the directory where Nashorn stores the
-type info cache when -Dnashorn.typeInfo.maxFiles is set to a nonzero
+This property can be used to set the directory where Sai stores the
+type info cache when -Dsai.typeInfo.maxFiles is set to a nonzero
 value. The default location is platform specific. On Windows, it is
-"${java.io.tmpdir}\com.oracle.java.NashornTypeInfo". On Linux and
-Solaris it is "~/.cache/com.oracle.java.NashornTypeInfo". On Mac OS X,
-it is "~/Library/Caches/com.oracle.java.NashornTypeInfo".
+"${java.io.tmpdir}\com.oracle.java.SaiTypeInfo". On Linux and
+Solaris it is "~/.cache/com.oracle.java.SaiTypeInfo". On Mac OS X,
+it is "~/Library/Caches/com.oracle.java.SaiTypeInfo".
 
 
-SYSTEM PROPERTY: -Dnashorn.typeInfo.cleanupDelaySeconds=<value>
+SYSTEM PROPERTY: -Dsai.typeInfo.cleanupDelaySeconds=<value>
 
 This sets the delay between cleanups of the typeInfo cache, in seconds.
 The default delay is 20 seconds.
 
 
-SYSTEM PROPERTY: -Dnashorn.profilefile=<filename>
+SYSTEM PROPERTY: -Dsai.profilefile=<filename>
 
-When running with the profile callsite options (-pcs), Nashorn will
+When running with the profile callsite options (-pcs), Sai will
 dump profiling data for all callsites to stderr as a shutdown hook. To
 instead redirect this to a file, specify the path to the file using
 this system property.
 
 
-SYSTEM_PROPERTY: -Dnashorn.regexp.impl=[jdk|joni]
+SYSTEM_PROPERTY: -Dsai.regexp.impl=[jdk|joni]
 
 This property defines the regular expression engine to be used by
-Nashorn. Set this flag to "jdk" to get an implementation based on the
+Sai. Set this flag to "jdk" to get an implementation based on the
 JDK's java.util.regex package. Set this property to "joni" to install
 an implementation based on Joni, the regular expression engine used by
 the JRuby project. The default value for this flag is "joni"
 
-SYSTEM PROPERTY: -Dnashorn.runtime.event.queue.size=<value>
+SYSTEM PROPERTY: -Dsai.runtime.event.queue.size=<value>
 
-Nashorn provides a fixed sized runtime event queue for debugging purposes.
-See -Dnashorn.debug for methods to access the event queue.
+Sai provides a fixed sized runtime event queue for debugging purposes.
+See -Dsai.debug for methods to access the event queue.
 The default value is 1024.
 
 ===============
@@ -307,7 +307,7 @@ The default value is 1024.
 It is very simple to create your own logger. Use the DebugLogger class
 and give the subsystem name as a constructor argument.
 
-The Nashorn loggers can be used to print per-module or per-subsystem
+The Sai loggers can be used to print per-module or per-subsystem
 debug information with different levels of verbosity. The loggers for
 a given subsystem are available are enabled by using
 
@@ -332,7 +332,7 @@ For example: --log=codegen,fields:finest is equivalent to
 
 The following is an incomplete list of subsystems that currently
 support logging. Look for classes implementing
-jdk.nashorn.internal.runtime.logging.Loggable for more loggers.
+org.codelibs.sai.internal.runtime.logging.Loggable for more loggers.
 
 
 * compiler
@@ -385,14 +385,14 @@ The first number on the log line is a unique monotonically increasing
 emission id per bytecode. There is no guarantee this is the same id
 between runs.  depending on non deterministic code
 execution/compilation, but for small applications it usually is. If
-the system variable -Dnashorn.codegen.debug.trace=<x> is set, where x
+the system variable -Dsai.codegen.debug.trace=<x> is set, where x
 is a bytecode emission id, a stack trace will be shown as the
 particular bytecode is about to be emitted. This can be a quick way to
 determine where it comes from without attaching the debugger. "Who
 generated that neg?"
 
 The --log=codegen option is equivalent to setting the system variable
-"nashorn.codegen.debug" to true.
+"sai.codegen.debug" to true.
 
 * fold
 
@@ -420,7 +420,7 @@ This logs the calculation of scope depths for non-local symbols.
 * fields
 
 The --log=fields option (at info level) is equivalent to setting the
-system variable "nashorn.fields.debug" to true. At the info level it
+system variable "sai.fields.debug" to true. At the info level it
 will only show info about type assumptions that were invalidated. If
 the level is set to finest, it will also trace every AccessorProperty
 getter and setter in the program, show arguments, return values
@@ -431,7 +431,7 @@ representation)
 * time
 
 This enables timers for various phases of script compilation. The timers
-will be dumped when the Nashorn process exits. We see a percentage value
+will be dumped when the Sai process exits. We see a percentage value
 of how much time was spent not executing bytecode (i.e. compilation and
 internal tasks) at the end of the report. 
 
@@ -468,7 +468,7 @@ where. (Also MethodTypes and SwitchPoints).
 * classcache
 
 This logger shows information about reusing code classes using the
-in-memory class cache. Nashorn will try to avoid compilation of
+in-memory class cache. Sai will try to avoid compilation of
 scripts by using existing classes. This can significantly improve
 performance when repeatedly evaluating the same script.
 
@@ -476,11 +476,11 @@ performance when repeatedly evaluating the same script.
 3. Undocumented options
 =======================
 
-Here follows a short description of undocumented options for Nashorn.
+Here follows a short description of undocumented options for Sai.
 To see a list of all undocumented options, use the (undocumented) flag
 "-xhelp".
 
-i.e. jjs -xhelp or java -jar nashorn.jar -xhelp
+i.e. jjs -xhelp or java -jar sai.jar -xhelp
 
 Undocumented options are not guaranteed to work, run correctly or be
 bug free. They are experimental and for internal or debugging use.
@@ -488,7 +488,7 @@ They are also subject to change without notice.
 
 In practice, though, all options below not explicitly documented as
 EXPERIMENTAL can be relied upon, for example --dump-on-error is useful
-for any JavaScript/Nashorn developer, but there is no guarantee.
+for any JavaScript/Sai developer, but there is no guarantee.
 
 A short summary follows:
 
@@ -519,7 +519,7 @@ A short summary follows:
 	--empty-statements (Preserve empty statements in AST.)
 		param: [true|false]   default: false
 
-	-fv, -fullversion (Print full version info of Nashorn.)
+	-fv, -fullversion (Print full version info of Sai.)
 		param: [true|false]   default: false
 
 	--function-statement-error (Report an error when function declaration is used as a statement.)
@@ -610,7 +610,7 @@ A short summary follows:
 	--verify-code (Verify byte code before running.)
 		param: [true|false]   default: false
 
-	-v, -version (Print version info of Nashorn.)
+	-v, -version (Print version info of Sai.)
 		param: [true|false]   default: false
 
 	-xhelp (Print extended help for command line flags.)

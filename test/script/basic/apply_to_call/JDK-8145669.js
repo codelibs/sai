@@ -25,7 +25,7 @@
  * JDK-8145669: apply2call optimized callsite fails after becoming megamorphic
  *
  * @test
- * @option -Dnashorn.unstable.relink.threshold=1
+ * @option -Dsai.unstable.relink.threshold=1
  * @fork
  * @run
  */

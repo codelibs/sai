@@ -30,5 +30,5 @@
  */
 
 var mgr = new javax.script.ScriptEngineManager();
-var engine = mgr.getEngineByName("nashorn");
+var engine = mgr.getEngineByName("sai");
 engine.eval("var v = new JSAdapter() {};");

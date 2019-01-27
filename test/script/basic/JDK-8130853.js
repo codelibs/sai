@@ -64,7 +64,7 @@ checkLoad("function f() {}");
 
 // check script engine eval
 var ScriptEngineManager = Java.type("javax.script.ScriptEngineManager");
-var e = new ScriptEngineManager().getEngineByName("nashorn");
+var e = new ScriptEngineManager().getEngineByName("sai");
 var global = e.eval("this");
 e.eval("Object.preventExtensions(this);");
 try {

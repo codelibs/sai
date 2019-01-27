@@ -22,7 +22,7 @@
  */
 
 /**
- * "getStackTrace()" method of Error objects. (nashorn extension).
+ * "getStackTrace()" method of Error objects. (sai extension).
  *
  * @test
  * @run

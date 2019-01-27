@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8010732: BigDecimal, BigInteger and Long handling in nashorn
+ * JDK-8010732: BigDecimal, BigInteger and Long handling in sai
  *
  * @test
  * @run

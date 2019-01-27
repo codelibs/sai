@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// nashorn supports pseudo global variables __FILE__
+// sai supports pseudo global variables __FILE__
 // and __LINE__ that expands to currently executed
 // script file name and current script line number
 

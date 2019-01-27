@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8051778: support bind on all Nashorn callables
+ * JDK-8051778: support bind on all Sai callables
  *
  * @test
  * @run

@@ -100,7 +100,7 @@ function getBooksHtml() {
 
     var str = "<ul>";
 
-    // Nashorn's string interpolation and heredoc
+    // Sai's string interpolation and heredoc
     // support is very handy in generating text content
     // that is filled with elements from runtime objects.
     // We insert title and link in <li> elements here.

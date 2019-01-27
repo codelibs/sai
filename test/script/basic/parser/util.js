@@ -27,7 +27,7 @@
 
 // utilitity for parser tests
 
-load("nashorn:parser.js");
+load("sai:parser.js");
 function printParse(code) {
     print(JSON.stringify(parse(code), null, '    '));
 }

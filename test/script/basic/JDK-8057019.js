@@ -26,7 +26,7 @@
  * (turning off apply to call)
  *
  * @fork
- * @option -Dnashorn.apply2call=false
+ * @option -Dsai.apply2call=false
  * @test
  * @run
  */

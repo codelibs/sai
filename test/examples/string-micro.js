@@ -30,7 +30,7 @@
  */
 
 
-var str = "The quick gray nashorn jumps over the lazy zebra.";
+var str = "The quick gray sai jumps over the lazy zebra.";
 
 function bench(name, func) {
     var start = Date.now();

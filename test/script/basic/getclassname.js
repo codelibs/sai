@@ -52,7 +52,7 @@ checkClass(new Number(42), "[object Number]");
 checkClass(new Object(), "[object Object]");
 checkClass(new RangeError(), "[object Error]");
 checkClass(new ReferenceError(), "[object Error]");
-checkClass(/nashorn/, "[object RegExp]");
+checkClass(/sai/, "[object RegExp]");
 checkClass(new String('hello'), "[object String]");
 checkClass(new SyntaxError(), "[object Error]");
 checkClass(new TypeError(), "[object Error]");

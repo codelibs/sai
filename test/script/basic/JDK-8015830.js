@@ -29,7 +29,7 @@
  */
 
 var m = new javax.script.ScriptEngineManager();
-var engine = m.getEngineByName("nashorn");
+var engine = m.getEngineByName("sai");
 
 engine.eval("x = 100; doit = function () { }");
 

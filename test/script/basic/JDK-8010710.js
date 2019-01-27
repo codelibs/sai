@@ -37,7 +37,7 @@ var a = [1, 2, 3, 4, 5];
 var b = [a, a];
 print(b[zero() + 1][2 + a[0]] += 10);
 
-//repro for NASHORN-258 that never made it
+//repro for SAI-258 that never made it
 function AddRoundKey() {
     var r=0;
     state[r][1] &= 17;

@@ -32,7 +32,7 @@
 // What is FizzBuzz? http://c2.com/cgi/wiki?FizzBuzzTest
 
 // Yet another FizzBuzz impl. using Java 8 lambda and stream
-// but using Nashorn. This is ECMAScript port of @stuartmarks'
+// but using Sai. This is ECMAScript port of @stuartmarks'
 // Java implementation
 
 var IntStream = Java.type("java.util.stream.IntStream");

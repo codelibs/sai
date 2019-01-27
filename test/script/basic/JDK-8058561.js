@@ -28,7 +28,7 @@
  * @run
  * @fork
  * @option --lazy-compilation=false
- * @option -Dnashorn.options.allowEagerCompilationSilentOverride
+ * @option -Dsai.options.allowEagerCompilationSilentOverride
  */
 
 // Just attempting to compile this caused the NPE

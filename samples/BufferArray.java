@@ -30,13 +30,13 @@
  */
 
 import java.nio.DoubleBuffer;
-import jdk.nashorn.api.scripting.AbstractJSObject;
+import org.codelibs.sai.api.scripting.AbstractJSObject;
 
 /**
  * Simple class demonstrating pluggable script object
- * implementation. By implementing jdk.nashorn.api.scripting.JSObject
+ * implementation. By implementing org.codelibs.sai.api.scripting.JSObject
  * (or extending AbstractJSObject which implements it), you
- * can supply a friendly script object. Nashorn will call
+ * can supply a friendly script object. Sai will call
  * 'magic' methods on such a class on 'obj.foo, obj.foo = 33,
  * obj.bar()' etc. from script.
  *

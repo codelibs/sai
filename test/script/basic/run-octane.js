@@ -144,7 +144,7 @@ function run_one_benchmark(arg, iters) {
         mean_score /= iters;
     } catch (e) {
         print_always(arg, "*** Aborted and setting score to zero. Reason: " + e);
-        if (is_this_nashorn() && e instanceof java.lang.Throwable) {
+        if (is_this_sai() && e instanceof java.lang.Throwable) {
             e.printStackTrace();
         }
         mean_score = min_score = max_score = 0;
@@ -253,12 +253,12 @@ if (tests_found.length == 0) {
     }
 }
 
-// returns false for rhino, v8 and all other javascript runtimes, true for Nashorn
-function is_this_nashorn() {
+// returns false for rhino, v8 and all other javascript runtimes, true for Sai
+function is_this_sai() {
     return typeof Error.dumpStack == 'function'
 }
 
-if (is_this_nashorn()) {
+if (is_this_sai()) {
     try {
         read = readFully;
     } catch (e) {

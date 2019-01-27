@@ -22,4 +22,4 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
-jdk.nashorn.api.scripting.NashornScriptEngineFactory
+org.codelibs.sai.api.scripting.SaiScriptEngineFactory

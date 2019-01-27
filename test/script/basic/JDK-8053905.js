@@ -27,8 +27,8 @@
  * @test
  * @runif external.octane
  * @fork
- * @option -Dnashorn.compiler.splitter.threshold=1000
- * @option -Dnashorn.options.allowEagerCompilationSilentOverride
+ * @option -Dsai.compiler.splitter.threshold=1000
+ * @option -Dsai.options.allowEagerCompilationSilentOverride
  * @option -scripting
  * @option --lazy-compilation=false
  */

@@ -31,7 +31,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// Nashorn supports Shell script like here-documents
+// Sai supports Shell script like here-documents
 // in -scripting mode. Here-docs are multi-line strings
 // that are possibly interpolated with ${} expressions
 // See also http://en.wikipedia.org/wiki/Here_document

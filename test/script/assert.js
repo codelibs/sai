@@ -47,8 +47,8 @@ Object.defineProperty(this, "fail", {
         if (typeof error != 'undefined') {
             if (error instanceof java.lang.Throwable) {
                 throwable = error;
-            } else if (error.nashornException instanceof java.lang.Throwable) {
-                throwable = error.nashornException;
+            } else if (error.saiException instanceof java.lang.Throwable) {
+                throwable = error.saiException;
             }
         }
 

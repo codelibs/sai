@@ -22,11 +22,11 @@
  */
 
 /**
- * JDK-8081156: jjs "nashorn.args" system property is not effective when script arguments are passed
+ * JDK-8081156: jjs "sai.args" system property is not effective when script arguments are passed
  *
  * @test
  * @fork
- * @option -Dnashorn.args=-strict
+ * @option -Dsai.args=-strict
  * @argument foo
  * @argument bar
  * @run

@@ -31,7 +31,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// cross nashorn engine scripting
+// cross sai engine scripting
 // access script objects from other engines in natural syntax
 
 var ScriptEngineManager = Java.type("javax.script.ScriptEngineManager");
@@ -50,9 +50,9 @@ engine.eval(<<CODE
     };
 CODE);
 
-// Nashorn engine returns script objects as instance of
-// the class jdk.nashorn.api.scripting.ScriptObjectMirror
-// But nashorn's dynalink linker can treat these objects
+// Sai engine returns script objects as instance of
+// the class org.codelibs.sai.api.scripting.ScriptObjectMirror
+// But sai's dynalink linker can treat these objects
 // specially to support natural script syntax to access..
 // In Java code, you need to use ScriptObjectMirror's
 // methods though. Once again, script world is simpler :-)

@@ -29,8 +29,8 @@
  * @run
  */
 
-// assume that this script is run with "nashorn.jar" System
-// property set to relative or absolute path of nashorn.jar
+// assume that this script is run with "sai.jar" System
+// property set to relative or absolute path of sai.jar
 
 if (typeof fail != 'function') {
     fail = print;
@@ -39,15 +39,17 @@ if (typeof fail != 'function') {
 var System = java.lang.System;
 var File = java.io.File;
 var javahome = System.getProperty("java.home");
-var nashornJar = new File(System.getProperty("nashorn.jar"));
-if (! nashornJar.isAbsolute()) {
-    nashornJar = new File(".", nashornJar);
+var saiJar = new File(System.getProperty("sai.jar"));
+if (! saiJar.isAbsolute()) {
+    saiJar = new File(".", saiJar);
 }
-var nashornJarDir = nashornJar.parentFile.absolutePath;
+var saiJarDir = saiJar.parentFile.absolutePath;
 
-// we want to use nashorn.jar passed and not the one that comes with JRE
-var jjsCmd = javahome + "/../bin/jjs";
-jjsCmd += " -J-Djava.ext.dirs=" + nashornJarDir;
+// we want to use sai.jar passed and not the one that comes with JRE
+// var jjsCmd = javahome + "/../bin/jjs";
+// jjsCmd += " -J-Djava.ext.dirs=" + saiJarDir;
+var jjsCmd = javahome + "/../bin/java";
+jjsCmd += " -cp " + saiJar + " org.codelibs.sai.tools.Shell";
 jjsCmd = jjsCmd.toString().replace(/\//g, File.separator);
 $ENV.PWD=System.getProperty("user.dir") // to avoid RE on Cygwin
 $EXEC(jjsCmd, "var x = Object.create(null);\nx;\nprint('PASSED');\nexit(0)");

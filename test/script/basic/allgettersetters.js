@@ -65,7 +65,7 @@ checkGetterSetter(new Number(42));
 checkGetterSetter(new Object());
 checkGetterSetter(new RangeError());
 checkGetterSetter(new ReferenceError());
-checkGetterSetter(/nashorn/);
+checkGetterSetter(/sai/);
 checkGetterSetter(new String('hello'));
 checkGetterSetter(new SyntaxError());
 checkGetterSetter(new TypeError());

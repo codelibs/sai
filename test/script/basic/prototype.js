@@ -22,7 +22,7 @@
  */
 
 /**
- * NASHORN-467 - check that prootype.js parses and compiles
+ * SAI-467 - check that prootype.js parses and compiles
  *
  * @test
  * @runif external.prototype

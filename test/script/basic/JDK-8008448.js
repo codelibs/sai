@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8008448: Add coverage test for jdk.nashorn.internal.ir.debug.JSONWriter
+ * JDK-8008448: Add coverage test for org.codelibs.sai.internal.ir.debug.JSONWriter
  * Ensure that all parseable files can be parsed using parser API.
  *
  * @test
@@ -33,7 +33,7 @@
 
 var File = Java.type("java.io.File");
 var FilenameFilter = Java.type("java.io.FilenameFilter");
-var SourceHelper = Java.type("jdk.nashorn.test.models.SourceHelper")
+var SourceHelper = Java.type("org.codelibs.sai.test.models.SourceHelper")
 
 // Filter out non .js files
 var files = new File(__DIR__).listFiles(new FilenameFilter() {
@@ -41,7 +41,7 @@ var files = new File(__DIR__).listFiles(new FilenameFilter() {
 });
 
 // load parser API
-load("nashorn:parser.js");
+load("sai:parser.js");
 
 // parse each file to make sure it does not result in exception
 for each (var f in files) {

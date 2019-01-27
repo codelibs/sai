@@ -32,7 +32,7 @@
  * @fork
  * @runif external.octane
  * @option -scripting
- * @option -Dnashorn.typeInfo.disabled=true
+ * @option -Dsai.typeInfo.disabled=true
  * @option --class-cache-size=0
  * @option --persistent-code-cache=false
  */

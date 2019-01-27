@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// nashorn supports Java interface implementation
+// sai supports Java interface implementation
 // by script using anonymous class-like syntax
 
 var Runnable = Java.type("java.lang.Runnable");

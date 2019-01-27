@@ -2,7 +2,7 @@ basic:
 
 "basic" language and library tests. These need run only with File read 
 permission to read files under "test/script" or subdirs and property read
-permission to read properties named "nashorn.test.*"
+permission to read properties named "sai.test.*"
 
 error:
 

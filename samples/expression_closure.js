@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// nashorn supports expression closures extension of
+// sai supports expression closures extension of
 // Mozilla JavaScript 1.8. See also
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/New_in_JavaScript/1.8
 

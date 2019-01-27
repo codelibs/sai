@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8146147: Java linker indexed property getter does not work for computed nashorn string
+ * JDK-8146147: Java linker indexed property getter does not work for computed sai string
  *
  * @test
  * @run

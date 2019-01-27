@@ -23,14 +23,14 @@
 #
 
 ###########################################################################################
-# This is a helper script to evaluate nashorn with optimistic types
+# This is a helper script to evaluate sai with optimistic types
 # it produces a flight recording for every run, and uses the best 
 # known flags for performance for the current configration
 ###########################################################################################
 
 # Flags to enable assertions, we need the system assertions too, since
-# this script runs Nashorn in the BCP to override any nashorn.jar that might
-# reside in your $JAVA_HOME/jre/lib/ext/nashorn.jar
+# this script runs Sai in the BCP to override any sai.jar that might
+# reside in your $JAVA_HOME/jre/lib/ext/sai.jar
 #
 ENABLE_ASSERTIONS_FLAGS="-ea -esa"
 
@@ -43,19 +43,19 @@ ENABLE_ASSERTIONS_FLAGS="-ea -esa"
 #    -Djava.lang.invoke.MethodHandle.TRACE_METHOD_LINKAGE=true \
 #    -Djava.lang.invoke.MethodHandle.TRACE_INTERPRETER=true"
 
-# Flags to run trusted tests from the Nashorn test suite
+# Flags to run trusted tests from the Sai test suite
 #
 #TRUSTED_TEST_FLAGS="\
 #-Djava.security.manager \
-#-Djava.security.policy=../build/nashorn.policy -Dnashorn.debug"
+#-Djava.security.policy=../build/sai.policy -Dsai.debug"
 
 # Testing out new code optimizations using the generic hotspot "new code" parameter
 #
 #USE_NEW_CODE_FLAGS=-XX:+UnlockDiagnosticVMOptions -XX:+UseNewCode
 
 #
-#-Dnashorn.typeInfo.disabled=false \
-# and for Nashorn options: 
+#-Dsai.typeInfo.disabled=false \
+# and for Sai options: 
 # --class-cache-size=0 --persistent-code-cache=false 
 
 # Unique timestamped file name for JFR recordings. For JFR, we also have to
@@ -65,10 +65,10 @@ ENABLE_ASSERTIONS_FLAGS="-ea -esa"
 # It is also recommended that you go into $JAVA_HOME/jre/lib/jfr/default.jfc and
 # set the "method-sampling-interval" Normal and Maximum sample time as low as you
 # can go (10 ms on most platforms). The default is normally higher. The increased
-# sampling overhead is usually negligible for Nashorn runs, but the data is better
+# sampling overhead is usually negligible for Sai runs, but the data is better
 
 if [ -z $JFR_FILENAME ]; then
-    JFR_FILENAME="./nashorn_$(date|sed "s/ /_/g"|sed "s/:/_/g").jfr"
+    JFR_FILENAME="./sai_$(date|sed "s/ /_/g"|sed "s/:/_/g").jfr"
 fi
 
 # Flight recorder
@@ -104,15 +104,15 @@ ENABLE_FLIGHT_RECORDER_FLAGS="\
 # Tier compile threasholds. Default value is 10. (1-100 is useful for experiments)
 #TIER_COMPILATION_THRESHOLD_FLAGS=-XX:IncreaseFirstTierCompileThresholdAt=10
 
-# Directory where to look for nashorn.jar in a dist folder. The default is "..", assuming
+# Directory where to look for sai.jar in a dist folder. The default is "..", assuming
 # that we run the script from the make dir
 DIR=..
-NASHORN_JAR=$DIR/dist/nashorn.jar
+SAI_JAR=$DIR/dist/sai.jar
 
 
-# The built Nashorn jar is placed first in the bootclasspath to override the JDK
-# nashorn.jar in $JAVA_HOME/jre/lib/ext. Thus, we also need -esa, as assertions in
-# nashorn count as system assertions in this configuration
+# The built Sai jar is placed first in the bootclasspath to override the JDK
+# sai.jar in $JAVA_HOME/jre/lib/ext. Thus, we also need -esa, as assertions in
+# sai count as system assertions in this configuration
 
 # Type profiling default level is 111, 222 adds some compile time, but is faster
 
@@ -127,10 +127,10 @@ $ENABLE_TYPE_SPECIALIZATION_FLAGS \
 $TIERED_COMPILATION_THRESOLD_FLAGS \
 $DISABLE_MATH_INTRINSICS_FLAGS \
 $PRINT_ASM_FLAGS \
--Xbootclasspath/p:$NASHORN_JAR \
+-Xbootclasspath/p:$SAI_JAR \
 -Xms2G -Xmx2G \
 -XX:TypeProfileLevel=222 \
 -cp $CLASSPATH:../build/test/classes/ \
-jdk.nashorn.tools.Shell $ENABLE_TIME_FLAGS ${@}
+org.codelibs.sai.tools.Shell $ENABLE_TIME_FLAGS ${@}
 
 

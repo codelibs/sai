@@ -23,7 +23,7 @@
 
 
 /**
- * JDK-8037562: Nashorn: JSON.parse comes up with nonexistent entries if there are gaps between the keys
+ * JDK-8037562: Sai: JSON.parse comes up with nonexistent entries if there are gaps between the keys
  *
  * @test
  * @run

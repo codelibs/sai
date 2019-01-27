@@ -27,13 +27,13 @@
  * @run
  */
 
-var factory = Java.type('jdk.nashorn.api.scripting.NashornScriptEngineFactory')
+var factory = Java.type('org.codelibs.sai.api.scripting.SaiScriptEngineFactory')
 var engine  = new factory().getScriptEngine(function(str){
     return str.indexOf('java.util') != -1;
 })
 
-load("nashorn:mozilla_compat.js");
-engine.eval("load('nashorn:mozilla_compat.js');")
+load("sai:mozilla_compat.js");
+engine.eval("load('sai:mozilla_compat.js');")
 
 function tryEval (str) {
         try {

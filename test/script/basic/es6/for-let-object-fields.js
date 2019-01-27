@@ -27,7 +27,7 @@
  * @test
  * @run
  * @fork
- * @option -Dnashorn.fields.objects=true
+ * @option -Dsai.fields.objects=true
  * @option --language=es6
  */
 

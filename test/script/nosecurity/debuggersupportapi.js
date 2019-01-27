@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8044798: API for debugging Nashorn
+ * JDK-8044798: API for debugging Sai
  *
  * @test
  * @run
@@ -31,14 +31,14 @@
 // Basic API class, method, field existence checks.
 
 // The following classes and the associated methods and fields are used as
-// private debugger interface. Though private/implementation defined, nashorn
+// private debugger interface. Though private/implementation defined, sai
 // code should not be changed to remove these classes, fields and methods.
 // The test takes signatures of debugger interface and stores in .EXPECTED file.
-// If any incompatible change is made to nashorn to break any of these, this
+// If any incompatible change is made to sai to break any of these, this
 // test will fail.
 
 var Arrays = Java.type("java.util.Arrays");
-var DebuggerSupport = Java.type("jdk.nashorn.internal.runtime.DebuggerSupport");
+var DebuggerSupport = Java.type("org.codelibs.sai.internal.runtime.DebuggerSupport");
 
 print(DebuggerSupport.class);
 print();
@@ -62,7 +62,7 @@ for each (var mth in methods) {
 }
 print();
 
-var DebuggerValueDesc = Java.type("jdk.nashorn.internal.runtime.DebuggerSupport.DebuggerValueDesc");
+var DebuggerValueDesc = Java.type("org.codelibs.sai.internal.runtime.DebuggerSupport.DebuggerValueDesc");
 print(DebuggerValueDesc.class);
 print();
 var fields = DebuggerValueDesc.class.declaredFields;
@@ -78,7 +78,7 @@ for each (var fld in fields) {
 }
 print();
 
-var SourceInfo = Java.type("jdk.nashorn.internal.runtime.DebuggerSupport.SourceInfo");
+var SourceInfo = Java.type("org.codelibs.sai.internal.runtime.DebuggerSupport.SourceInfo");
 print(SourceInfo.class);
 print();
 var fields = SourceInfo.class.declaredFields;

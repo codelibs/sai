@@ -28,7 +28,7 @@
  * @run
  */
 
-var acp = new (Java.type("jdk.nashorn.test.models.ArrayConversionPreferences"))
+var acp = new (Java.type("org.codelibs.sai.test.models.ArrayConversionPreferences"))
 
 var a = [1, "", {}]
 

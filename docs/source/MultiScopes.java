@@ -39,7 +39,7 @@ import javax.script.SimpleScriptContext;
 public class MultiScopes {
     public static void main(final String[] args) throws Exception {
         final ScriptEngineManager manager = new ScriptEngineManager();
-        final ScriptEngine engine = manager.getEngineByName("nashorn");
+        final ScriptEngine engine = manager.getEngineByName("sai");
 
         engine.put("x", "hello");
         // print global variable "x"

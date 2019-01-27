@@ -22,11 +22,11 @@
  */
 
 /**
- * JDK-8079145: jdk.nashorn.internal.runtime.arrays.IntArrayData.convert assertion
+ * JDK-8079145: org.codelibs.sai.internal.runtime.arrays.IntArrayData.convert assertion
  *
  * @test
  * @fork
- * @option -Dnashorn.debug=true
+ * @option -Dsai.debug=true
  * @run
  */
 

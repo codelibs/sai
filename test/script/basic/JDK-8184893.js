@@ -22,7 +22,7 @@
  */
 
 /**
- * JDK-8184893: jdk8u152 b06 : issues with nashorn when running kraken benchmarks
+ * JDK-8184893: jdk8u152 b06 : issues with sai when running kraken benchmarks
  *
  * @test
  * @run

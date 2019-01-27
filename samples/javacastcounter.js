@@ -31,7 +31,7 @@
 
 // Usage: jjs javacastcounter.js -- <.java files>
 
-// This example demonstrates Nashorn Java.extend API
+// This example demonstrates Sai Java.extend API
 // to subclass a Java class from script.
 
 // This example uses Javac Compiler and Tree API

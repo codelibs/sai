@@ -24,30 +24,30 @@
 -->
 <body>
 <p>
-Nashorn is a runtime environment for programs written in ECMAScript 5.1.
+Sai is a runtime environment for programs written in ECMAScript 5.1.
 </p>
 <h1>Usage</h1>
 <p>
-The recommended way to use Nashorn is through the <a href="http://jcp.org/en/jsr/detail?id=223" target="_top">JSR-223
+The recommended way to use Sai is through the <a href="http://jcp.org/en/jsr/detail?id=223" target="_top">JSR-223
 "Scripting for the Java Platform"</a> APIs found in the {@link javax.script} package. Usually, you'll obtain a
-{@link javax.script.ScriptEngine} instance for Nashorn using:
+{@link javax.script.ScriptEngine} instance for Sai using:
 <pre>
 import javax.script.*;
 ...
-ScriptEngine nashornEngine = new ScriptEngineManager().getEngineByName("nashorn");
+ScriptEngine saiEngine = new ScriptEngineManager().getEngineByName("sai");
 </pre>
 and then use it just as you would any other JSR-223 script engine. See
-<a href="jdk/nashorn/api/scripting/package-summary.html">{@code jdk.nashorn.api.scripting}</a> package
+<a href="org/codelibs/sai/api/scripting/package-summary.html">{@code org.codelibs.sai.api.scripting}</a> package
 for details.
 <p>
 <h1>Compatibility</h1>
-Nashorn is 100% compliant with the <a href="http://www.ecma-international.org/publications/standards/Ecma-262.htm"
+Sai is 100% compliant with the <a href="http://www.ecma-international.org/publications/standards/Ecma-262.htm"
 target="_top">ECMA-262 Standard, Edition 5.1</a>. It requires a Java Virtual Machine that implements the
 <a href="http://jcp.org/en/jsr/detail?id=292" target="_top">JSR-292 "Supporting Dynamically Typed Languages on the Java
 Platform"</a> specification (often referred to as "invokedynamic"), as well as the already mentioned JSR-223.
 <h1>Interoperability with the Java platform</h1>
 <p>
-In addition to being a 100% ECMAScript 5.1 runtime, Nashorn provides features for interoperability of the ECMAScript
+In addition to being a 100% ECMAScript 5.1 runtime, Sai provides features for interoperability of the ECMAScript
 programs with the Java platform. In general, any Java object put into the script engine's context will be visible from
 the script. In terms of the standard, such Java objects are not considered "native objects", but rather "host objects",
 as defined in section 4.3.8. This distinction allows certain semantical differences in handling them compared to native
@@ -77,16 +77,16 @@ When a method on a Java object is invoked, the arguments are converted to the fo
 using all allowed ECMAScript conversions. This can be surprising, as in general, conversions from string to number will
 succeed according to Standard's section 9.3 "ToNumber" and so on; string to boolean, number to boolean, Object to
 number, Object to string all work. Note that if the Java method's declared parameter type is {@code java.lang.Object},
-Nashorn objects are passed without any conversion whatsoever; specifically if the JavaScript value being passed is of
+Sai objects are passed without any conversion whatsoever; specifically if the JavaScript value being passed is of
 primitive string type, you can only rely on it being a {@code java.lang.CharSequence}, and if the value is a number, you
 can only rely on it being a {@code java.lang.Number}. If the Java method declared parameter type is more specific (e.g.
-{@code java.lang.String} or {@code java.lang.Double}), then Nashorn will of course ensure the required type is passed.
+{@code java.lang.String} or {@code java.lang.Double}), then Sai will of course ensure the required type is passed.
 <p>
 <h2>SAM types</h2>
 <p>
 As a special extension when invoking Java methods, ECMAScript function objects can be passed in place of an argument
 whose Java type is so-called "single abstract method" or "SAM" type. While this name usually covers single-method
-interfaces, Nashorn is a bit more versatile, and it recognizes a type as a SAM type if all its abstract methods are
+interfaces, Sai is a bit more versatile, and it recognizes a type as a SAM type if all its abstract methods are
 overloads of the same name, and it is either an interface, or it is an abstract class with
 a no-arg constructor. The type itself must be public, while the constructor and the methods can be either public or
 protected. If there are multiple abstract overloads of the same name, the single function will serve as the shared
@@ -94,20 +94,20 @@ implementation for all of them, <em>and additionally it will also override any n
 This is done to be consistent with the fact that ECMAScript does not have the concept of overloaded methods.
 <p>
 <h2>The {@code Java} object</h2>
-Nashorn exposes a non-standard global object named {@code Java} that is the primary API entry point into Java
+Sai exposes a non-standard global object named {@code Java} that is the primary API entry point into Java
 platform-specific functionality. You can use it to create instances of Java classes, convert from Java arrays to native
 arrays and back, and so on. The methods on the objects are directly implemented by public static methods on the class
-<a href="jdk/nashorn/internal/objects/NativeJava.html">{@code NativeJava}</a>, see that class for details on what
+<a href="org/codelibs/sai/internal/objects/NativeJava.html">{@code NativeJava}</a>, see that class for details on what
 functionality is available.
 <h2>Representations of Java types</h2>
-The method <a href="jdk/nashorn/internal/objects/NativeJava.html#type(java.lang.Object,%20java.lang.Object)">
+The method <a href="org/codelibs/sai/internal/objects/NativeJava.html#type(java.lang.Object,%20java.lang.Object)">
 {@code Java.type(typeName)}</a> takes a name of a type, and returns an object representing a Java type. You can
 use that object to both create new instances of Java classes, as well as to access static fields and methods on them.
 The type object is distinct from the {@code java.lang.Class} object, which represents the reflective run-time type
 identity and doesn't carry i.e. static members. Again, see the link for {@code NativeJava} above for details.
 <h2>Other non-standard built-in objects</h2>
-In addition to {@code Java}, Nashorn also exposes some other non-standard built-in objects:
-<a href="jdk/nashorn/internal/objects/NativeJSAdapter.html">{@code JSAdapter}</a>,
-<a href="jdk/nashorn/internal/objects/NativeJavaImporter.html">{@code JavaImporter}</a>,
-<a href="jdk/nashorn/internal/runtime/NativeJavaPackage.html">{@code Packages}.</a>
+In addition to {@code Java}, Sai also exposes some other non-standard built-in objects:
+<a href="org/codelibs/sai/internal/objects/NativeJSAdapter.html">{@code JSAdapter}</a>,
+<a href="org/codelibs/sai/internal/objects/NativeJavaImporter.html">{@code JavaImporter}</a>,
+<a href="org/codelibs/sai/internal/runtime/NativeJavaPackage.html">{@code Packages}.</a>
 </body>

@@ -65,7 +65,7 @@ print("eval is java function? " + Java.isJavaFunction(eval));
 print("println is java function? " + Java.isJavaFunction(println));
 print("getProperty is java function? " + Java.isJavaFunction(getProperty));
 
-var JSObject = Java.type("jdk.nashorn.api.scripting.JSObject");
+var JSObject = Java.type("org.codelibs.sai.api.scripting.JSObject");
 print("callable JSObject is function? " +
     Java.isJavaFunction(new JSObject() {
         isFunction: function() true,
@@ -104,7 +104,7 @@ Java.synchronized(function() {
 }, lock)();
 
 // try Mozilla "sync" as well
-load("nashorn:mozilla_compat.js");
+load("sai:mozilla_compat.js");
 sync(function() {
     var th = new java.lang.Thread(sync(function() {
         print("new thread");

@@ -40,10 +40,10 @@ var Locale = Java.type("java.util.Locale");
 
 var formatStr = "Country : %s \t\t\t\t:\t Country Code : %s";
 
-// Nashorn allows script functions to be passed
+// Sai allows script functions to be passed
 // whereever Java8 lambdas are expected.
 
-// Nashorn also supports "expression closures" supported by
+// Sai also supports "expression closures" supported by
 // Mozilla JavaScript 1.8 version. See also
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/New_in_JavaScript/1.8
 

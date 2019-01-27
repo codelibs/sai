@@ -22,12 +22,12 @@
  */
 
 /**
- * JDK-8078049: Nashorn crashes when attempting to start the new tsc.js compiler for TypeScript
+ * JDK-8078049: Sai crashes when attempting to start the new tsc.js compiler for TypeScript
  *
  * @test
  * @run
  * @fork
- * @option -Dnashorn.debug=true
+ * @option -Dsai.debug=true
  */
 
 var m = 1;
@@ -541,8 +541,8 @@ var spill = {
     p499: { code: 499, category: m }
 };
 
-var AccessorProperty = Java.type("jdk.nashorn.internal.runtime.AccessorProperty");
-var SpillProperty    = Java.type("jdk.nashorn.internal.runtime.SpillProperty");
+var AccessorProperty = Java.type("org.codelibs.sai.internal.runtime.AccessorProperty");
+var SpillProperty    = Java.type("org.codelibs.sai.internal.runtime.SpillProperty");
 
 Assert.assertTrue(Object.keys(fields).length === 3);
 Assert.assertTrue(Debug.map(fields).findProperty("p0").getClass() === AccessorProperty.class);

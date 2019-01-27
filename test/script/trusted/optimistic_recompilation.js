@@ -26,17 +26,17 @@
  * @test
  * @bug 8037086,8038398
  * @fork
- * @option -Dnashorn.debug=true
+ * @option -Dsai.debug=true
  * @option --log=recompile:quiet
  * @option --optimistic-types=true
  */
 
 var forName       = java.lang.Class["forName(String)"];
-var RuntimeEvent  = forName("jdk.nashorn.internal.runtime.events.RuntimeEvent").static;
+var RuntimeEvent  = forName("org.codelibs.sai.internal.runtime.events.RuntimeEvent").static;
 var getValue      = RuntimeEvent.class.getMethod("getValue");
-var RewriteException = forName("jdk.nashorn.internal.runtime.RewriteException").static;
+var RewriteException = forName("org.codelibs.sai.internal.runtime.RewriteException").static;
 var getReturnType    = RewriteException.class.getMethod("getReturnType");
-var RecompilationEvent = forName("jdk.nashorn.internal.runtime.events.RecompilationEvent").static;
+var RecompilationEvent = forName("org.codelibs.sai.internal.runtime.events.RecompilationEvent").static;
 var getReturnValue     = RecompilationEvent.class.getMethod("getReturnValue");
 var setReturnTypeAndValue = [];
 var expectedValues = [];

@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// Java like "import static class_name.*" for nashorn
+// Java like "import static class_name.*" for sai
 
 function importStatic(clazz) {
     // make sure the argument is a Java type

@@ -29,7 +29,7 @@
  */
 
 var m = new javax.script.ScriptEngineManager();
-var e = m.getEngineByName("nashorn");
+var e = m.getEngineByName("sai");
 e.put("foo", "hello");
 var obj = e.eval("context.getAttribute('foo')");
 if (obj != "hello") {
