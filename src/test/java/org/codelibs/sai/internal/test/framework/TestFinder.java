@@ -96,8 +96,16 @@ public final class TestFinder {
         void log(String mg);
     }
 
+    static void updateUserDir() {
+        final String newuserDir = new File(
+                TestFinder.class.getClassLoader().getResource("test").getFile())
+                        .getParent();
+        System.setProperty("user.dir", newuserDir);
+    }
+
     // finds all tests from configuration and calls TestFactory to create 'test' instance for each script test found
     static <T> void findAllTests(final List<T> tests, final Set<String> orphans, final TestFactory<T> testFactory) throws Exception {
+        updateUserDir();
         final String framework = System.getProperty(TEST_JS_FRAMEWORK);
         final String testList = System.getProperty(TEST_JS_LIST);
         final String failedTestFileName = System.getProperty(TEST_FAILED_LIST_FILE);
@@ -119,7 +127,7 @@ public final class TestFinder {
         if (testList == null || testList.length() == 0) {
             // Run the tests under the test roots dir, selected by the
             // TEST_JS_INCLUDES patterns
-            final String testRootsString = System.getProperty(TEST_JS_ROOTS, TestFinder.class.getClassLoader().getResource("script").getFile());
+            final String testRootsString = System.getProperty(TEST_JS_ROOTS, "test/script");
             if (testRootsString == null || testRootsString.length() == 0) {
                 throw new Exception("Error: " + TEST_JS_ROOTS + " must be set");
             }

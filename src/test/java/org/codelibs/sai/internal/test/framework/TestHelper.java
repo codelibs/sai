@@ -49,12 +49,17 @@ public abstract class TestHelper {
 
     protected static File makeBuildDir(final File testFile) {
         final File buildDir = getBuildDir(testFile);
+        new File(BUILD_ROOT).mkdirs();
         buildDir.mkdirs();
         return buildDir;
     }
 
     protected static File getBuildDir(final File testFile) {
-        return testFile.getParentFile();
+        if (!testFile.getPath().startsWith(TEST_PREFIX)) {
+            throw new IllegalArgumentException("test file path not a relative pathname");
+        }
+        final File buildDir = new File(BUILD_ROOT + File.separator + testFile.getParent().substring(TEST_PREFIX.length()));
+        return buildDir;
     }
 
     // return the first line of the given file

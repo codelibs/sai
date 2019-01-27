@@ -130,7 +130,7 @@ public class ScriptEngineTest {
         assertEquals(fac.getLanguageName(), "ECMAScript");
         assertEquals(fac.getParameter(ScriptEngine.NAME), "javascript");
         assertEquals(fac.getLanguageVersion(), "ECMA - 262 Edition 5.1");
-        assertEquals(fac.getEngineName(), "Oracle Sai");
+        assertEquals(fac.getEngineName(), "CodeLibs Sai");
         assertEquals(fac.getOutputStatement("context"), "print(context)");
         assertEquals(fac.getProgram("print('hello')", "print('world')"), "print('hello');print('world');");
         assertEquals(fac.getParameter(ScriptEngine.NAME), "javascript");
