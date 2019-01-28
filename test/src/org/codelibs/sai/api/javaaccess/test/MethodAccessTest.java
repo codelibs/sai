@@ -422,7 +422,7 @@ public class MethodAccessTest {
         assertEquals(0, e.eval("o.overloadedMethod(0);"));
         assertEquals(2000, e.eval("o.overloadedMethod(1000);"));
         assertEquals(2, e.eval("o.overloadedMethod('10');"));
-        assertEquals(7, e.eval("o.overloadedMethod('Sai');"));
+        assertEquals(7, e.eval("o.overloadedMethod('Saihorn');"));
         assertEquals(4, e.eval("o.overloadedMethod('true');"));
         assertEquals(1, e.eval("o.overloadedMethod(true);"));
         assertEquals(0, e.eval("o.overloadedMethod(false);"));

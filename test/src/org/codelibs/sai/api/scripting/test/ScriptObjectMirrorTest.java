@@ -186,7 +186,7 @@ public class ScriptObjectMirrorTest {
 
             // Simple eval tests
             assertEquals(obj.eval("typeof Object"), "function");
-            assertEquals(obj.eval("'sai'.substring(3)"), "horn");
+            assertEquals(obj.eval("'saihorn'.substring(3)"), "horn");
         } catch (final Exception exp) {
             exp.printStackTrace();
             fail(exp.getMessage());
