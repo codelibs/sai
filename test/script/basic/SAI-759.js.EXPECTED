@@ -14,33 +14,33 @@ object
 function
 false
 
-T,h,e, ,q,u,i,c,k, ,g,r,a,y, ,n,a,s,h,o,r,n, ,j,u,m,p,s, ,o,v,e,r, ,t,h,e, ,l,a,z,y, ,z,e,b,r,a,.
-Th,e ,qu,ic,k ,gr,ay, n,as,ho,rn, j,um,ps, o,ve,r ,th,e ,la,zy, z,eb,ra,.
-The ,quic,k gr,ay n,asho,rn j,umps, ove,r th,e la,zy z,ebra,.
-The quic,k gray n,ashorn j,umps ove,r the la,zy zebra,.
-The quick gray n,ashorn jumps ove,r the lazy zebra,.
-The quick gray sai jumps ove,r the lazy zebra.
+T,h,e, ,q,u,i,c,k, ,g,r,a,y, ,s,a,i, ,j,u,m,p,s, ,o,v,e,r, ,t,h,e, ,l,a,z,y, ,z,e,b,r,a,.
+Th,e ,qu,ic,k ,gr,ay, s,ai, j,um,ps, o,ve,r ,th,e ,la,zy, z,eb,ra,.
+The ,quic,k gr,ay s,ai j,umps, ove,r th,e la,zy z,ebra,.
+The quic,k gray s,ai jumps, over th,e lazy z,ebra.
+The quick gray s,ai jumps over th,e lazy zebra.
+The quick gray sai jumps over th,e lazy zebra.
 The quick gray sai jumps over the lazy zebra.
-The quick gray sai jumps over the lazy zebra. The quick gray sai jumps over the lazy zebra. 49 true true false true false true
+The quick gray sai jumps over the lazy zebra. The quick gray sai jumps over the lazy zebra. 45 true true false true false true
 string
 number
 true
 
-T,h,e, ,q,u,i,c,k, ,g,r,a,y, ,n,a,s,h,o,r,n, ,j,u,m,p,s, ,o,v,e,r, ,t,h,e, ,l,a,z,y, ,z,e,b,r,a,.
-Th,e ,qu,ic,k ,gr,ay, n,as,ho,rn, j,um,ps, o,ve,r ,th,e ,la,zy, z,eb,ra,.
-The ,quic,k gr,ay n,asho,rn j,umps, ove,r th,e la,zy z,ebra,.
-The quic,k gray n,ashorn j,umps ove,r the la,zy zebra,.
-The quick gray n,ashorn jumps ove,r the lazy zebra,.
-The quick gray sai jumps ove,r the lazy zebra.
+T,h,e, ,q,u,i,c,k, ,g,r,a,y, ,s,a,i, ,j,u,m,p,s, ,o,v,e,r, ,t,h,e, ,l,a,z,y, ,z,e,b,r,a,.
+Th,e ,qu,ic,k ,gr,ay, s,ai, j,um,ps, o,ve,r ,th,e ,la,zy, z,eb,ra,.
+The ,quic,k gr,ay s,ai j,umps, ove,r th,e la,zy z,ebra,.
+The quic,k gray s,ai jumps, over th,e lazy z,ebra.
+The quick gray s,ai jumps over th,e lazy zebra.
+The quick gray sai jumps over th,e lazy zebra.
 The quick gray sai jumps over the lazy zebra.
-T,h,e, ,q,u,i,c,k, ,g,r,a,y, ,n,a,s,h,o,r,n, ,j,u,m,p,s, ,o,v,e,r, ,t,h,e, ,l,a,z,y, ,z,e,b,r,a,.
-Th,e ,qu,ic,k ,gr,ay, n,as,ho,rn, j,um,ps, o,ve,r ,th,e ,la,zy, z,eb,ra,.
-The ,quic,k gr,ay n,asho,rn j,umps, ove,r th,e la,zy z,ebra,.
-The quic,k gray n,ashorn j,umps ove,r the la,zy zebra,.
-The quick gray n,ashorn jumps ove,r the lazy zebra,.
-The quick gray sai jumps ove,r the lazy zebra.
+T,h,e, ,q,u,i,c,k, ,g,r,a,y, ,s,a,i, ,j,u,m,p,s, ,o,v,e,r, ,t,h,e, ,l,a,z,y, ,z,e,b,r,a,.
+Th,e ,qu,ic,k ,gr,ay, s,ai, j,um,ps, o,ve,r ,th,e ,la,zy, z,eb,ra,.
+The ,quic,k gr,ay s,ai j,umps, ove,r th,e la,zy z,ebra,.
+The quic,k gray s,ai jumps, over th,e lazy z,ebra.
+The quick gray s,ai jumps over th,e lazy zebra.
+The quick gray sai jumps over th,e lazy zebra.
 The quick gray sai jumps over the lazy zebra.
-The quick gray sai jumps over the lazy zebra. 49 true true true true
+The quick gray sai jumps over the lazy zebra. 45 true true true true
 string
 number
 true
