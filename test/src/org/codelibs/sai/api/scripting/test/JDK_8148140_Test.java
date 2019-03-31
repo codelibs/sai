@@ -47,7 +47,7 @@ public class JDK_8148140_Test {
 
     @BeforeClass
     public void setupTest() {
-        engine = new ScriptEngineManager().getEngineByName("js");
+        engine = new ScriptEngineManager().getEngineByName("sai");
         engine.put("f", new AbstractJSObject() {
             @Override
             public boolean isFunction() {
