@@ -4,9 +4,9 @@
 	<groupId>org.codelibs</groupId>
 	<artifactId>sai</artifactId>
 	<packaging>jar</packaging>
-	<name>CodeLibs Core Library</name>
+	<name>JavaScript Engine</name>
 	<version>SNAPSHOT</version>
-	<description />
+	<description>JavaScript engine developed in the Java programming language</description>
 	<url>https://github.com/codelibs/sai</url>
 	<inceptionYear>2012</inceptionYear>
 	<licenses>
