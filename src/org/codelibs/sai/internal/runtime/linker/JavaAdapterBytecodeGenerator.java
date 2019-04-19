@@ -25,24 +25,25 @@
 
 package org.codelibs.sai.internal.runtime.linker;
 
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_FINAL;
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PRIVATE;
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_STATIC;
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_SUPER;
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_VARARGS;
-import static jdk.internal.org.objectweb.asm.Opcodes.ACONST_NULL;
-import static jdk.internal.org.objectweb.asm.Opcodes.ALOAD;
-import static jdk.internal.org.objectweb.asm.Opcodes.ASTORE;
-import static jdk.internal.org.objectweb.asm.Opcodes.DUP;
-import static jdk.internal.org.objectweb.asm.Opcodes.IFNONNULL;
-import static jdk.internal.org.objectweb.asm.Opcodes.ILOAD;
-import static jdk.internal.org.objectweb.asm.Opcodes.ISTORE;
-import static jdk.internal.org.objectweb.asm.Opcodes.POP;
-import static jdk.internal.org.objectweb.asm.Opcodes.RETURN;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACC_FINAL;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACC_SUPER;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACC_VARARGS;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACONST_NULL;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ALOAD;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ASTORE;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.DUP;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IFNONNULL;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ILOAD;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ISTORE;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.POP;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.RETURN;
 import static org.codelibs.sai.internal.lookup.Lookup.MH;
 import static org.codelibs.sai.internal.runtime.linker.AdaptationResult.Outcome.ERROR_NO_ACCESSIBLE_CONSTRUCTOR;
 
+import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.AccessibleObject;
@@ -68,13 +69,12 @@ import org.codelibs.sai.internal.runtime.ScriptFunction;
 import org.codelibs.sai.internal.runtime.ScriptObject;
 import org.codelibs.sai.internal.runtime.linker.AdaptationResult.Outcome;
 
-import jdk.internal.org.objectweb.asm.ClassWriter;
-import jdk.internal.org.objectweb.asm.Handle;
-import jdk.internal.org.objectweb.asm.Label;
-import jdk.internal.org.objectweb.asm.Opcodes;
-import jdk.internal.org.objectweb.asm.Type;
-import jdk.internal.org.objectweb.asm.commons.InstructionAdapter;
-import sun.reflect.CallerSensitive;
+import org.codelibs.sai.org.objectweb.asm.ClassWriter;
+import org.codelibs.sai.org.objectweb.asm.Handle;
+import org.codelibs.sai.org.objectweb.asm.Label;
+import org.codelibs.sai.org.objectweb.asm.Opcodes;
+import org.codelibs.sai.org.objectweb.asm.Type;
+import org.codelibs.sai.org.objectweb.asm.commons.InstructionAdapter;
 
 /**
  * Generates bytecode for a Java adapter class. Used by the {@link JavaAdapterFactory}.
@@ -1241,6 +1241,11 @@ final class JavaAdapterBytecodeGenerator {
     }
 
     private static boolean isCallerSensitive(final AccessibleObject e) {
-        return e.isAnnotationPresent(CallerSensitive.class);
+        for (Annotation a : e.getAnnotations()) {
+            if (a.getClass().getSimpleName().equals("CallerSensitive")) {
+                return true;
+            }
+        }
+        return false;
     }
 }

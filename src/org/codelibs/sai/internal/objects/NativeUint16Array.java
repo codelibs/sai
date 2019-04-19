@@ -84,7 +84,7 @@ public final class NativeUint16Array extends ArrayBufferView {
                 int.class, int.class).methodHandle();
 
         private Uint16ArrayData(final CharBuffer nb, final int start, final int end) {
-            super(((CharBuffer) nb.position(start).limit(end)).slice(), end - start);
+            super((nb.position(start).limit(end)).slice(), end - start);
         }
 
         @Override

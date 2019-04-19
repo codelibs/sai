@@ -84,7 +84,7 @@ public final class NativeFloat64Array extends ArrayBufferView {
                 int.class, double.class).methodHandle();
 
         private Float64ArrayData(final DoubleBuffer nb, final int start, final int end) {
-            super(((DoubleBuffer) nb.position(start).limit(end)).slice(), end - start);
+            super((nb.position(start).limit(end)).slice(), end - start);
         }
 
         @Override

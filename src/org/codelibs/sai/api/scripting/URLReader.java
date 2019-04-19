@@ -40,7 +40,6 @@ import org.codelibs.sai.internal.runtime.Source;
  *
  * @since 1.8u40
  */
-@jdk.Exported
 public final class URLReader extends Reader {
     // underlying URL
     private final URL url;

@@ -38,6 +38,5 @@
  *
  * @since 1.8u40
  */
-@jdk.Exported
 package org.codelibs.sai.api.scripting;
 

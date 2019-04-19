@@ -43,7 +43,6 @@ import org.codelibs.sai.internal.runtime.JSType;
  *
  * @since 1.8u40
  */
-@jdk.Exported
 public abstract class AbstractJSObject implements JSObject {
     /**
      * The default constructor.

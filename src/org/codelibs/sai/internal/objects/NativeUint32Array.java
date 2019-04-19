@@ -85,7 +85,7 @@ public final class NativeUint32Array extends ArrayBufferView {
                 int.class, int.class).methodHandle();
 
         private Uint32ArrayData(final IntBuffer nb, final int start, final int end) {
-            super(((IntBuffer) nb.position(start).limit(end)).slice(), end - start);
+            super((nb.position(start).limit(end)).slice(), end - start);
         }
 
         @Override

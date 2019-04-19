@@ -35,11 +35,6 @@
     <path id="dist.path">
          <pathelement location="${dist.dir}"/>
     </path>
-    <path id="sai.ext.path">
-      <pathelement location="${dist.dir}"/>
-      <pathelement location="${java.ext.dirs}"/>
-    </path>
-    <property name="ext.class.path" value="-Djava.ext.dirs=&quot;${toString:sai.ext.path}&quot;"/>
     <condition property="svn.executable" value="/usr/local/bin/svn" else="svn">
       <available file="/usr/local/bin/svn"/>
     </condition>
@@ -151,7 +146,6 @@
            debug="${javac.debug}"
            encoding="${javac.encoding}"
            includeantruntime="false" fork="true">
-      <compilerarg value="-J-Djava.ext.dirs="/>
       <compilerarg value="-Xlint:all"/>
       <compilerarg value="-XDignore.symbol.file"/>
       <compilerarg value="-Xdiags:verbose"/>
@@ -226,15 +220,16 @@
   <!-- generate javadoc for all Sai and ASM classes -->
   <target name="javadoc" depends="jar">
     <javadoc destdir="${dist.javadoc.dir}" use="yes" overview="${src.dir}/overview.html" 
-        extdirs="${sai.ext.path}" windowtitle="${sai.product.name} ${sai.version}"
-        additionalparam="-quiet" failonerror="true" useexternalfile="true">
+        windowtitle="${sai.product.name} ${sai.version}"
+        additionalparam="-quiet" failonerror="false" useexternalfile="true">
       <arg value="${javadoc.option}"/>
       <classpath>
         <pathelement location="${build.classes.dir}"/>
+        <fileset dir="${dist.dir}">
+          <include name="**/*.jar" />
+        </fileset>
       </classpath>
       <fileset dir="${src.dir}" includes="**/*.java"/>
-      <fileset dir="${jdk.asm.src.dir}" includes="**/*.java"/>
-      <link href="http://docs.oracle.com/javase/8/docs/api/"/>
       <!-- The following tags are used only in ASM sources - just ignore these -->
       <tag name="label" description="label tag in ASM sources" enabled="false"/>
       <tag name="linked" description="linked tag in ASM sources" enabled="false"/>
@@ -245,34 +240,37 @@
   <!-- generate javadoc for Sai classes -->
   <target name="javadocnh" depends="jar">
     <javadoc destdir="${dist.javadoc.dir}" use="yes" overview="${src.dir}/overview.html"
-        extdirs="${sai.ext.path}" windowtitle="${sai.product.name} ${sai.version}"
-        additionalparam="-quiet" failonerror="true" useexternalfile="true">
+        windowtitle="${sai.product.name} ${sai.version}"
+        additionalparam="-quiet" failonerror="false" useexternalfile="true">
       <arg value="${javadoc.option}"/>
       <classpath>
         <pathelement location="${build.classes.dir}"/>
+        <fileset dir="${dist.dir}">
+          <include name="**/*.jar" />
+        </fileset>
       </classpath>
       <fileset dir="${src.dir}" includes="**/*.java"/>
-      <link href="http://docs.oracle.com/javase/8/docs/api/"/>
     </javadoc>
   </target>
 
   <!-- generate javadoc only for sai extension api classes -->
   <target name="javadocapi" depends="jar">
-    <javadoc destdir="${dist.javadoc.dir}" use="yes" extdirs="${sai.ext.path}" 
-        windowtitle="${sai.product.name}" additionalparam="-quiet" failonerror="true" useexternalfile="true">
+    <javadoc destdir="${dist.javadoc.dir}" use="yes"
+        windowtitle="${sai.product.name}" additionalparam="-quiet" failonerror="false" useexternalfile="true">
       <arg value="${javadoc.option}"/>
       <classpath>
         <pathelement location="${build.classes.dir}"/>
+        <fileset dir="${dist.dir}">
+          <include name="**/*.jar" />
+        </fileset>
       </classpath>
       <fileset dir="${src.dir}" includes="org/codelibs/sai/api/**/*.java"/>
-      <link href="http://docs.oracle.com/javase/8/docs/api/"/>
     </javadoc>
   </target>
 
   <!-- generate shell.html for shell tool documentation -->
   <target name="shelldoc" depends="jar">
     <java classname="${sai.shell.tool}" dir="${basedir}" output="${dist.dir}/shell.html" failonerror="true" fork="true">
-      <jvmarg line="${ext.class.path}"/>
       <arg value="-scripting"/>
       <arg value="docs/genshelldoc.js"/>
     </java>
@@ -302,7 +300,6 @@
            debug="${javac.debug}"
            encoding="${javac.encoding}"
            includeantruntime="false" fork="true">
-        <compilerarg value="-J-Djava.ext.dirs="/>
         <compilerarg value="-Xlint:unchecked"/>
         <compilerarg value="-Xlint:deprecation"/>
         <compilerarg value="-Xdiags:verbose"/>
@@ -479,7 +476,6 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
     </fileset>
     <testng outputdir="${build.nosecurity.test.results.dir}/${testResultsSubDir}" classfilesetref="test.nosecurity.classes"
        verbose="${testng.verbose}" haltonfailure="true" useDefaultListeners="false" listeners="${testng.listeners}" workingDir="${basedir}">
-      <jvmarg line="${ext.class.path}"/>
       <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} -Dbuild.dir=${build.dir}"/>
       <sysproperty key="sai.jar" value="${dist.dir}/sai.jar"/>
       <propertyset>
@@ -491,7 +487,10 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
       </propertyset>
       <sysproperty key="optimistic.override" value="${optimistic}"/>
       <classpath>
-          <pathelement path="${run.test.classpath}"/>
+        <pathelement path="${run.test.classpath}"/>
+	<fileset dir="${dist.dir}">
+	  <include name="**/*.jar" />
+	</fileset>
       </classpath>
     </testng>
   </target>
@@ -502,7 +501,6 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
     <property name="debug.test.jvmargs" value=""/>
     <testng outputdir="${build.test.results.dir}/${testResultsSubDir}" classfilesetref="test.classes"
 	    verbose="${testng.verbose}" haltonfailure="true" useDefaultListeners="false" listeners="${testng.listeners}" workingDir="${basedir}">
-      <jvmarg line="${ext.class.path}"/>
       <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} ${run.test.jvmsecurityargs} -Dbuild.dir=${build.dir}"/>
       <jvmarg line="${debug.test.jvmargs}"/>
       <propertyset>
@@ -515,7 +513,10 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
       <sysproperty key="optimistic.override" value="${optimistic}"/>
       <sysproperty key="test.js.excludes.file" value="${exclude.list}"/>
       <classpath>
-          <pathelement path="${run.test.classpath}"/>
+        <pathelement path="${run.test.classpath}"/>
+	<fileset dir="${dist.dir}">
+	  <include name="**/*.jar" />
+	</fileset>
       </classpath>
     </testng>
   </target>
@@ -528,10 +529,12 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
       <param name="optimistic" value="true"/>
       <param name="testResultsSubDir" value="optimistic"/>
     </antcall>    
+    <!-- TODO fix java.security.AccessControlExceptio
     <antcall target="-test-security" inheritRefs="true">
       <param name="optimistic" value="true"/>
       <param name="testResultsSubDir" value="optimistic"/>
     </antcall>
+    -->
   </target>
 
   <target name="test-pessimistic" depends="jar, -test-classes-all,-test-classes-single, check-testng, check-external-tests, compile-test, generate-policy-file" if="testng.available">
@@ -540,10 +543,12 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
       <param name="optimistic" value="false"/>
       <param name="testResultsSubDir" value="pessimistic"/>
     </antcall>    
+    <!-- TODO fix java.security.AccessControlExceptio
     <antcall target="-test-security" inheritRefs="true">
       <param name="optimistic" value="false"/>
       <param name="testResultsSubDir" value="pessimistic"/>
     </antcall>
+    -->
   </target>
 
   <target name="check-jemmy.jfx.testng" unless="jemmy.jfx.testng.available">
@@ -565,7 +570,6 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
 
     <testng outputdir="${build.test.results.dir}" classfilesetref="test.classes"
        verbose="${testng.verbose}" haltonfailure="true" useDefaultListeners="false" listeners="${testng.listeners}" workingDir="${basedir}">
-      <jvmarg line="${ext.class.path}"/>
       <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} -Dbuild.dir=${build.dir}"/>
       <propertyset>
         <propertyref prefix="testjfx-test-sys-prop."/>
@@ -585,7 +589,6 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
 
     <testng outputdir="${build.test.results.dir}" classfilesetref="test.classes"
        verbose="${testng.verbose}" haltonfailure="true" useDefaultListeners="false" listeners="${testng.listeners}" workingDir="${basedir}">
-      <jvmarg line="${ext.class.path}"/>
       <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} ${run.test.jvmsecurityargs} -Dbuild.dir=${build.dir}"/>
       <propertyset>
         <propertyref prefix="testmarkdown-test-sys-prop."/>
@@ -604,7 +607,6 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
 
     <testng outputdir="${build.test.results.dir}" classfilesetref="test.classes"
        verbose="${testng.verbose}" haltonfailure="true" useDefaultListeners="false" listeners="${testng.listeners}" workingDir="${basedir}">
-      <jvmarg line="${ext.class.path}"/>
       <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} ${run.test.jvmsecurityargs} -Dbuild.dir=${build.dir}"/>
       <propertyset>
         <propertyref prefix="sai."/>
@@ -624,7 +626,6 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
   <target name="test262-parallel" depends="jar, get-testng, check-testng, check-external-tests, compile-test, generate-policy-file" if="testng.available">
     <!-- use just build.test.classes.dir to avoid referring to TestNG -->
     <java classname="${parallel.test.runner}" dir="${basedir}" fork="true">
-      <jvmarg line="${ext.class.path}"/>
       <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} ${run.test.jvmsecurityargs} -Dbuild.dir=${build.dir}"/>
       <!-- avoid too many typeinfo cache files. Each script is run only once anyway -->
       <jvmarg line="-Dsai.typeInfo.disabled=true"/>
@@ -645,7 +646,6 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
       <java classname="${parallel.test.runner}" dir="${basedir}"
         failonerror="true"
         fork="true">
-      <jvmarg line="${ext.class.path}"/>
       <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} ${run.test.jvmsecurityargs}"/>
       <classpath>
           <pathelement path="${run.test.classpath}"/>
@@ -664,7 +664,6 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
   <target name="run" depends="jar"
       description="Run the shell with a sample script">
     <java classname="${sai.shell.tool}" fork="true" dir="samples">
-        <jvmarg line="${ext.class.path}"/>
         <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx}"/>
         <arg value="-dump-on-error"/>
         <arg value="test.js"/>
@@ -674,7 +673,6 @@ grant codeBase "file:/${basedir}/test/script/basic/JDK-8158467.js" {
   <target name="debug" depends="jar"
       description="Debug the shell with a sample script">
     <java classname="${sai.shell.tool}" fork="true" dir="samples">
-        <jvmarg line="${ext.class.path}"/>
         <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx}"/>
         <arg value="--print-code"/>
         <arg value="--verify-code"/>

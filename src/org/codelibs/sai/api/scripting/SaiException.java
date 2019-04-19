@@ -45,7 +45,6 @@ import org.codelibs.sai.internal.runtime.ScriptObject;
  *
  * @since 1.8u40
  */
-@jdk.Exported
 @SuppressWarnings("serial")
 public abstract class SaiException extends RuntimeException {
     private static final long serialVersionUID = 1L;

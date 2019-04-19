@@ -84,7 +84,7 @@ public final class NativeUint8Array extends ArrayBufferView {
                 int.class, int.class).methodHandle();
 
         private Uint8ArrayData(final ByteBuffer nb, final int start, final int end) {
-            super(((ByteBuffer) nb.position(start).limit(end)).slice(), end - start);
+            super((nb.position(start).limit(end)).slice(), end - start);
         }
 
         @Override

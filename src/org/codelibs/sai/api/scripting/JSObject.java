@@ -36,7 +36,6 @@ import java.util.Set;
  *
  * @since 1.8u40
  */
-@jdk.Exported
 public interface JSObject {
     /**
      * Call this object as a JavaScript function. This is equivalent to

@@ -86,8 +86,6 @@ package org.codelibs.sai.internal.dynalink.beans;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
 
-import sun.reflect.CallerSensitive;
-
 /**
  * Utility class that determines if a method or constructor is caller sensitive. It actually encapsulates two different
  * strategies for determining caller sensitivity; a more robust one that works if Dynalink runs as code with access
@@ -125,11 +123,14 @@ public class CallerSensitiveDetector {
     }
 
     private static class PrivilegedDetectionStrategy extends DetectionStrategy {
-        private static final Class<? extends Annotation> CALLER_SENSITIVE_ANNOTATION_CLASS = CallerSensitive.class;
-
         @Override
         boolean isCallerSensitive(final AccessibleObject ao) {
-            return ao.getAnnotation(CALLER_SENSITIVE_ANNOTATION_CLASS) != null;
+            for (Annotation a : ao.getAnnotations()) {
+                if (a.getClass().getSimpleName().equals("CallerSensitive")) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 

@@ -48,7 +48,7 @@ var saiJarDir = saiJar.parentFile.absolutePath;
 // we want to use sai.jar passed and not the one that comes with JRE
 // var jjsCmd = javahome + "/../bin/jjs";
 // jjsCmd += " -J-Djava.ext.dirs=" + saiJarDir;
-var jjsCmd = javahome + "/../bin/java";
+var jjsCmd = javahome + "/bin/java";
 jjsCmd += " -cp " + saiJar + " org.codelibs.sai.tools.Shell";
 jjsCmd = jjsCmd.toString().replace(/\//g, File.separator);
 $ENV.PWD=System.getProperty("user.dir") // to avoid RE on Cygwin

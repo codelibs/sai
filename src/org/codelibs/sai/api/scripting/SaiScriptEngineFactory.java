@@ -50,7 +50,6 @@ import org.codelibs.sai.internal.runtime.Version;
  *
  * @since 1.8u40
  */
-@jdk.Exported
 public final class SaiScriptEngineFactory implements ScriptEngineFactory {
     @Override
     public String getEngineName() {

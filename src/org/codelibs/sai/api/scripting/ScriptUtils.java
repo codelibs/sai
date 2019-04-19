@@ -40,7 +40,6 @@ import org.codelibs.sai.internal.runtime.linker.Bootstrap;
  *
  * @since 1.8u40
  */
-@jdk.Exported
 public final class ScriptUtils {
     private ScriptUtils() {
     }

@@ -38,8 +38,8 @@ import org.codelibs.sai.internal.runtime.ScriptFunction;
 import org.codelibs.sai.internal.runtime.ScriptObject;
 import org.codelibs.sai.internal.runtime.Source;
 
-import jdk.internal.org.objectweb.asm.MethodVisitor;
-import jdk.internal.org.objectweb.asm.Opcodes;
+import org.codelibs.sai.org.objectweb.asm.MethodVisitor;
+import org.codelibs.sai.org.objectweb.asm.Opcodes;
 
 /**
  * This class represents constant names of variables, methods and fields in

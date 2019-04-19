@@ -58,12 +58,11 @@ $(eval $(call SetupJavaCompilation,BUILD_SAI, \
     BIN := $(SAI_OUTPUTDIR)/sai_classes))
 
 NASGEN_SRC := $(SAI_TOPDIR)/buildtools/saigen/src
-ASM_SRC := $(JDK_TOPDIR)/src/share/classes/jdk/internal/org/objectweb/asm
 
 # Build saigen
 $(eval $(call SetupJavaCompilation,BUILD_NASGEN, \
     SETUP := GENERATE_NEWBYTECODE_DEBUG, \
-    SRC := $(NASGEN_SRC) $(ASM_SRC), \
+    SRC := $(NASGEN_SRC), \
     BIN := $(SAI_OUTPUTDIR)/saigen_classes, \
     ADD_JAVAC_FLAGS := -bootclasspath "$(BOOT_RTJAR)$(PATH_SEP)$(SAI_OUTPUTDIR)/sai_classes"))
 

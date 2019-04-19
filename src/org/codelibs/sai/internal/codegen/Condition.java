@@ -25,20 +25,20 @@
 
 package org.codelibs.sai.internal.codegen;
 
-import static jdk.internal.org.objectweb.asm.Opcodes.IFEQ;
-import static jdk.internal.org.objectweb.asm.Opcodes.IFGE;
-import static jdk.internal.org.objectweb.asm.Opcodes.IFGT;
-import static jdk.internal.org.objectweb.asm.Opcodes.IFLE;
-import static jdk.internal.org.objectweb.asm.Opcodes.IFLT;
-import static jdk.internal.org.objectweb.asm.Opcodes.IFNE;
-import static jdk.internal.org.objectweb.asm.Opcodes.IF_ACMPEQ;
-import static jdk.internal.org.objectweb.asm.Opcodes.IF_ACMPNE;
-import static jdk.internal.org.objectweb.asm.Opcodes.IF_ICMPEQ;
-import static jdk.internal.org.objectweb.asm.Opcodes.IF_ICMPGE;
-import static jdk.internal.org.objectweb.asm.Opcodes.IF_ICMPGT;
-import static jdk.internal.org.objectweb.asm.Opcodes.IF_ICMPLE;
-import static jdk.internal.org.objectweb.asm.Opcodes.IF_ICMPLT;
-import static jdk.internal.org.objectweb.asm.Opcodes.IF_ICMPNE;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IFEQ;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IFGE;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IFGT;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IFLE;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IFLT;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IFNE;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IF_ACMPEQ;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IF_ACMPNE;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IF_ICMPEQ;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IF_ICMPGE;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IF_ICMPGT;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IF_ICMPLE;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IF_ICMPLT;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IF_ICMPNE;
 
 /**
  * Condition enum used for all kinds of jumps, regardless of type

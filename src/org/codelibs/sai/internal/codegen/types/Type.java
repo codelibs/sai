@@ -25,27 +25,27 @@
 
 package org.codelibs.sai.internal.codegen.types;
 
-import static jdk.internal.org.objectweb.asm.Opcodes.DALOAD;
-import static jdk.internal.org.objectweb.asm.Opcodes.DASTORE;
-import static jdk.internal.org.objectweb.asm.Opcodes.DUP;
-import static jdk.internal.org.objectweb.asm.Opcodes.DUP2;
-import static jdk.internal.org.objectweb.asm.Opcodes.DUP2_X1;
-import static jdk.internal.org.objectweb.asm.Opcodes.DUP2_X2;
-import static jdk.internal.org.objectweb.asm.Opcodes.DUP_X1;
-import static jdk.internal.org.objectweb.asm.Opcodes.DUP_X2;
-import static jdk.internal.org.objectweb.asm.Opcodes.H_INVOKESTATIC;
-import static jdk.internal.org.objectweb.asm.Opcodes.IALOAD;
-import static jdk.internal.org.objectweb.asm.Opcodes.IASTORE;
-import static jdk.internal.org.objectweb.asm.Opcodes.INVOKESTATIC;
-import static jdk.internal.org.objectweb.asm.Opcodes.LALOAD;
-import static jdk.internal.org.objectweb.asm.Opcodes.LASTORE;
-import static jdk.internal.org.objectweb.asm.Opcodes.NEWARRAY;
-import static jdk.internal.org.objectweb.asm.Opcodes.POP;
-import static jdk.internal.org.objectweb.asm.Opcodes.POP2;
-import static jdk.internal.org.objectweb.asm.Opcodes.SWAP;
-import static jdk.internal.org.objectweb.asm.Opcodes.T_DOUBLE;
-import static jdk.internal.org.objectweb.asm.Opcodes.T_INT;
-import static jdk.internal.org.objectweb.asm.Opcodes.T_LONG;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.DALOAD;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.DASTORE;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.DUP;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.DUP2;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.DUP2_X1;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.DUP2_X2;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.DUP_X1;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.DUP_X2;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.H_INVOKESTATIC;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IALOAD;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IASTORE;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.LALOAD;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.LASTORE;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.NEWARRAY;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.POP;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.POP2;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.SWAP;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.T_DOUBLE;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.T_INT;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.T_LONG;
 import static org.codelibs.sai.internal.codegen.CompilerConstants.staticCallNoLookup;
 
 import java.io.DataInput;
@@ -68,8 +68,8 @@ import org.codelibs.sai.internal.runtime.ScriptObject;
 import org.codelibs.sai.internal.runtime.Undefined;
 import org.codelibs.sai.internal.runtime.linker.Bootstrap;
 
-import jdk.internal.org.objectweb.asm.Handle;
-import jdk.internal.org.objectweb.asm.MethodVisitor;
+import org.codelibs.sai.org.objectweb.asm.Handle;
+import org.codelibs.sai.org.objectweb.asm.MethodVisitor;
 
 /**
  * This is the representation of a JavaScript type, disassociated from java
@@ -114,11 +114,11 @@ public abstract class Type implements Comparable<Type>, BytecodeOps, Serializabl
      * Cache for internal types - this is a query that requires complex stringbuilding inside
      * ASM and it saves startup time to cache the type mappings
      */
-    private static final Map<Class<?>, jdk.internal.org.objectweb.asm.Type> INTERNAL_TYPE_CACHE = Collections
-            .synchronizedMap(new WeakHashMap<Class<?>, jdk.internal.org.objectweb.asm.Type>());
+    private static final Map<Class<?>, org.codelibs.sai.org.objectweb.asm.Type> INTERNAL_TYPE_CACHE = Collections
+            .synchronizedMap(new WeakHashMap<Class<?>, org.codelibs.sai.org.objectweb.asm.Type>());
 
     /** Internal ASM type for this Type - computed once at construction */
-    private transient final jdk.internal.org.objectweb.asm.Type internalType;
+    private transient final org.codelibs.sai.org.objectweb.asm.Type internalType;
 
     /** Weights are used to decide which types are "wider" than other types */
     protected static final int MIN_WEIGHT = -1;
@@ -141,7 +141,7 @@ public abstract class Type implements Comparable<Type>, BytecodeOps, Serializabl
     Type(final String name, final Class<?> clazz, final int weight, final int slots) {
         this.name = name;
         this.clazz = clazz;
-        this.descriptor = jdk.internal.org.objectweb.asm.Type.getDescriptor(clazz);
+        this.descriptor = org.codelibs.sai.org.objectweb.asm.Type.getDescriptor(clazz);
         this.weight = weight;
         assert weight >= MIN_WEIGHT && weight <= MAX_WEIGHT : "illegal type weight: " + weight;
         this.slots = slots;
@@ -203,11 +203,11 @@ public abstract class Type implements Comparable<Type>, BytecodeOps, Serializabl
      * @return a descriptor string
      */
     public static String getMethodDescriptor(final Type returnType, final Type... types) {
-        final jdk.internal.org.objectweb.asm.Type[] itypes = new jdk.internal.org.objectweb.asm.Type[types.length];
+        final org.codelibs.sai.org.objectweb.asm.Type[] itypes = new org.codelibs.sai.org.objectweb.asm.Type[types.length];
         for (int i = 0; i < types.length; i++) {
             itypes[i] = types[i].getInternalType();
         }
-        return jdk.internal.org.objectweb.asm.Type.getMethodDescriptor(returnType.getInternalType(), itypes);
+        return org.codelibs.sai.org.objectweb.asm.Type.getMethodDescriptor(returnType.getInternalType(), itypes);
     }
 
     /**
@@ -219,11 +219,11 @@ public abstract class Type implements Comparable<Type>, BytecodeOps, Serializabl
      * @return a descriptor string
      */
     public static String getMethodDescriptor(final Class<?> returnType, final Class<?>... types) {
-        final jdk.internal.org.objectweb.asm.Type[] itypes = new jdk.internal.org.objectweb.asm.Type[types.length];
+        final org.codelibs.sai.org.objectweb.asm.Type[] itypes = new org.codelibs.sai.org.objectweb.asm.Type[types.length];
         for (int i = 0; i < types.length; i++) {
             itypes[i] = getInternalType(types[i]);
         }
-        return jdk.internal.org.objectweb.asm.Type.getMethodDescriptor(getInternalType(returnType), itypes);
+        return org.codelibs.sai.org.objectweb.asm.Type.getMethodDescriptor(getInternalType(returnType), itypes);
     }
 
     /**
@@ -248,17 +248,17 @@ public abstract class Type implements Comparable<Type>, BytecodeOps, Serializabl
      * @return Sai type
      */
     @SuppressWarnings("fallthrough")
-    static Type typeFor(final jdk.internal.org.objectweb.asm.Type itype) {
+    static Type typeFor(final org.codelibs.sai.org.objectweb.asm.Type itype) {
         switch (itype.getSort()) {
-        case jdk.internal.org.objectweb.asm.Type.BOOLEAN:
+        case org.codelibs.sai.org.objectweb.asm.Type.BOOLEAN:
             return BOOLEAN;
-        case jdk.internal.org.objectweb.asm.Type.INT:
+        case org.codelibs.sai.org.objectweb.asm.Type.INT:
             return INT;
-        case jdk.internal.org.objectweb.asm.Type.LONG:
+        case org.codelibs.sai.org.objectweb.asm.Type.LONG:
             return LONG;
-        case jdk.internal.org.objectweb.asm.Type.DOUBLE:
+        case org.codelibs.sai.org.objectweb.asm.Type.DOUBLE:
             return NUMBER;
-        case jdk.internal.org.objectweb.asm.Type.OBJECT:
+        case org.codelibs.sai.org.objectweb.asm.Type.OBJECT:
             if (Context.isStructureClass(itype.getClassName())) {
                 return SCRIPT_OBJECT;
             }
@@ -267,19 +267,19 @@ public abstract class Type implements Comparable<Type>, BytecodeOps, Serializabl
             } catch (final ClassNotFoundException e) {
                 throw new AssertionError(e);
             }
-        case jdk.internal.org.objectweb.asm.Type.VOID:
+        case org.codelibs.sai.org.objectweb.asm.Type.VOID:
             return null;
-        case jdk.internal.org.objectweb.asm.Type.ARRAY:
+        case org.codelibs.sai.org.objectweb.asm.Type.ARRAY:
             switch (itype.getElementType().getSort()) {
-            case jdk.internal.org.objectweb.asm.Type.DOUBLE:
+            case org.codelibs.sai.org.objectweb.asm.Type.DOUBLE:
                 return NUMBER_ARRAY;
-            case jdk.internal.org.objectweb.asm.Type.INT:
+            case org.codelibs.sai.org.objectweb.asm.Type.INT:
                 return INT_ARRAY;
-            case jdk.internal.org.objectweb.asm.Type.LONG:
+            case org.codelibs.sai.org.objectweb.asm.Type.LONG:
                 return LONG_ARRAY;
             default:
                 assert false;
-            case jdk.internal.org.objectweb.asm.Type.OBJECT:
+            case org.codelibs.sai.org.objectweb.asm.Type.OBJECT:
                 return OBJECT_ARRAY;
             }
 
@@ -297,7 +297,7 @@ public abstract class Type implements Comparable<Type>, BytecodeOps, Serializabl
      * @return return type
      */
     public static Type getMethodReturnType(final String methodDescriptor) {
-        return Type.typeFor(jdk.internal.org.objectweb.asm.Type.getReturnType(methodDescriptor));
+        return Type.typeFor(org.codelibs.sai.org.objectweb.asm.Type.getReturnType(methodDescriptor));
     }
 
     /**
@@ -307,7 +307,7 @@ public abstract class Type implements Comparable<Type>, BytecodeOps, Serializabl
      * @return parameter type array
      */
     public static Type[] getMethodArguments(final String methodDescriptor) {
-        final jdk.internal.org.objectweb.asm.Type itypes[] = jdk.internal.org.objectweb.asm.Type.getArgumentTypes(methodDescriptor);
+        final org.codelibs.sai.org.objectweb.asm.Type itypes[] = org.codelibs.sai.org.objectweb.asm.Type.getArgumentTypes(methodDescriptor);
         final Type types[] = new Type[itypes.length];
         for (int i = 0; i < itypes.length; i++) {
             types[i] = Type.typeFor(itypes[i]);
@@ -380,26 +380,26 @@ public abstract class Type implements Comparable<Type>, BytecodeOps, Serializabl
         return map;
     }
 
-    static jdk.internal.org.objectweb.asm.Type getInternalType(final String className) {
-        return jdk.internal.org.objectweb.asm.Type.getType(className);
+    static org.codelibs.sai.org.objectweb.asm.Type getInternalType(final String className) {
+        return org.codelibs.sai.org.objectweb.asm.Type.getType(className);
     }
 
-    private jdk.internal.org.objectweb.asm.Type getInternalType() {
+    private org.codelibs.sai.org.objectweb.asm.Type getInternalType() {
         return internalType;
     }
 
-    private static jdk.internal.org.objectweb.asm.Type lookupInternalType(final Class<?> type) {
-        final Map<Class<?>, jdk.internal.org.objectweb.asm.Type> c = INTERNAL_TYPE_CACHE;
-        jdk.internal.org.objectweb.asm.Type itype = c.get(type);
+    private static org.codelibs.sai.org.objectweb.asm.Type lookupInternalType(final Class<?> type) {
+        final Map<Class<?>, org.codelibs.sai.org.objectweb.asm.Type> c = INTERNAL_TYPE_CACHE;
+        org.codelibs.sai.org.objectweb.asm.Type itype = c.get(type);
         if (itype != null) {
             return itype;
         }
-        itype = jdk.internal.org.objectweb.asm.Type.getType(type);
+        itype = org.codelibs.sai.org.objectweb.asm.Type.getType(type);
         c.put(type, itype);
         return itype;
     }
 
-    private static jdk.internal.org.objectweb.asm.Type getInternalType(final Class<?> type) {
+    private static org.codelibs.sai.org.objectweb.asm.Type getInternalType(final Class<?> type) {
         return lookupInternalType(type);
     }
 
@@ -412,7 +412,7 @@ public abstract class Type implements Comparable<Type>, BytecodeOps, Serializabl
      * @return the internal name
      */
     public String getInternalName() {
-        return jdk.internal.org.objectweb.asm.Type.getInternalName(getTypeClass());
+        return org.codelibs.sai.org.objectweb.asm.Type.getInternalName(getTypeClass());
     }
 
     /**
@@ -421,7 +421,7 @@ public abstract class Type implements Comparable<Type>, BytecodeOps, Serializabl
      * @return the internal name
      */
     public static String getInternalName(final Class<?> clazz) {
-        return jdk.internal.org.objectweb.asm.Type.getInternalName(clazz);
+        return org.codelibs.sai.org.objectweb.asm.Type.getInternalName(clazz);
     }
 
     /**

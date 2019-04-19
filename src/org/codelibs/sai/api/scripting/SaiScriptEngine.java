@@ -71,7 +71,6 @@ import org.codelibs.sai.internal.runtime.options.Options;
  *
  * @since 1.8u40
  */
-@jdk.Exported
 public final class SaiScriptEngine extends AbstractScriptEngine implements Compilable, Invocable {
     /**
      * Key used to associate Sai global object mirror with arbitrary Bindings instance.

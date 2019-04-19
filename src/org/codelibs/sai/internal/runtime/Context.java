@@ -87,8 +87,8 @@ import org.codelibs.sai.internal.runtime.logging.Logger;
 import org.codelibs.sai.internal.runtime.options.LoggingOption.LoggerInfo;
 import org.codelibs.sai.internal.runtime.options.Options;
 
-import jdk.internal.org.objectweb.asm.ClassReader;
-import jdk.internal.org.objectweb.asm.util.CheckClassAdapter;
+import org.codelibs.sai.org.objectweb.asm.ClassReader;
+import org.codelibs.sai.org.objectweb.asm.util.CheckClassAdapter;
 
 /**
  * This class manages the global state of execution. Context is immutable.

@@ -493,7 +493,7 @@ public final class Label implements Serializable {
     private transient Label.Stack stack;
 
     /** ASM representation of this label */
-    private transient jdk.internal.org.objectweb.asm.Label label;
+    private transient org.codelibs.sai.org.objectweb.asm.Label label;
 
     /** Id for debugging purposes, remove if footprint becomes unmanageable */
     private final int id;
@@ -525,9 +525,9 @@ public final class Label implements Serializable {
         this.id = label.id;
     }
 
-    jdk.internal.org.objectweb.asm.Label getLabel() {
+    org.codelibs.sai.org.objectweb.asm.Label getLabel() {
         if (this.label == null) {
-            this.label = new jdk.internal.org.objectweb.asm.Label();
+            this.label = new org.codelibs.sai.org.objectweb.asm.Label();
         }
         return label;
     }

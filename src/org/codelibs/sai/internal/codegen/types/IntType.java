@@ -25,30 +25,30 @@
 
 package org.codelibs.sai.internal.codegen.types;
 
-import static jdk.internal.org.objectweb.asm.Opcodes.BIPUSH;
-import static jdk.internal.org.objectweb.asm.Opcodes.I2D;
-import static jdk.internal.org.objectweb.asm.Opcodes.I2L;
-import static jdk.internal.org.objectweb.asm.Opcodes.IADD;
-import static jdk.internal.org.objectweb.asm.Opcodes.IAND;
-import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_0;
-import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_1;
-import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_2;
-import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_3;
-import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_4;
-import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_5;
-import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_M1;
-import static jdk.internal.org.objectweb.asm.Opcodes.ILOAD;
-import static jdk.internal.org.objectweb.asm.Opcodes.IMUL;
-import static jdk.internal.org.objectweb.asm.Opcodes.INEG;
-import static jdk.internal.org.objectweb.asm.Opcodes.IOR;
-import static jdk.internal.org.objectweb.asm.Opcodes.IRETURN;
-import static jdk.internal.org.objectweb.asm.Opcodes.ISHL;
-import static jdk.internal.org.objectweb.asm.Opcodes.ISHR;
-import static jdk.internal.org.objectweb.asm.Opcodes.ISTORE;
-import static jdk.internal.org.objectweb.asm.Opcodes.ISUB;
-import static jdk.internal.org.objectweb.asm.Opcodes.IUSHR;
-import static jdk.internal.org.objectweb.asm.Opcodes.IXOR;
-import static jdk.internal.org.objectweb.asm.Opcodes.SIPUSH;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.BIPUSH;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.I2D;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.I2L;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IADD;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IAND;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ICONST_0;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ICONST_1;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ICONST_2;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ICONST_3;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ICONST_4;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ICONST_5;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ICONST_M1;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ILOAD;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IMUL;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.INEG;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IOR;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IRETURN;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ISHL;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ISHR;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ISTORE;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.ISUB;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IUSHR;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.IXOR;
+import static org.codelibs.sai.org.objectweb.asm.Opcodes.SIPUSH;
 import static org.codelibs.sai.internal.codegen.CompilerConstants.staticCallNoLookup;
 import static org.codelibs.sai.internal.runtime.JSType.UNDEFINED_INT;
 import static org.codelibs.sai.internal.runtime.UnwarrantedOptimismException.INVALID_PROGRAM_POINT;
@@ -56,7 +56,7 @@ import static org.codelibs.sai.internal.runtime.UnwarrantedOptimismException.INV
 import org.codelibs.sai.internal.codegen.CompilerConstants;
 import org.codelibs.sai.internal.runtime.JSType;
 
-import jdk.internal.org.objectweb.asm.MethodVisitor;
+import org.codelibs.sai.org.objectweb.asm.MethodVisitor;
 
 /**
  * Type class: INT

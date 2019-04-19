@@ -39,7 +39,6 @@
                 <pathelement location="${dist.dir}/saigen.jar"/>
                 <pathelement path="${build.dir}/classes"/>
             </classpath>
-            <jvmarg value="-Djava.ext.dirs="/>
             <arg value="${build.dir}/classes"/>
             <arg value="org.codelibs.sai.internal.objects"/>
             <arg value="${build.dir}/classes"/>

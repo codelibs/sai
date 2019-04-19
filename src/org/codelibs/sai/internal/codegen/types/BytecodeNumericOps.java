@@ -25,7 +25,7 @@
 
 package org.codelibs.sai.internal.codegen.types;
 
-import jdk.internal.org.objectweb.asm.MethodVisitor;
+import org.codelibs.sai.org.objectweb.asm.MethodVisitor;
 
 /**
  * Numeric operations, not supported by all types

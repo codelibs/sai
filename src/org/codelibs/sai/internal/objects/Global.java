@@ -38,6 +38,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.SwitchPoint;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -2558,7 +2559,7 @@ public final class Global extends Scope {
             sb.append("$Constructor");
 
             final Class<?> funcClass = Class.forName(sb.toString());
-            final T res = clazz.cast(funcClass.newInstance());
+            final T res = clazz.cast(funcClass.getDeclaredConstructor().newInstance());
 
             if (res instanceof ScriptFunction) {
                 // All global constructor prototypes are not-writable,
@@ -2574,7 +2575,7 @@ public final class Global extends Scope {
             res.setIsBuiltin();
 
             return res;
-        } catch (final ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+        } catch (final ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }

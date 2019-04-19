@@ -32,7 +32,6 @@
         </nbjpdastart>
         <java classname="org.codelibs.sai.tools.Shell" classpath="${run.test.classpath}" dir="samples" fork="true">
 	    <jvmarg line="-Dsai.optimistic"/>
-            <jvmarg line="${ext.class.path}"/> 
             <jvmarg line="${run.test.jvmargs}"/>
             <arg value="../samples/test.js"/>
             <jvmarg value="-Xdebug"/>
