@@ -43,13 +43,13 @@ var saiJar = new File(System.getProperty("sai.jar"));
 if (! saiJar.isAbsolute()) {
     saiJar = new File(".", saiJar);
 }
-var saiJarDir = saiJar.parentFile.absolutePath;
+var cpPath = saiJar.absolutePath + ":" + saiJar.parentFile.parentFile.absolutePath + "/lib/*";
 
 // we want to use sai.jar passed and not the one that comes with JRE
 // var jjsCmd = javahome + "/../bin/jjs";
 // jjsCmd += " -J-Djava.ext.dirs=" + saiJarDir;
 var jjsCmd = javahome + "/bin/java";
-jjsCmd += " -cp " + saiJar + " org.codelibs.sai.tools.Shell";
+jjsCmd += " -cp " + cpPath + " org.codelibs.sai.tools.Shell";
 jjsCmd = jjsCmd.toString().replace(/\//g, File.separator);
 $ENV.PWD=System.getProperty("user.dir") // to avoid RE on Cygwin
 $EXEC(jjsCmd, "var x = Object.create(null);\nx;\nprint('PASSED');\nexit(0)");

@@ -25,18 +25,18 @@
 
 package org.codelibs.sai.internal.codegen;
 
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACC_FINAL;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACC_PRIVATE;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACC_PUBLIC;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACC_STATIC;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACC_SUPER;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACC_VARARGS;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.H_INVOKEINTERFACE;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.H_INVOKESPECIAL;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.H_INVOKESTATIC;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.H_INVOKEVIRTUAL;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.H_NEWINVOKESPECIAL;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.V1_7;
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
+import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.objectweb.asm.Opcodes.ACC_SUPER;
+import static org.objectweb.asm.Opcodes.ACC_VARARGS;
+import static org.objectweb.asm.Opcodes.H_INVOKEINTERFACE;
+import static org.objectweb.asm.Opcodes.H_INVOKESPECIAL;
+import static org.objectweb.asm.Opcodes.H_INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.H_INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.H_NEWINVOKESPECIAL;
+import static org.objectweb.asm.Opcodes.V1_7;
 import static org.codelibs.sai.internal.codegen.CompilerConstants.CLINIT;
 import static org.codelibs.sai.internal.codegen.CompilerConstants.CONSTANTS;
 import static org.codelibs.sai.internal.codegen.CompilerConstants.GET_ARRAY_PREFIX;
@@ -71,9 +71,9 @@ import org.codelibs.sai.internal.runtime.RewriteException;
 import org.codelibs.sai.internal.runtime.ScriptObject;
 import org.codelibs.sai.internal.runtime.Source;
 
-import org.codelibs.sai.org.objectweb.asm.ClassWriter;
-import org.codelibs.sai.org.objectweb.asm.MethodVisitor;
-import org.codelibs.sai.org.objectweb.asm.util.TraceClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.util.TraceClassVisitor;
 
 /**
  * The interface responsible for speaking to ASM, emitting classes,

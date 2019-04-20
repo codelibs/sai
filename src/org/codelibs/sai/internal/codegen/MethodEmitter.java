@@ -25,38 +25,38 @@
 
 package org.codelibs.sai.internal.codegen;
 
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ATHROW;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.CHECKCAST;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.DUP2;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.GETFIELD;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.GETSTATIC;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.GOTO;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.H_INVOKESTATIC;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.IFEQ;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.IFGE;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.IFGT;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.IFLE;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.IFLT;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.IFNE;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.IFNONNULL;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.IFNULL;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.IF_ACMPEQ;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.IF_ACMPNE;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.IF_ICMPEQ;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.IF_ICMPGE;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.IF_ICMPGT;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.IF_ICMPLE;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.IF_ICMPLT;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.IF_ICMPNE;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.INSTANCEOF;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.INVOKEINTERFACE;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.INVOKESPECIAL;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.INVOKESTATIC;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.NEW;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.PUTFIELD;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.PUTSTATIC;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.RETURN;
+import static org.objectweb.asm.Opcodes.ATHROW;
+import static org.objectweb.asm.Opcodes.CHECKCAST;
+import static org.objectweb.asm.Opcodes.DUP2;
+import static org.objectweb.asm.Opcodes.GETFIELD;
+import static org.objectweb.asm.Opcodes.GETSTATIC;
+import static org.objectweb.asm.Opcodes.GOTO;
+import static org.objectweb.asm.Opcodes.H_INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.IFEQ;
+import static org.objectweb.asm.Opcodes.IFGE;
+import static org.objectweb.asm.Opcodes.IFGT;
+import static org.objectweb.asm.Opcodes.IFLE;
+import static org.objectweb.asm.Opcodes.IFLT;
+import static org.objectweb.asm.Opcodes.IFNE;
+import static org.objectweb.asm.Opcodes.IFNONNULL;
+import static org.objectweb.asm.Opcodes.IFNULL;
+import static org.objectweb.asm.Opcodes.IF_ACMPEQ;
+import static org.objectweb.asm.Opcodes.IF_ACMPNE;
+import static org.objectweb.asm.Opcodes.IF_ICMPEQ;
+import static org.objectweb.asm.Opcodes.IF_ICMPGE;
+import static org.objectweb.asm.Opcodes.IF_ICMPGT;
+import static org.objectweb.asm.Opcodes.IF_ICMPLE;
+import static org.objectweb.asm.Opcodes.IF_ICMPLT;
+import static org.objectweb.asm.Opcodes.IF_ICMPNE;
+import static org.objectweb.asm.Opcodes.INSTANCEOF;
+import static org.objectweb.asm.Opcodes.INVOKEINTERFACE;
+import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.NEW;
+import static org.objectweb.asm.Opcodes.PUTFIELD;
+import static org.objectweb.asm.Opcodes.PUTSTATIC;
+import static org.objectweb.asm.Opcodes.RETURN;
 import static org.codelibs.sai.internal.codegen.CompilerConstants.ARGUMENTS;
 import static org.codelibs.sai.internal.codegen.CompilerConstants.CONSTANTS;
 import static org.codelibs.sai.internal.codegen.CompilerConstants.SCOPE;
@@ -109,8 +109,8 @@ import org.codelibs.sai.internal.runtime.linker.Bootstrap;
 import org.codelibs.sai.internal.runtime.logging.DebugLogger;
 import org.codelibs.sai.internal.runtime.options.Options;
 
-import org.codelibs.sai.org.objectweb.asm.Handle;
-import org.codelibs.sai.org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.MethodVisitor;
 
 /**
  * This is the main function responsible for emitting method code
@@ -811,7 +811,7 @@ public class MethodEmitter {
      */
     MethodEmitter loadType(final String className) {
         debug("load type", className);
-        method.visitLdcInsn(org.codelibs.sai.org.objectweb.asm.Type.getObjectType(className));
+        method.visitLdcInsn(org.objectweb.asm.Type.getObjectType(className));
         pushType(Type.OBJECT);
         return this;
     }
@@ -1116,11 +1116,11 @@ public class MethodEmitter {
      */
     private static class LocalVariableDef {
         // The start label from where this definition lives.
-        private final org.codelibs.sai.org.objectweb.asm.Label label;
+        private final org.objectweb.asm.Label label;
         // The currently live type of the local variable.
         private final Type type;
 
-        LocalVariableDef(final org.codelibs.sai.org.objectweb.asm.Label label, final Type type) {
+        LocalVariableDef(final org.objectweb.asm.Label label, final Type type) {
             this.label = label;
             this.type = type;
         }
@@ -1147,7 +1147,7 @@ public class MethodEmitter {
         stack.markDeadLocalVariables(firstSlot, slotCount);
     }
 
-    private void endLocalValueDef(final Symbol symbol, final LocalVariableDef def, final org.codelibs.sai.org.objectweb.asm.Label label) {
+    private void endLocalValueDef(final Symbol symbol, final LocalVariableDef def, final org.objectweb.asm.Label label) {
         String name = symbol.getName();
         if (name.equals(THIS.symbolName())) {
             name = THIS_DEBUGGER.symbolName();
@@ -1176,7 +1176,7 @@ public class MethodEmitter {
             final boolean isLiveType = symbol.hasSlotFor(type);
             final LocalVariableDef existingDef = localVariableDefs.get(symbol);
             if (existingDef == null || existingDef.type != type) {
-                final org.codelibs.sai.org.objectweb.asm.Label here = new org.codelibs.sai.org.objectweb.asm.Label();
+                final org.objectweb.asm.Label here = new org.objectweb.asm.Label();
                 if (isLiveType) {
                     final LocalVariableDef newDef = new LocalVariableDef(here, type);
                     localVariableDefs.put(symbol, newDef);
@@ -1538,8 +1538,8 @@ public class MethodEmitter {
         return invoke(INVOKEINTERFACE, className, methodName, methodDescriptor, true);
     }
 
-    static org.codelibs.sai.org.objectweb.asm.Label[] getLabels(final Label... table) {
-        final org.codelibs.sai.org.objectweb.asm.Label[] internalLabels = new org.codelibs.sai.org.objectweb.asm.Label[table.length];
+    static org.objectweb.asm.Label[] getLabels(final Label... table) {
+        final org.objectweb.asm.Label[] internalLabels = new org.objectweb.asm.Label[table.length];
         for (int i = 0; i < table.length; i++) {
             internalLabels[i] = table[i].getLabel();
         }
@@ -2477,7 +2477,7 @@ public class MethodEmitter {
     void lineNumber(final int line) {
         if (context.getEnv()._debug_lines) {
             debug_label("[LINE]", line);
-            final org.codelibs.sai.org.objectweb.asm.Label l = new org.codelibs.sai.org.objectweb.asm.Label();
+            final org.objectweb.asm.Label l = new org.objectweb.asm.Label();
             method.visitLabel(l);
             method.visitLineNumber(line, l);
         }

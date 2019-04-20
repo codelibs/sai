@@ -25,21 +25,21 @@
 
 package org.codelibs.sai.internal.codegen.types;
 
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.I2D;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.I2L;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.IADD;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ICONST_0;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ICONST_1;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ILOAD;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.IRETURN;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ISTORE;
+import static org.objectweb.asm.Opcodes.I2D;
+import static org.objectweb.asm.Opcodes.I2L;
+import static org.objectweb.asm.Opcodes.IADD;
+import static org.objectweb.asm.Opcodes.ICONST_0;
+import static org.objectweb.asm.Opcodes.ICONST_1;
+import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.IRETURN;
+import static org.objectweb.asm.Opcodes.ISTORE;
 import static org.codelibs.sai.internal.codegen.CompilerConstants.staticCallNoLookup;
 import static org.codelibs.sai.internal.runtime.JSType.UNDEFINED_INT;
 import static org.codelibs.sai.internal.runtime.UnwarrantedOptimismException.INVALID_PROGRAM_POINT;
 
 import org.codelibs.sai.internal.codegen.CompilerConstants;
 
-import org.codelibs.sai.org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.MethodVisitor;
 
 /**
  * The boolean type class

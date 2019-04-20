@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import jdk.internal.org.objectweb.asm.Type;
+import org.objectweb.asm.Type;
 import org.codelibs.sai.internal.runtime.AccessorProperty;
 import org.codelibs.sai.internal.runtime.PropertyMap;
 import org.codelibs.sai.internal.runtime.PrototypeObject;

@@ -25,12 +25,12 @@
 
 package org.codelibs.sai.internal.codegen.types;
 
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACONST_NULL;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ALOAD;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ARETURN;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ASTORE;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.CHECKCAST;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.GETSTATIC;
+import static org.objectweb.asm.Opcodes.ACONST_NULL;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ARETURN;
+import static org.objectweb.asm.Opcodes.ASTORE;
+import static org.objectweb.asm.Opcodes.CHECKCAST;
+import static org.objectweb.asm.Opcodes.GETSTATIC;
 import static org.codelibs.sai.internal.codegen.CompilerConstants.className;
 import static org.codelibs.sai.internal.codegen.CompilerConstants.typeDescriptor;
 
@@ -41,8 +41,8 @@ import org.codelibs.sai.internal.runtime.JSType;
 import org.codelibs.sai.internal.runtime.ScriptRuntime;
 import org.codelibs.sai.internal.runtime.Undefined;
 
-import org.codelibs.sai.org.objectweb.asm.Handle;
-import org.codelibs.sai.org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.MethodVisitor;
 
 /**
  * Type class: OBJECT This is the object type, used for all object types. It can

@@ -37,6 +37,11 @@
                 <pathelement location="${basedir}/buildtools/saigen/dist/saigen.jar"/>
                 <pathelement path="${basedir}/build/classes"/>
                 <pathelement location="${dist.dir}/saigen.jar"/>
+                <pathelement location="${file.reference.asm.jar}"/>
+                <pathelement location="${file.reference.asm-commons.jar}"/>
+                <pathelement location="${file.reference.asm-tree.jar}"/>
+                <pathelement location="${file.reference.asm-analysis.jar}"/>
+                <pathelement location="${file.reference.asm-util.jar}"/>
                 <pathelement path="${build.dir}/classes"/>
             </classpath>
             <arg value="${build.dir}/classes"/>
@@ -51,6 +56,11 @@
         <java classname="org.codelibs.sai.internal.tools.saigen.Main" fork="true" failonerror="true">
             <classpath>
                 <pathelement location="${basedir}/buildtools/saigen/dist/saigen.jar"/>
+                <pathelement location="${file.reference.asm.jar}"/>
+                <pathelement location="${file.reference.asm-commons.jar}"/>
+                <pathelement location="${file.reference.asm-tree.jar}"/>
+                <pathelement location="${file.reference.asm-analysis.jar}"/>
+                <pathelement location="${file.reference.asm-util.jar}"/>
                 <pathelement path="${basedir}/build/eclipse"/>
             </classpath>
             <arg value="${basedir}/build/eclipse"/>

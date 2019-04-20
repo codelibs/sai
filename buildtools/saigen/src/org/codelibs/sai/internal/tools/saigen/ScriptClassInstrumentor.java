@@ -25,13 +25,13 @@
 
 package org.codelibs.sai.internal.tools.saigen;
 
-import static jdk.internal.org.objectweb.asm.Opcodes.ALOAD;
-import static jdk.internal.org.objectweb.asm.Opcodes.DUP;
-import static jdk.internal.org.objectweb.asm.Opcodes.INVOKESPECIAL;
-import static jdk.internal.org.objectweb.asm.Opcodes.INVOKESTATIC;
-import static jdk.internal.org.objectweb.asm.Opcodes.NEW;
-import static jdk.internal.org.objectweb.asm.Opcodes.PUTFIELD;
-import static jdk.internal.org.objectweb.asm.Opcodes.RETURN;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.NEW;
+import static org.objectweb.asm.Opcodes.PUTFIELD;
+import static org.objectweb.asm.Opcodes.RETURN;
 import static org.codelibs.sai.internal.tools.saigen.StringConstants.$CLINIT$;
 import static org.codelibs.sai.internal.tools.saigen.StringConstants.CLINIT;
 import static org.codelibs.sai.internal.tools.saigen.StringConstants.DEFAULT_INIT_DESC;
@@ -42,15 +42,15 @@ import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import jdk.internal.org.objectweb.asm.AnnotationVisitor;
-import jdk.internal.org.objectweb.asm.Attribute;
-import jdk.internal.org.objectweb.asm.ClassReader;
-import jdk.internal.org.objectweb.asm.ClassVisitor;
-import jdk.internal.org.objectweb.asm.ClassWriter;
-import jdk.internal.org.objectweb.asm.FieldVisitor;
-import jdk.internal.org.objectweb.asm.MethodVisitor;
-import jdk.internal.org.objectweb.asm.Opcodes;
-import jdk.internal.org.objectweb.asm.util.CheckClassAdapter;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Attribute;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.util.CheckClassAdapter;
 import org.codelibs.sai.internal.objects.annotations.Where;
 import org.codelibs.sai.internal.tools.saigen.MemberInfo.Kind;
 
@@ -71,7 +71,7 @@ public class ScriptClassInstrumentor extends ClassVisitor {
     private boolean staticInitFound;
 
     ScriptClassInstrumentor(final ClassVisitor visitor, final ScriptClassInfo sci) {
-        super(Opcodes.ASM4, visitor);
+        super(Opcodes.ASM7, visitor);
         if (sci == null) {
             throw new IllegalArgumentException("Null ScriptClassInfo, is the class annotated?");
         }
@@ -101,7 +101,7 @@ public class ScriptClassInstrumentor extends ClassVisitor {
 
         final FieldVisitor delegateFV = super.visitField(fieldAccess, fieldName, fieldDesc,
                 signature, value);
-        return new FieldVisitor(Opcodes.ASM4, delegateFV) {
+        return new FieldVisitor(Opcodes.ASM7, delegateFV) {
             @Override
             public AnnotationVisitor visitAnnotation(final String desc, final boolean visible) {
                 if (ScriptClassInfo.annotations.containsKey(desc)) {
@@ -138,7 +138,7 @@ public class ScriptClassInstrumentor extends ClassVisitor {
         final MethodGenerator delegateMV = new MethodGenerator(super.visitMethod(methodAccess, methodName, methodDesc,
                 signature, exceptions), methodAccess, methodName, methodDesc);
 
-        return new MethodVisitor(Opcodes.ASM4, delegateMV) {
+        return new MethodVisitor(Opcodes.ASM7, delegateMV) {
             @Override
             public void visitInsn(final int opcode) {
                 // call $clinit$ just before return from <clinit>

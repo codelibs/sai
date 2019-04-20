@@ -25,26 +25,26 @@
 
 package org.codelibs.sai.internal.codegen.types;
 
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.DADD;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.DCMPG;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.DCMPL;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.DCONST_0;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.DCONST_1;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.DDIV;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.DLOAD;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.DMUL;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.DNEG;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.DREM;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.DRETURN;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.DSTORE;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.DSUB;
+import static org.objectweb.asm.Opcodes.DADD;
+import static org.objectweb.asm.Opcodes.DCMPG;
+import static org.objectweb.asm.Opcodes.DCMPL;
+import static org.objectweb.asm.Opcodes.DCONST_0;
+import static org.objectweb.asm.Opcodes.DCONST_1;
+import static org.objectweb.asm.Opcodes.DDIV;
+import static org.objectweb.asm.Opcodes.DLOAD;
+import static org.objectweb.asm.Opcodes.DMUL;
+import static org.objectweb.asm.Opcodes.DNEG;
+import static org.objectweb.asm.Opcodes.DREM;
+import static org.objectweb.asm.Opcodes.DRETURN;
+import static org.objectweb.asm.Opcodes.DSTORE;
+import static org.objectweb.asm.Opcodes.DSUB;
 import static org.codelibs.sai.internal.codegen.CompilerConstants.staticCallNoLookup;
 import static org.codelibs.sai.internal.runtime.JSType.UNDEFINED_DOUBLE;
 
 import org.codelibs.sai.internal.codegen.CompilerConstants;
 import org.codelibs.sai.internal.runtime.JSType;
 
-import org.codelibs.sai.org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.MethodVisitor;
 
 class NumberType extends NumericType {
     private static final long serialVersionUID = 1L;

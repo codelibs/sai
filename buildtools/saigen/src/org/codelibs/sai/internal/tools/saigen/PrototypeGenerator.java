@@ -25,10 +25,10 @@
 
 package org.codelibs.sai.internal.tools.saigen;
 
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_FINAL;
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_SUPER;
-import static jdk.internal.org.objectweb.asm.Opcodes.V1_7;
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static org.objectweb.asm.Opcodes.ACC_SUPER;
+import static org.objectweb.asm.Opcodes.V1_7;
 import static org.codelibs.sai.internal.tools.saigen.StringConstants.DEFAULT_INIT_DESC;
 import static org.codelibs.sai.internal.tools.saigen.StringConstants.INIT;
 import static org.codelibs.sai.internal.tools.saigen.StringConstants.OBJECT_DESC;

@@ -25,10 +25,10 @@
 
 package org.codelibs.sai.internal.tools.saigen;
 
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_FINAL;
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
-import static jdk.internal.org.objectweb.asm.Opcodes.H_INVOKESTATIC;
-import static jdk.internal.org.objectweb.asm.Opcodes.V1_7;
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static org.objectweb.asm.Opcodes.H_INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.V1_7;
 import static org.codelibs.sai.internal.tools.saigen.StringConstants.CONSTRUCTOR_SUFFIX;
 import static org.codelibs.sai.internal.tools.saigen.StringConstants.DEFAULT_INIT_DESC;
 import static org.codelibs.sai.internal.tools.saigen.StringConstants.INIT;
@@ -51,7 +51,7 @@ import static org.codelibs.sai.internal.tools.saigen.StringConstants.SCRIPTOBJEC
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
-import jdk.internal.org.objectweb.asm.Handle;
+import org.objectweb.asm.Handle;
 
 /**
  * This class generates constructor class for a @ScriptClass annotated class.

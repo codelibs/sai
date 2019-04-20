@@ -30,16 +30,16 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import jdk.internal.org.objectweb.asm.ClassReader;
-import jdk.internal.org.objectweb.asm.ClassWriter;
-import jdk.internal.org.objectweb.asm.util.CheckClassAdapter;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.util.CheckClassAdapter;
 
 /**
  * Main class for the "saigen" tool.
  *
  */
 public class Main {
-    private static final boolean DEBUG = Boolean.getBoolean("saigen.debug");
+    private static final boolean DEBUG = true;
 
     private interface ErrorReporter {
         public void error(String msg);

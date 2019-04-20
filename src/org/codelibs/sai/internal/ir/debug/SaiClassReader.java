@@ -32,10 +32,10 @@ import java.util.Map;
 
 import org.codelibs.sai.internal.ir.debug.SaiTextifier.SaiLabel;
 
-import org.codelibs.sai.org.objectweb.asm.Attribute;
-import org.codelibs.sai.org.objectweb.asm.ClassReader;
-import org.codelibs.sai.org.objectweb.asm.ClassVisitor;
-import org.codelibs.sai.org.objectweb.asm.Label;
+import org.objectweb.asm.Attribute;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Label;
 
 /**
  * Subclass of the ASM class reader that retains more info, such

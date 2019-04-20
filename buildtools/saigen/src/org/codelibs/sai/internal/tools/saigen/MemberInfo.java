@@ -28,8 +28,8 @@ import static org.codelibs.sai.internal.tools.saigen.StringConstants.OBJECT_ARRA
 import static org.codelibs.sai.internal.tools.saigen.StringConstants.OBJECT_DESC;
 import static org.codelibs.sai.internal.tools.saigen.StringConstants.SCRIPTOBJECT_DESC;
 import static org.codelibs.sai.internal.tools.saigen.StringConstants.STRING_DESC;
-import jdk.internal.org.objectweb.asm.Opcodes;
-import jdk.internal.org.objectweb.asm.Type;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.codelibs.sai.internal.objects.annotations.Where;
 import org.codelibs.sai.internal.runtime.ScriptObject;
 

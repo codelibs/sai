@@ -34,13 +34,13 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import jdk.internal.org.objectweb.asm.AnnotationVisitor;
-import jdk.internal.org.objectweb.asm.ClassReader;
-import jdk.internal.org.objectweb.asm.ClassVisitor;
-import jdk.internal.org.objectweb.asm.FieldVisitor;
-import jdk.internal.org.objectweb.asm.MethodVisitor;
-import jdk.internal.org.objectweb.asm.Opcodes;
-import jdk.internal.org.objectweb.asm.Type;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.codelibs.sai.internal.objects.annotations.Where;
 import org.codelibs.sai.internal.tools.saigen.MemberInfo.Kind;
 
@@ -55,7 +55,7 @@ public class ScriptClassInfoCollector extends ClassVisitor {
     private String javaClassName;
 
     ScriptClassInfoCollector(final ClassVisitor visitor) {
-        super(Opcodes.ASM4, visitor);
+        super(Opcodes.ASM7, visitor);
     }
 
     ScriptClassInfoCollector() {
@@ -80,7 +80,7 @@ public class ScriptClassInfoCollector extends ClassVisitor {
     public AnnotationVisitor visitAnnotation(final String desc, final boolean visible) {
         final AnnotationVisitor delegateAV = super.visitAnnotation(desc, visible);
         if (SCRIPT_CLASS_ANNO_DESC.equals(desc)) {
-            return new AnnotationVisitor(Opcodes.ASM4, delegateAV) {
+            return new AnnotationVisitor(Opcodes.ASM7, delegateAV) {
                 @Override
                 public void visit(final String name, final Object value) {
                     if ("value".equals(name)) {
@@ -98,7 +98,7 @@ public class ScriptClassInfoCollector extends ClassVisitor {
     public FieldVisitor visitField(final int fieldAccess, final String fieldName, final String fieldDesc, final String signature, final Object value) {
         final FieldVisitor delegateFV = super.visitField(fieldAccess, fieldName, fieldDesc, signature, value);
 
-        return new FieldVisitor(Opcodes.ASM4, delegateFV) {
+        return new FieldVisitor(Opcodes.ASM7, delegateFV) {
             @Override
             public AnnotationVisitor visitAnnotation(final String descriptor, final boolean visible) {
                 final AnnotationVisitor delegateAV = super.visitAnnotation(descriptor, visible);
@@ -117,7 +117,7 @@ public class ScriptClassInfoCollector extends ClassVisitor {
 
                     addScriptMember(memInfo);
 
-                    return new AnnotationVisitor(Opcodes.ASM4, delegateAV) {
+                    return new AnnotationVisitor(Opcodes.ASM7, delegateAV) {
                         // These could be "null" if values are not supplied,
                         // in which case we have to use the default values.
                         private String  name;
@@ -180,7 +180,7 @@ public class ScriptClassInfoCollector extends ClassVisitor {
         final MethodVisitor delegateMV = super.visitMethod(methodAccess, methodName, methodDesc,
                 signature, exceptions);
 
-        return new MethodVisitor(Opcodes.ASM4, delegateMV) {
+        return new MethodVisitor(Opcodes.ASM7, delegateMV) {
 
             @Override
             public AnnotationVisitor visitAnnotation(final String descriptor, final boolean visible) {
@@ -202,7 +202,7 @@ public class ScriptClassInfoCollector extends ClassVisitor {
 
                     addScriptMember(memInfo);
 
-                    return new AnnotationVisitor(Opcodes.ASM4, delegateAV) {
+                    return new AnnotationVisitor(Opcodes.ASM7, delegateAV) {
                         // These could be "null" if values are not supplied,
                         // in which case we have to use the default values.
                         private String  name;

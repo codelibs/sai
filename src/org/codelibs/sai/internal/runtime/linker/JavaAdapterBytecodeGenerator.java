@@ -25,21 +25,21 @@
 
 package org.codelibs.sai.internal.runtime.linker;
 
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACC_FINAL;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACC_PRIVATE;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACC_PUBLIC;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACC_STATIC;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACC_SUPER;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACC_VARARGS;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ACONST_NULL;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ALOAD;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ASTORE;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.DUP;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.IFNONNULL;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ILOAD;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ISTORE;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.POP;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.RETURN;
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
+import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.objectweb.asm.Opcodes.ACC_SUPER;
+import static org.objectweb.asm.Opcodes.ACC_VARARGS;
+import static org.objectweb.asm.Opcodes.ACONST_NULL;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ASTORE;
+import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.IFNONNULL;
+import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.ISTORE;
+import static org.objectweb.asm.Opcodes.POP;
+import static org.objectweb.asm.Opcodes.RETURN;
 import static org.codelibs.sai.internal.lookup.Lookup.MH;
 import static org.codelibs.sai.internal.runtime.linker.AdaptationResult.Outcome.ERROR_NO_ACCESSIBLE_CONSTRUCTOR;
 
@@ -69,12 +69,12 @@ import org.codelibs.sai.internal.runtime.ScriptFunction;
 import org.codelibs.sai.internal.runtime.ScriptObject;
 import org.codelibs.sai.internal.runtime.linker.AdaptationResult.Outcome;
 
-import org.codelibs.sai.org.objectweb.asm.ClassWriter;
-import org.codelibs.sai.org.objectweb.asm.Handle;
-import org.codelibs.sai.org.objectweb.asm.Label;
-import org.codelibs.sai.org.objectweb.asm.Opcodes;
-import org.codelibs.sai.org.objectweb.asm.Type;
-import org.codelibs.sai.org.objectweb.asm.commons.InstructionAdapter;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.InstructionAdapter;
 
 /**
  * Generates bytecode for a Java adapter class. Used by the {@link JavaAdapterFactory}.

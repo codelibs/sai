@@ -25,7 +25,7 @@
 
 package org.codelibs.sai.internal.codegen.types;
 
-import org.codelibs.sai.org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.MethodVisitor;
 
 /**
  * Array operations, not supported by all ops

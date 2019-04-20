@@ -25,13 +25,13 @@
 
 package org.codelibs.sai.internal.codegen.types;
 
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.AALOAD;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.AASTORE;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ALOAD;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ANEWARRAY;
-import static org.codelibs.sai.org.objectweb.asm.Opcodes.ARRAYLENGTH;
+import static org.objectweb.asm.Opcodes.AALOAD;
+import static org.objectweb.asm.Opcodes.AASTORE;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ANEWARRAY;
+import static org.objectweb.asm.Opcodes.ARRAYLENGTH;
 
-import org.codelibs.sai.org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.MethodVisitor;
 
 /**
  * This is an array type, i.e. OBJECT_ARRAY, NUMBER_ARRAY.

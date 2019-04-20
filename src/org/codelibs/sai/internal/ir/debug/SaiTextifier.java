@@ -43,14 +43,14 @@ import java.util.Set;
 import org.codelibs.sai.internal.runtime.ScriptEnvironment;
 import org.codelibs.sai.internal.runtime.linker.SaiCallSiteDescriptor;
 
-import org.codelibs.sai.org.objectweb.asm.Attribute;
-import org.codelibs.sai.org.objectweb.asm.Handle;
-import org.codelibs.sai.org.objectweb.asm.Label;
-import org.codelibs.sai.org.objectweb.asm.Opcodes;
-import org.codelibs.sai.org.objectweb.asm.Type;
-import org.codelibs.sai.org.objectweb.asm.signature.SignatureReader;
-import org.codelibs.sai.org.objectweb.asm.util.Printer;
-import org.codelibs.sai.org.objectweb.asm.util.TraceSignatureVisitor;
+import org.objectweb.asm.Attribute;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.signature.SignatureReader;
+import org.objectweb.asm.util.Printer;
+import org.objectweb.asm.util.TraceSignatureVisitor;
 
 /**
  * Pretty printer for --print-code.
