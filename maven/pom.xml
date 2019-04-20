@@ -69,12 +69,12 @@
 	</build>
 	<dependencies>
 		<dependency>
-			<groupId>asm</groupId>
+			<groupId>org.ow2.asm</groupId>
 			<artifactId>asm-commons</artifactId>
 			<version>${asm.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>asm</groupId>
+			<groupId>org.ow2.asm</groupId>
 			<artifactId>asm-util</artifactId>
 			<version>${asm.version}</version>
 		</dependency>
