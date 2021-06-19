@@ -1,4 +1,5 @@
 CodeLibs Sai
+[![Java CI](https://github.com/codelibs/sai/actions/workflows/ant.yml/badge.svg)](https://github.com/codelibs/sai/actions/workflows/ant.yml)
 =============
 
 Sai is a runtime environment for programs written in ECMAScript 5.1 that runs on top of JVM.
