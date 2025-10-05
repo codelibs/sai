@@ -56,6 +56,7 @@ public abstract class ArrayBufferView extends ScriptObject {
     // initialized by saigen
     private static PropertyMap $saigenmap$;
 
+    @SuppressWarnings("this-escape")
     private ArrayBufferView(final NativeArrayBuffer buffer, final int byteOffset, final int elementLength, final Global global) {
         super($saigenmap$);
 
@@ -82,6 +83,7 @@ public abstract class ArrayBufferView extends ScriptObject {
      * @param byteOffset     byte offset for buffer
      * @param elementLength  element length in bytes
      */
+    @SuppressWarnings("this-escape")
     protected ArrayBufferView(final NativeArrayBuffer buffer, final int byteOffset, final int elementLength) {
         this(buffer, byteOffset, elementLength, Global.instance());
     }

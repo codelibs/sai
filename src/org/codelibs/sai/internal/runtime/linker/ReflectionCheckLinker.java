@@ -103,6 +103,7 @@ final class ReflectionCheckLinker implements TypeBasedGuardingDynamicLinker {
         return isReflectionClass(type);
     }
 
+    @SuppressWarnings("removal")
     static void checkReflectionAccess(final Class<?> clazz, final boolean isStatic) {
         final Global global = Context.getGlobal();
         final ClassFilter cf = global.getClassFilter();
@@ -116,6 +117,7 @@ final class ReflectionCheckLinker implements TypeBasedGuardingDynamicLinker {
         }
     }
 
+    @SuppressWarnings("removal")
     private static void checkLinkRequest(final LinkRequest origRequest) {
         final Global global = Context.getGlobal();
         final ClassFilter cf = global.getClassFilter();
@@ -145,6 +147,7 @@ final class ReflectionCheckLinker implements TypeBasedGuardingDynamicLinker {
         }
     }
 
+    @SuppressWarnings("removal")
     private static void checkReflectionPermission(final SecurityManager sm) {
         sm.checkPermission(new RuntimePermission(Context.SAI_JAVA_REFLECTION));
     }

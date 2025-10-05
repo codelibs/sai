@@ -88,7 +88,7 @@ package org.codelibs.sai.internal.dynalink.linker;
  * guards, as the validity of the method handle for calls at a call site inevitably depends on some condition (at the
  * very least, it depends on the receiver belonging to the language runtime of the linker). Language runtime
  * implementors will normally implement one for their own language, and declare it in the
- * <tt>META-INF/services/org.codelibs.sai.internal.dynalink.linker.GuardingDynamicLinker</tt> file within their JAR file.
+ * <code>META-INF/services/org.codelibs.sai.internal.dynalink.linker.GuardingDynamicLinker</code> file within their JAR file.
  *
  * @author Attila Szegedi
  */

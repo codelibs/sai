@@ -169,6 +169,7 @@ public class LinkerServicesImpl implements LinkerServices {
      * @throws SecurityException if the calling code doesn't have the {@code "dynalink.getCurrentLinkRequest"} runtime
      * permission.
      */
+    @SuppressWarnings("removal")
     public static LinkRequest getCurrentLinkRequest() {
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {

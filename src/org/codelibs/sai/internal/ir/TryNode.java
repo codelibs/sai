@@ -38,6 +38,7 @@ import org.codelibs.sai.internal.ir.visitor.NodeVisitor;
  * IR representation of a TRY statement.
  */
 @Immutable
+@SuppressWarnings("serial")
 public final class TryNode extends LexicalContextStatement implements JoinPredecessor {
     private static final long serialVersionUID = 1L;
 

@@ -35,6 +35,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -158,7 +160,7 @@ public final class OptimisticTypesPersistence {
      * {@link #getLocationDescriptor(Source, int, Type[])}.
      * @param optimisticTypes the map of optimistic types.
      */
-    @SuppressWarnings("resource")
+    @SuppressWarnings({"resource", "removal"})
     public static void store(final Object locationDescriptor, final Map<Integer, Type> optimisticTypes) {
         if (locationDescriptor == null || optimisticTypes.isEmpty()) {
             return;
@@ -194,7 +196,7 @@ public final class OptimisticTypesPersistence {
      * {@link #getLocationDescriptor(Source, int, Type[])}.
      * @return the map of optimistic types, or null if persisted type information could not be retrieved.
      */
-    @SuppressWarnings("resource")
+    @SuppressWarnings({"resource", "removal"})
     public static Map<Integer, Type> load(final Object locationDescriptor) {
         if (locationDescriptor == null) {
             return null;
@@ -268,6 +270,7 @@ public final class OptimisticTypesPersistence {
         }
     }
 
+    @SuppressWarnings("removal")
     private static File createBaseCacheDirPrivileged() {
         return AccessController.doPrivileged(new PrivilegedAction<File>() {
             @Override
@@ -302,6 +305,7 @@ public final class OptimisticTypesPersistence {
         }
     }
 
+    @SuppressWarnings("removal")
     private static File createCacheDirPrivileged(final File baseDir) {
         return AccessController.doPrivileged(new PrivilegedAction<File>() {
             @Override
@@ -358,39 +362,43 @@ public final class OptimisticTypesPersistence {
      * @throws Exception if digest could not be created
      */
     public static String getVersionDirName() throws Exception {
-        // NOTE: getResource("") won't work if the JAR file doesn't have directory entries (and JAR files in JDK distro
-        // don't, or at least it's a bad idea counting on it). Alternatively, we could've tried
-        // getResource("OptimisticTypesPersistence.class") but behavior of getResource with regard to its willingness
-        // to hand out URLs to .class files is also unspecified. Therefore, the most robust way to obtain an URL to our
-        // package is to have a small non-class anchor file and start out from its URL.
-        final URL url = OptimisticTypesPersistence.class.getResource("anchor.properties");
-        final String protocol = url.getProtocol();
-        if (protocol.equals("jar")) {
-            // Normal deployment: sai.jar
-            final String jarUrlFile = url.getFile();
-            final String filePath = jarUrlFile.substring(0, jarUrlFile.indexOf('!'));
-            final URL file = new URL(filePath);
-            try (final InputStream in = file.openStream()) {
-                final byte[] buf = new byte[128 * 1024];
-                final MessageDigest digest = MessageDigest.getInstance("SHA-1");
-                for (;;) {
-                    final int l = in.read(buf);
-                    if (l == -1) {
-                        return Base64.getUrlEncoder().withoutPadding().encodeToString(digest.digest());
+        try {
+            // NOTE: getResource("") won't work if the JAR file doesn't have directory entries (and JAR files in JDK distro
+            // don't, or at least it's a bad idea counting on it). Alternatively, we could've tried
+            // getResource("OptimisticTypesPersistence.class") but behavior of getResource with regard to its willingness
+            // to hand out URLs to .class files is also unspecified. Therefore, the most robust way to obtain an URL to our
+            // package is to have a small non-class anchor file and start out from its URL.
+            final URL url = OptimisticTypesPersistence.class.getResource("anchor.properties");
+            final String protocol = url.getProtocol();
+            if (protocol.equals("jar")) {
+                // Normal deployment: sai.jar
+                final String jarUrlFile = url.getFile();
+                final String filePath = jarUrlFile.substring(0, jarUrlFile.indexOf('!'));
+                final URL file = new URI(filePath).toURL();
+                try (final InputStream in = file.openStream()) {
+                    final byte[] buf = new byte[128 * 1024];
+                    final MessageDigest digest = MessageDigest.getInstance("SHA-1");
+                    for (;;) {
+                        final int l = in.read(buf);
+                        if (l == -1) {
+                            return Base64.getUrlEncoder().withoutPadding().encodeToString(digest.digest());
+                        }
+                        digest.update(buf, 0, l);
                     }
-                    digest.update(buf, 0, l);
                 }
+            } else if (protocol.equals("file")) {
+                // Development
+                final String fileStr = url.getFile();
+                final String className = OptimisticTypesPersistence.class.getName();
+                final int packageNameLen = className.lastIndexOf('.');
+                final String dirStr = fileStr.substring(0, fileStr.length() - packageNameLen - 1);
+                final File dir = new File(dirStr);
+                return "dev-" + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date(getLastModifiedClassFile(dir, 0L)));
+            } else {
+                throw new AssertionError();
             }
-        } else if (protocol.equals("file")) {
-            // Development
-            final String fileStr = url.getFile();
-            final String className = OptimisticTypesPersistence.class.getName();
-            final int packageNameLen = className.lastIndexOf('.');
-            final String dirStr = fileStr.substring(0, fileStr.length() - packageNameLen - 1);
-            final File dir = new File(dirStr);
-            return "dev-" + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date(getLastModifiedClassFile(dir, 0L)));
-        } else {
-            throw new AssertionError();
+        } catch (final URISyntaxException e) {
+            throw new RuntimeException("Failed to convert file path to URI", e);
         }
     }
 

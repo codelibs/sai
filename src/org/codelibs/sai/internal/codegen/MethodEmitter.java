@@ -171,11 +171,11 @@ public class MethodEmitter {
 
     /** Bootstrap for normal indy:s */
     private static final Handle LINKERBOOTSTRAP = new Handle(H_INVOKESTATIC, Bootstrap.BOOTSTRAP.className(), Bootstrap.BOOTSTRAP.name(),
-            Bootstrap.BOOTSTRAP.descriptor());
+            Bootstrap.BOOTSTRAP.descriptor(), false);
 
     /** Bootstrap for array populators */
     private static final Handle POPULATE_ARRAY_BOOTSTRAP = new Handle(H_INVOKESTATIC, RewriteException.BOOTSTRAP.className(),
-            RewriteException.BOOTSTRAP.name(), RewriteException.BOOTSTRAP.descriptor());
+            RewriteException.BOOTSTRAP.name(), RewriteException.BOOTSTRAP.descriptor(), false);
 
     /**
      * Constructor - internal use from ClassEmitter only
@@ -1011,7 +1011,7 @@ public class MethodEmitter {
      */
     MethodEmitter loadHandle(final String className, final String methodName, final String descName, final EnumSet<Flag> flags) {
         debug("load handle ");
-        pushType(Type.OBJECT.ldc(method, new Handle(Flag.getValue(flags), className, methodName, descName)));
+        pushType(Type.OBJECT.ldc(method, new Handle(Flag.getValue(flags), className, methodName, descName, false)));
         return this;
     }
 
@@ -2059,7 +2059,7 @@ public class MethodEmitter {
     }
 
     /**
-     * Retrieve the top <tt>count</tt> types on the stack without modifying it.
+     * Retrieve the top <code>count</code> types on the stack without modifying it.
      *
      * @param count number of types to return
      * @return array of Types

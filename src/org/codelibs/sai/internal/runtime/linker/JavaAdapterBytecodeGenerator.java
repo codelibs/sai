@@ -1107,7 +1107,7 @@ final class JavaAdapterBytecodeGenerator {
                 new InstructionAdapter(cw.visitMethod(ACC_PUBLIC, "finalize", VOID_NOARG_METHOD_DESCRIPTOR, null, null));
         // Overridden finalizer will take a MethodHandle to the finalizer delegating method, ...
         mv.aconst(new Handle(Opcodes.H_INVOKESTATIC, generatedClassName, finalizerDelegateName, Type.getMethodDescriptor(Type.VOID_TYPE,
-                OBJECT_TYPE)));
+                OBJECT_TYPE), false));
         mv.visitVarInsn(ALOAD, 0);
         // ...and invoke it through JavaAdapterServices.invokeNoPermissions
         mv.invokestatic(SERVICES_CLASS_TYPE_NAME, "invokeNoPermissions", Type.getMethodDescriptor(METHOD_HANDLE_TYPE, OBJECT_TYPE), false);
@@ -1195,6 +1195,7 @@ final class JavaAdapterBytecodeGenerator {
         }
     }
 
+    @SuppressWarnings("removal")
     private static final AccessControlContext GET_DECLARED_MEMBERS_ACC_CTXT = ClassAndLoader.createPermAccCtxt("accessDeclaredMembers");
 
     /**
@@ -1203,6 +1204,7 @@ final class JavaAdapterBytecodeGenerator {
      * {@code Object.clone()}.
      * @return a collection of method infos representing those methods that we never override in adapter classes.
      */
+    @SuppressWarnings("removal")
     private static Collection<MethodInfo> getExcludedMethods() {
         return AccessController.doPrivileged(new PrivilegedAction<Collection<MethodInfo>>() {
             @Override

@@ -78,13 +78,16 @@ public final class SaiScriptEngine extends AbstractScriptEngine implements Compi
     public static final String SAI_GLOBAL = "sai.global";
 
     // commonly used access control context objects
+    @SuppressWarnings("removal")
     private static AccessControlContext createPermAccCtxt(final String permName) {
         final Permissions perms = new Permissions();
         perms.add(new RuntimePermission(permName));
         return new AccessControlContext(new ProtectionDomain[] { new ProtectionDomain(null, perms) });
     }
 
+    @SuppressWarnings("removal")
     private static final AccessControlContext CREATE_CONTEXT_ACC_CTXT = createPermAccCtxt(Context.SAI_CREATE_CONTEXT);
+    @SuppressWarnings("removal")
     private static final AccessControlContext CREATE_GLOBAL_ACC_CTXT = createPermAccCtxt(Context.SAI_CREATE_GLOBAL);
 
     // the factory that created this engine
@@ -114,6 +117,7 @@ public final class SaiScriptEngine extends AbstractScriptEngine implements Compi
         }
     }
 
+    @SuppressWarnings("removal")
     SaiScriptEngine(final SaiScriptEngineFactory factory, final String[] args, final ClassLoader appLoader, final ClassFilter classFilter) {
         assert args != null : "null argument array";
         this.factory = factory;
@@ -230,6 +234,7 @@ public final class SaiScriptEngine extends AbstractScriptEngine implements Compi
         return (val != null) ? val.toString() : "<eval>";
     }
 
+    @SuppressWarnings("removal")
     private <T> T getInterfaceInner(final Object thiz, final Class<T> clazz) {
         assert !(thiz instanceof ScriptObject) : "raw ScriptObject not expected here";
 
@@ -341,6 +346,7 @@ public final class SaiScriptEngine extends AbstractScriptEngine implements Compi
     }
 
     // Create a new Sai Global object
+    @SuppressWarnings("removal")
     private Global createSaiGlobal() {
         final Global newGlobal = AccessController.doPrivileged(new PrivilegedAction<Global>() {
             @Override

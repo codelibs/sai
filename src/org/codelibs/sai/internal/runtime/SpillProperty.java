@@ -164,6 +164,7 @@ public class SpillProperty extends AccessorProperty {
      * @param flags  the property flags
      * @param slot   spill slot
      */
+    @SuppressWarnings("this-escape")
     public SpillProperty(final String key, final int flags, final int slot) {
         super(key, flags, slot, primitiveGetter(slot, flags), primitiveSetter(slot, flags), objectGetter(slot), objectSetter(slot));
     }
@@ -175,11 +176,13 @@ public class SpillProperty extends AccessorProperty {
      * @param slot        spill slot
      * @param initialType initial type
      */
+    @SuppressWarnings("this-escape")
     public SpillProperty(final String key, final int flags, final int slot, final Class<?> initialType) {
         this(key, flags, slot);
         setType(hasDualFields() ? initialType : Object.class);
     }
 
+    @SuppressWarnings("this-escape")
     SpillProperty(final String key, final int flags, final int slot, final ScriptObject owner, final Object initialValue) {
         this(key, flags, slot);
         setInitialValue(owner, initialValue);

@@ -171,6 +171,7 @@ public class OctaneTest {
         }
     }
 
+    @SuppressWarnings("deprecation")
     public Double genericRhinoTest(final String benchmark, final String[] testPath, final String jarPath) throws Throwable {
 
         final PrintStream systemOut = System.out;
@@ -201,6 +202,7 @@ public class OctaneTest {
         }
     }
 
+    @SuppressWarnings("deprecation")
     public Double genericV8Test(final String benchmark, final String testPath) throws Throwable {
 
         System.out.println("genericV8Test");

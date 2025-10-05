@@ -40,6 +40,7 @@ import org.codelibs.sai.internal.ir.visitor.NodeVisitor;
  * IR representation for a function call.
  */
 @Immutable
+@SuppressWarnings("serial")
 public final class CallNode extends LexicalContextExpression implements Optimistic {
     private static final long serialVersionUID = 1L;
 
@@ -66,6 +67,7 @@ public final class CallNode extends LexicalContextExpression implements Optimist
     /**
      * Arguments to be passed to builtin {@code eval} function
      */
+    @SuppressWarnings("serial")
     public static class EvalArgs implements Serializable {
         private static final long serialVersionUID = 1L;
         private final List<Expression> args;

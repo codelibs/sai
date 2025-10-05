@@ -32,6 +32,7 @@ import org.codelibs.sai.internal.ir.visitor.NodeVisitor;
  * IR representation of an object literal property.
  */
 @Immutable
+@SuppressWarnings("serial")
 public final class PropertyNode extends Node {
     private static final long serialVersionUID = 1L;
 

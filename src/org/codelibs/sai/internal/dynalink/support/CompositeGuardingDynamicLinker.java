@@ -99,6 +99,7 @@ import org.codelibs.sai.internal.dynalink.linker.LinkerServices;
  *
  * @author Attila Szegedi
  */
+@SuppressWarnings("serial")
 public class CompositeGuardingDynamicLinker implements GuardingDynamicLinker, Serializable {
 
     private static final long serialVersionUID = 1L;

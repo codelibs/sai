@@ -38,6 +38,7 @@ import org.codelibs.sai.internal.parser.TokenType;
  * IR representation for a runtime call.
  */
 @Immutable
+@SuppressWarnings("serial")
 public class RuntimeNode extends Expression {
     private static final long serialVersionUID = 1L;
 

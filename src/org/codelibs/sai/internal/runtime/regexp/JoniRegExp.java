@@ -51,6 +51,7 @@ public class JoniRegExp extends RegExp {
      * @param flags RegExp flag string
      * @throws ParserException if flags is invalid or pattern string has syntax error.
      */
+    @SuppressWarnings("this-escape")
     public JoniRegExp(final String pattern, final String flags) throws ParserException {
         super(pattern, flags);
 

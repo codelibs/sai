@@ -37,6 +37,7 @@ import org.codelibs.sai.internal.ir.visitor.NodeVisitor;
  * Case nodes are not BreakableNodes, but the SwitchNode is
  */
 @Immutable
+@SuppressWarnings("serial")
 public final class CaseNode extends Node implements JoinPredecessor, Labels, Terminal {
     private static final long serialVersionUID = 1L;
 

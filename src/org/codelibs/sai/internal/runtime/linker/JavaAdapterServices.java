@@ -160,6 +160,7 @@ public final class JavaAdapterServices {
         return Bootstrap.getLinkerServices().asType(ScriptObject.pairArguments(fn.getBoundInvokeHandle(self), type, false), type);
     }
 
+    @SuppressWarnings("removal")
     private static MethodHandle createNoPermissionsInvoker() {
         final String className = "NoPermissionsInvoker";
 

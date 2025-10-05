@@ -150,6 +150,7 @@ public abstract class ClassMap<T> {
         final T newV = computeValue(clazz);
         assert newV != null;
 
+        @SuppressWarnings("removal")
         final ClassLoader clazzLoader = AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
             @Override
             public ClassLoader run() {

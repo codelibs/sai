@@ -48,7 +48,7 @@ import java.util.Objects;
  * It can only make an educated guess at whether compressed OOPs are used,
  * though; specifically, it knows what the JVM's default choice of OOP
  * compression would be based on HotSpot version and maximum heap sizes, but if
- * the choice is explicitly overridden with the <tt>-XX:{+|-}UseCompressedOops</tt> command line
+ * the choice is explicitly overridden with the <code>-XX:{+|-}UseCompressedOops</code> command line
  * switch, it can not detect
  * this fact and will report incorrect sizes, as it will presume the default JVM
  * behavior.

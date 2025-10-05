@@ -32,6 +32,7 @@ import org.codelibs.sai.internal.ir.visitor.NodeVisitor;
  * IR representation for an IF statement.
  */
 @Immutable
+@SuppressWarnings("serial")
 public final class IfNode extends Statement implements JoinPredecessor {
     private static final long serialVersionUID = 1L;
 

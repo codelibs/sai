@@ -94,6 +94,7 @@ import java.security.ProtectionDomain;
  * A utility class to check whether a given class is in a package with restricted access e.g. "sun.*" etc.
  */
 class CheckRestrictedPackage {
+    @SuppressWarnings("removal")
     private static final AccessControlContext NO_PERMISSIONS_CONTEXT = createNoPermissionsContext();
 
     /**
@@ -101,6 +102,7 @@ class CheckRestrictedPackage {
      * @param clazz the class to test
      * @return true if the class is either not public, or it resides in a package with restricted access.
      */
+    @SuppressWarnings("removal")
     static boolean isRestrictedClass(final Class<?> clazz) {
         if (!Modifier.isPublic(clazz.getModifiers())) {
             // Non-public classes are always restricted
@@ -132,6 +134,7 @@ class CheckRestrictedPackage {
         return false;
     }
 
+    @SuppressWarnings("removal")
     private static AccessControlContext createNoPermissionsContext() {
         return new AccessControlContext(new ProtectionDomain[] { new ProtectionDomain(null, new Permissions()) });
     }

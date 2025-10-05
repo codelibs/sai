@@ -37,6 +37,7 @@ import org.codelibs.sai.internal.ir.visitor.NodeVisitor;
  * IR representation of an object literal.
  */
 @Immutable
+@SuppressWarnings("serial")
 public final class ObjectNode extends Expression implements LexicalContextNode, Splittable {
     private static final long serialVersionUID = 1L;
 

@@ -276,7 +276,7 @@ public class ClassGenerator {
         final boolean arityFound = (memInfo.getArity() != MemberInfo.DEFAULT_ARITY);
 
         mi.loadLiteral(memInfo.getName());
-        mi.visitLdcInsn(new Handle(H_INVOKESTATIC, className, memInfo.getJavaName(), memInfo.getJavaDesc()));
+        mi.visitLdcInsn(new Handle(H_INVOKESTATIC, className, memInfo.getJavaName(), memInfo.getJavaDesc(), false));
 
         assert specs != null;
         if (!specs.isEmpty()) {
@@ -305,13 +305,13 @@ public class ClassGenerator {
         mi.push(memInfo.getAttributes());
         // setup getter method handle
         String javaName = GETTER_PREFIX + memInfo.getJavaName();
-        mi.visitLdcInsn(new Handle(H_INVOKEVIRTUAL, className, javaName, getterDesc(memInfo)));
+        mi.visitLdcInsn(new Handle(H_INVOKEVIRTUAL, className, javaName, getterDesc(memInfo), false));
         // setup setter method handle
         if (memInfo.isFinal()) {
             mi.pushNull();
         } else {
             javaName = SETTER_PREFIX + memInfo.getJavaName();
-            mi.visitLdcInsn(new Handle(H_INVOKEVIRTUAL, className, javaName, setterDesc(memInfo)));
+            mi.visitLdcInsn(new Handle(H_INVOKEVIRTUAL, className, javaName, setterDesc(memInfo), false));
         }
         mi.invokeStatic(ACCESSORPROPERTY_TYPE, ACCESSORPROPERTY_CREATE, ACCESSORPROPERTY_CREATE_DESC);
         // boolean Collection.add(property)
@@ -333,13 +333,13 @@ public class ClassGenerator {
         mi.push(getter.getAttributes());
         // setup getter method handle
         mi.visitLdcInsn(new Handle(H_INVOKESTATIC, className,
-                getter.getJavaName(), getter.getJavaDesc()));
+                getter.getJavaName(), getter.getJavaDesc(), false));
         // setup setter method handle
         if (setter == null) {
             mi.pushNull();
         } else {
             mi.visitLdcInsn(new Handle(H_INVOKESTATIC, className,
-                    setter.getJavaName(), setter.getJavaDesc()));
+                    setter.getJavaName(), setter.getJavaDesc(), false));
         }
         mi.invokeStatic(ACCESSORPROPERTY_TYPE, ACCESSORPROPERTY_CREATE, ACCESSORPROPERTY_CREATE_DESC);
         // boolean Collection.add(property)

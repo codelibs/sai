@@ -31,6 +31,7 @@ import org.codelibs.sai.internal.ir.visitor.NodeVisitor;
 /**
  * A wrapper for an expression that is in a position to be a join predecessor.
  */
+@SuppressWarnings("serial")
 public class JoinPredecessorExpression extends Expression implements JoinPredecessor {
     private static final long serialVersionUID = 1L;
 

@@ -51,7 +51,7 @@ public final class ScriptTest {
      * @return a Object[] of test objects.
      * @throws Exception upon failure
      */
-    @SuppressWarnings("static-method")
+    @SuppressWarnings({"static-method", "deprecation"})
     @Factory
     public Object[] suite() throws Exception {
         Locale.setDefault(new Locale(""));

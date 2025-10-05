@@ -46,6 +46,7 @@ import java.util.Map;
  * used to determine if one loader can see the other loader's classes.
  */
 final class ClassAndLoader {
+    @SuppressWarnings("removal")
     static AccessControlContext createPermAccCtxt(final String... permNames) {
         final Permissions perms = new Permissions();
         for (final String permName : permNames) {
@@ -54,6 +55,7 @@ final class ClassAndLoader {
         return new AccessControlContext(new ProtectionDomain[] { new ProtectionDomain(null, perms) });
     }
 
+    @SuppressWarnings("removal")
     private static final AccessControlContext GET_LOADER_ACC_CTXT = createPermAccCtxt("getClassLoader");
 
     private final Class<?> representativeClass;
@@ -118,6 +120,7 @@ final class ClassAndLoader {
      * @param types the input types
      * @return the first type from the array that is defined in a class loader that can also see all other types.
      */
+    @SuppressWarnings("removal")
     static ClassAndLoader getDefiningClassAndLoader(final Class<?>[] types) {
         // Short circuit the cheap case
         if (types.length == 1) {

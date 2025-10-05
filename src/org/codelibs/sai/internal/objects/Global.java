@@ -984,6 +984,7 @@ public final class Global extends Scope {
 
     // performs initialization checks for Global constructor and returns the
     // PropertyMap, if everything is fine.
+    @SuppressWarnings("removal")
     private static PropertyMap checkAndGetMap(final Context context) {
         // security check first
         final SecurityManager sm = System.getSecurityManager();
@@ -1414,6 +1415,7 @@ public final class Global extends Scope {
      * @param name name of the variable missing
      * @return value of the missing variable or undefined (or TypeError for scope search)
      */
+    @SuppressWarnings("removal")
     public static Object __noSuchProperty__(final Object self, final Object name) {
         final Global global = Global.instance();
         final ScriptContext sctxt = global.currentContext();
@@ -2252,7 +2254,7 @@ public final class Global extends Scope {
         return func;
     }
 
-    @SuppressWarnings("hiding")
+    @SuppressWarnings({"hiding", "removal"})
     private void init(final ScriptEngine eng) {
         assert Context.getGlobal() == this : "this global is not set as current";
 
@@ -2439,6 +2441,7 @@ public final class Global extends Scope {
         this.builtinOrg = new NativeJavaPackage("org", objectProto);
     }
 
+    @SuppressWarnings("removal")
     private void initScripting(final ScriptEnvironment scriptEnv) {
         ScriptObject value;
         value = ScriptFunction.createBuiltin("readLine", ScriptingFunctions.READLINE);

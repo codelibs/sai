@@ -137,6 +137,7 @@ public class ClassFilterTest {
     }
 
     @Test
+    @SuppressWarnings("removal")
     public void securityTest() {
         if (System.getSecurityManager() == null) {
             return;

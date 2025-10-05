@@ -102,6 +102,7 @@ import org.codelibs.sai.internal.dynalink.linker.TypeBasedGuardingDynamicLinker;
  *
  * @author Attila Szegedi
  */
+@SuppressWarnings("serial")
 public class CompositeTypeBasedGuardingDynamicLinker implements TypeBasedGuardingDynamicLinker, Serializable {
     private static final long serialVersionUID = 1L;
 

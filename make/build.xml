@@ -219,12 +219,17 @@
 
   <!-- generate javadoc for all Sai and ASM classes -->
   <target name="javadoc" depends="jar">
-    <javadoc destdir="${dist.javadoc.dir}" use="yes" overview="${src.dir}/overview.html" 
+    <javadoc destdir="${dist.javadoc.dir}" use="yes" overview="${src.dir}/overview.html"
         windowtitle="${sai.product.name} ${sai.version}"
-        additionalparam="-quiet" failonerror="false" useexternalfile="true">
+        additionalparam="-quiet -Xdoclint:-missing" failonerror="false" useexternalfile="true">
       <arg value="${javadoc.option}"/>
       <classpath>
         <pathelement location="${build.classes.dir}"/>
+        <pathelement location="${file.reference.asm.jar}"/>
+        <pathelement location="${file.reference.asm-commons.jar}"/>
+        <pathelement location="${file.reference.asm-tree.jar}"/>
+        <pathelement location="${file.reference.asm-analysis.jar}"/>
+        <pathelement location="${file.reference.asm-util.jar}"/>
         <fileset dir="${dist.dir}">
           <include name="**/*.jar" />
         </fileset>
@@ -241,10 +246,15 @@
   <target name="javadocnh" depends="jar">
     <javadoc destdir="${dist.javadoc.dir}" use="yes" overview="${src.dir}/overview.html"
         windowtitle="${sai.product.name} ${sai.version}"
-        additionalparam="-quiet" failonerror="false" useexternalfile="true">
+        additionalparam="-quiet -Xdoclint:-missing" failonerror="false" useexternalfile="true">
       <arg value="${javadoc.option}"/>
       <classpath>
         <pathelement location="${build.classes.dir}"/>
+        <pathelement location="${file.reference.asm.jar}"/>
+        <pathelement location="${file.reference.asm-commons.jar}"/>
+        <pathelement location="${file.reference.asm-tree.jar}"/>
+        <pathelement location="${file.reference.asm-analysis.jar}"/>
+        <pathelement location="${file.reference.asm-util.jar}"/>
         <fileset dir="${dist.dir}">
           <include name="**/*.jar" />
         </fileset>
@@ -256,10 +266,15 @@
   <!-- generate javadoc only for sai extension api classes -->
   <target name="javadocapi" depends="jar">
     <javadoc destdir="${dist.javadoc.dir}" use="yes"
-        windowtitle="${sai.product.name}" additionalparam="-quiet" failonerror="false" useexternalfile="true">
+        windowtitle="${sai.product.name}" additionalparam="-quiet -Xdoclint:-missing" failonerror="false" useexternalfile="true">
       <arg value="${javadoc.option}"/>
       <classpath>
         <pathelement location="${build.classes.dir}"/>
+        <pathelement location="${file.reference.asm.jar}"/>
+        <pathelement location="${file.reference.asm-commons.jar}"/>
+        <pathelement location="${file.reference.asm-tree.jar}"/>
+        <pathelement location="${file.reference.asm-analysis.jar}"/>
+        <pathelement location="${file.reference.asm-util.jar}"/>
         <fileset dir="${dist.dir}">
           <include name="**/*.jar" />
         </fileset>

@@ -45,6 +45,13 @@ public class BlockLexicalContext extends LexicalContext {
     /** Last non debug statement emitted in this context */
     protected Statement lastStatement;
 
+    /**
+     * Creates a new block lexical context.
+     */
+    public BlockLexicalContext() {
+        super();
+    }
+
     @Override
     public <T extends LexicalContextNode> T push(final T node) {
         final T pushed = super.push(node);

@@ -191,6 +191,7 @@ public class ScriptFunction extends ScriptObject {
      * @param map property map
      * @param scope scope
      */
+    @SuppressWarnings("this-escape")
     private ScriptFunction(final ScriptFunctionData data, final PropertyMap map, final ScriptObject scope, final Global global) {
 
         super(map);
@@ -225,6 +226,7 @@ public class ScriptFunction extends ScriptObject {
      * @param specs specialized version of this function - other method handles
      * @param flags {@link ScriptFunctionData} flags
      */
+    @SuppressWarnings("this-escape")
     private ScriptFunction(final String name, final MethodHandle methodHandle, final PropertyMap map, final ScriptObject scope,
             final Specialization[] specs, final int flags, final Global global) {
         this(new FinalScriptFunctionData(name, methodHandle, specs, flags), map, scope, global);
@@ -240,6 +242,7 @@ public class ScriptFunction extends ScriptObject {
      * otherwise
      * @param flags {@link ScriptFunctionData} flags
      */
+    @SuppressWarnings("this-escape")
     private ScriptFunction(final String name, final MethodHandle methodHandle, final ScriptObject scope, final Specialization[] specs,
             final int flags) {
         this(name, methodHandle, getMap(isStrict(flags)), scope, specs, flags, Global.instance());
@@ -254,6 +257,7 @@ public class ScriptFunction extends ScriptObject {
      * @param specs specialized versions of this method, if available, null
      * otherwise
      */
+    @SuppressWarnings("this-escape")
     protected ScriptFunction(final String name, final MethodHandle invokeHandle, final Specialization[] specs) {
         this(name, invokeHandle, map$, null, specs, ScriptFunctionData.IS_BUILTIN_CONSTRUCTOR, Global.instance());
     }
@@ -268,6 +272,7 @@ public class ScriptFunction extends ScriptObject {
      * @param specs specialized versions of this method, if available, null
      * otherwise
      */
+    @SuppressWarnings("this-escape")
     protected ScriptFunction(final String name, final MethodHandle invokeHandle, final PropertyMap map, final Specialization[] specs) {
         this(name, invokeHandle, map.addAll(map$), null, specs, ScriptFunctionData.IS_BUILTIN_CONSTRUCTOR, Global.instance());
     }

@@ -37,6 +37,7 @@ import org.codelibs.sai.internal.ir.visitor.NodeVisitor;
  * IR representation of a SWITCH statement.
  */
 @Immutable
+@SuppressWarnings("serial")
 public final class SwitchNode extends BreakableStatement {
     private static final long serialVersionUID = 1L;
 

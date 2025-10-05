@@ -34,6 +34,7 @@ import org.codelibs.sai.internal.ir.visitor.NodeVisitor;
  * types to the join at the break point.
  */
 @Immutable
+@SuppressWarnings("serial")
 public final class LabelNode extends LexicalContextStatement implements JoinPredecessor {
     private static final long serialVersionUID = 1L;
 

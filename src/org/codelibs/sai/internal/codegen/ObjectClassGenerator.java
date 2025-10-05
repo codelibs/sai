@@ -653,7 +653,7 @@ public final class ObjectClassGenerator implements Loggable {
      * but the guards needed on every getter took too much time.
      * <p>
      * To see how this is used, look for example in {@link AccessorProperty#getGetter}
-     * <p>
+     *
      * @param forType         representation of the underlying type in the field, null if undefined
      * @param type            type to retrieve it as
      * @param primitiveGetter getter to read the primitive version of this field (null if Objects Only)

@@ -241,6 +241,7 @@ public final class SaiScriptEngineFactory implements ScriptEngineFactory {
 
     // -- Internals only below this point
 
+    @SuppressWarnings("removal")
     private static void checkConfigPermission() {
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {

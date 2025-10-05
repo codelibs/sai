@@ -36,6 +36,12 @@ public final class AssertsEnabled {
     }
 
     /**
+     * Private constructor to prevent instantiation.
+     */
+    private AssertsEnabled() {
+    }
+
+    /**
      * Returns true if asserts are enabled
      * @return true if asserts are enabled
      */
