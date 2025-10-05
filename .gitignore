@@ -9,6 +9,11 @@ gradle-app.setting
 !gradle-wrapper.properties
 .gradletasknamecache
 
+# GPG and Maven Central credentials (never commit these!)
+secring.gpg
+*.gpg
+gradle.properties.local
+
 # Maven (legacy)
 target/
 

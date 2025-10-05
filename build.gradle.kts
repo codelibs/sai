@@ -555,21 +555,21 @@ publishing {
             from(components["java"])
 
             pom {
-                name.set("JavaScript Engine")
-                description.set("JavaScript engine developed in the Java programming language")
+                name.set("Sai JavaScript Engine")
+                description.set("JavaScript engine developed in the Java programming language based on ECMAScript 5.1")
                 url.set("https://github.com/codelibs/sai")
                 inceptionYear.set("2012")
 
                 licenses {
                     license {
-                        name.set("The GNU General Public License (\"CLASSPATH\" EXCEPTION)")
+                        name.set("The GNU General Public License, version 2, with the Classpath Exception")
                         url.set("https://raw.githubusercontent.com/codelibs/sai/master/LICENSE")
                     }
                 }
 
                 organization {
                     name.set("CodeLibs Project")
-                    url.set("http://www.codelibs.org/")
+                    url.set("https://www.codelibs.org/")
                 }
 
                 developers {
@@ -584,7 +584,7 @@ publishing {
 
                 scm {
                     connection.set("scm:git:git@github.com:codelibs/sai.git")
-                    url.set("scm:git:git@github.com:codelibs/sai.git")
+                    url.set("https://github.com/codelibs/sai")
                     developerConnection.set("scm:git:git@github.com:codelibs/sai.git")
                 }
             }
@@ -594,14 +594,65 @@ publishing {
     repositories {
         maven {
             name = "central"
-            url = uri("https://central.sonatype.com/api/v1/publisher")
+            val isSnapshot = version.toString().endsWith("-SNAPSHOT")
+
+            url = if (isSnapshot) {
+                // SNAPSHOT versions go to Maven Central snapshot repository
+                uri("https://central.sonatype.com/repository/maven-snapshots/")
+            } else {
+                // Release versions go to Maven Central Portal Publisher API
+                uri("https://central.sonatype.com/api/v1/publisher")
+            }
+
+            credentials {
+                username = project.findProperty("mavenCentralUsername")?.toString() ?: System.getenv("MAVEN_CENTRAL_USERNAME")
+                password = project.findProperty("mavenCentralPassword")?.toString() ?: System.getenv("MAVEN_CENTRAL_PASSWORD")
+            }
         }
     }
 }
 
 // Signing Configuration
 signing {
-    sign(publishing.publications["maven"])
+    // Configure signing from environment variables if not in gradle.properties
+    val signingKeyId = project.findProperty("signing.keyId")?.toString()
+        ?: System.getenv("SIGNING_KEY_ID")
+    val signingPassword = project.findProperty("signing.password")?.toString()
+        ?: System.getenv("SIGNING_PASSWORD")
+    val signingSecretKeyRingFile = project.findProperty("signing.secretKeyRingFile")?.toString()
+        ?: System.getenv("SIGNING_SECRET_KEY_RING_FILE")
+
+    // Use in-memory key if provided
+    val signingKey = project.findProperty("signing.key")?.toString()
+        ?: System.getenv("SIGNING_KEY")
+
+    val hasSigningConfig = if (signingKey != null && signingPassword != null) {
+        // In-memory key configuration
+        useInMemoryPgpKeys(signingKey, signingPassword)
+        true
+    } else if (signingKeyId != null && signingPassword != null && signingSecretKeyRingFile != null) {
+        // Traditional keyring file configuration
+        // Note: Gradle's signing plugin will use these from project properties automatically
+        // We just need to ensure they are set
+        if (!project.hasProperty("signing.keyId")) {
+            project.extra["signing.keyId"] = signingKeyId
+        }
+        if (!project.hasProperty("signing.password")) {
+            project.extra["signing.password"] = signingPassword
+        }
+        if (!project.hasProperty("signing.secretKeyRingFile")) {
+            project.extra["signing.secretKeyRingFile"] = signingSecretKeyRingFile
+        }
+        true
+    } else {
+        false
+    }
+
+    isRequired = hasSigningConfig
+
+    if (hasSigningConfig) {
+        sign(publishing.publications["maven"])
+    }
 }
 
 // Custom run task for testing
