@@ -157,7 +157,7 @@ public class AccessorProperty extends Property {
      * @param property  accessor property to rebind
      * @param delegate  delegate object to rebind receiver to
      */
-    @SuppressWarnings({"this-escape", "this-escape"})
+    @SuppressWarnings("this-escape")
     AccessorProperty(final AccessorProperty property, final Object delegate) {
         super(property, property.getFlags() | IS_BOUND);
 
@@ -316,7 +316,7 @@ public class AccessorProperty extends Property {
      * @param slot         field slot index
      * @param initialType  initial type of the property
      */
-    @SuppressWarnings({"this-escape", "this-escape"})
+    @SuppressWarnings("this-escape")
     public AccessorProperty(final String key, final int flags, final Class<?> structure, final int slot, final Class<?> initialType) {
         this(key, flags, structure, slot);
         setType(hasDualFields() ? initialType : Object.class);
