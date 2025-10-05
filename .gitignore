@@ -1,26 +1,58 @@
+# Build outputs
 build/
 dist/
-/nbproject/private/
+
+# Gradle
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+.gradletasknamecache
+
+# Maven (legacy)
+target/
+
+# IDE
+.idea/
+.project
+.classpath
+.settings/
+nbproject/private/
 private.xml
 private.properties
-webrev/
-webrev.zip
-.classpath
+
+# Serena MCP
+.serena/
+
+# Compiled files
 *.class
 *.clazz
+
+# Logs
 *.log
-*.orig
-genfiles.properties
 hotspot.log
-.DS_Store*
+
+# Test outputs
 TEST-*.xml
 TESTS-*.xml
 report.xml
-CC/
-jcov2/
-.idea/
+
+# External test suites
 test/lib/*.jar
 test/script/external/
-.project
+
+# Code coverage
+CC/
+jcov2/
+
+# Temporary files
+*.orig
+webrev/
+webrev.zip
 *Profile.txt
-/target/
+
+# OS files
+.DS_Store*
+
+# Generated files
+genfiles.properties
