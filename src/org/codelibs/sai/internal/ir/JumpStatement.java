@@ -30,6 +30,7 @@ import org.codelibs.sai.internal.codegen.Label;
 /**
  * Common base class for jump statements (e.g. {@code break} and {@code continue}).
  */
+@SuppressWarnings("serial")
 public abstract class JumpStatement extends Statement implements JoinPredecessor {
     private static final long serialVersionUID = 1L;
 

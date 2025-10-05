@@ -63,12 +63,14 @@ import org.codelibs.sai.internal.runtime.linker.SaiCallSiteDescriptor;
  * @since 1.8u40
  */
 public final class ScriptObjectMirror extends AbstractJSObject implements Bindings {
+    @SuppressWarnings("removal")
     private static AccessControlContext getContextAccCtxt() {
         final Permissions perms = new Permissions();
         perms.add(new RuntimePermission(Context.SAI_GET_CONTEXT));
         return new AccessControlContext(new ProtectionDomain[] { new ProtectionDomain(null, perms) });
     }
 
+    @SuppressWarnings("removal")
     private static final AccessControlContext GET_CONTEXT_ACC_CTXT = getContextAccCtxt();
 
     private final ScriptObject sobj;
@@ -162,6 +164,7 @@ public final class ScriptObjectMirror extends AbstractJSObject implements Bindin
     }
 
     @Override
+    @SuppressWarnings("removal")
     public Object eval(final String s) {
         return inGlobal(new Callable<Object>() {
             @Override

@@ -428,6 +428,7 @@ public class ClassEmitter {
      *
      * @return disassembly as human readable string
      */
+    @SuppressWarnings("removal")
     static String disassemble(final byte[] bytecode) {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (final PrintWriter pw = new PrintWriter(baos)) {

@@ -309,6 +309,7 @@ public class ParallelTestRunner {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private void suite() throws Exception {
         Locale.setDefault(new Locale(""));
         System.setOut(outputStream());

@@ -35,7 +35,7 @@
 	</scm>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<asm.version>7.1</asm.version>
+		<asm.version>9.7</asm.version>
 	</properties>
 	<build>
 		<plugins>
@@ -43,7 +43,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.14.0</version>
 				<configuration>
-					<release>11</release>
+					<release>21</release>
 					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>

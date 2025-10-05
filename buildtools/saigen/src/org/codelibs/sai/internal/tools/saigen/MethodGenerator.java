@@ -405,7 +405,7 @@ public class MethodGenerator extends MethodVisitor {
             push(pos++);
             visitTypeInsn(NEW, SPECIALIZATION_TYPE);
             dup();
-            visitLdcInsn(new Handle(H_INVOKESTATIC, className, mi.getJavaName(), mi.getJavaDesc()));
+            visitLdcInsn(new Handle(H_INVOKESTATIC, className, mi.getJavaName(), mi.getJavaDesc(), false));
             final Type    linkLogicClass = mi.getLinkLogicClass();
             final boolean linkLogic      = !linkLogicIsEmpty(linkLogicClass);
             final String  ctor           = linkLogic ? SPECIALIZATION_INIT3 : SPECIALIZATION_INIT2;

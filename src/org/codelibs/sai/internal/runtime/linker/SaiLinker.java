@@ -173,6 +173,7 @@ final class SaiLinker implements TypeBasedGuardingDynamicLinker, GuardingTypeCon
         return null;
     }
 
+    @SuppressWarnings("removal")
     private static java.lang.invoke.MethodHandles.Lookup getCurrentLookup() {
         final LinkRequest currentRequest = AccessController.doPrivileged(new PrivilegedAction<LinkRequest>() {
             @Override

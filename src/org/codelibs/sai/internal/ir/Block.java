@@ -42,6 +42,7 @@ import org.codelibs.sai.internal.ir.visitor.NodeVisitor;
  * IR representation for a list of statements.
  */
 @Immutable
+@SuppressWarnings("serial")
 public class Block extends Node implements BreakableNode, Terminal, Flags<Block> {
     private static final long serialVersionUID = 1L;
 
@@ -209,7 +210,7 @@ public class Block extends Node implements BreakableNode, Terminal, Flags<Block>
     }
 
     /**
-     * Test if this block represents a <tt>catch</tt> block in a <tt>try</tt> statement.
+     * Test if this block represents a <code>catch</code> block in a <code>try</code> statement.
      * This is used by the Splitter as catch blocks are not be subject to splitting.
      *
      * @return true if this block represents a catch block in a try statement.

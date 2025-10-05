@@ -27,8 +27,11 @@ package org.codelibs.sai.internal.runtime;
 
 import java.lang.invoke.MethodHandle;
 import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -116,7 +119,7 @@ public class ListAdapter extends AbstractList<Object> implements RandomAccess, D
     }
 
     @Override
-    public final Object get(final int index) {
+    public Object get(final int index) {
         checkRange(index);
         return getAt(index);
     }
@@ -412,5 +415,29 @@ public class ListAdapter extends AbstractList<Object> implements RandomAccess, D
 
     private MethodHandle getDynamicInvoker(final Object key, final Callable<MethodHandle> creator) {
         return global.getDynamicInvoker(key, creator);
+    }
+
+    /**
+     * Returns a reverse-ordered view of this list.
+     * This method resolves the conflict between List.reversed() and Deque.reversed()
+     * introduced in Java 21.
+     *
+     * @return a reverse-ordered view of this list
+     */
+    @Override
+    public ListAdapter reversed() {
+        final int size = size();
+        final ListAdapter parent = this;
+        return new ListAdapter(obj, global) {
+            @Override
+            public Object get(final int index) {
+                return parent.get(size - 1 - index);
+            }
+
+            @Override
+            public int size() {
+                return size;
+            }
+        };
     }
 }

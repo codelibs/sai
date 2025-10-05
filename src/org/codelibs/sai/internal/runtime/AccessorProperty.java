@@ -157,6 +157,7 @@ public class AccessorProperty extends Property {
      * @param property  accessor property to rebind
      * @param delegate  delegate object to rebind receiver to
      */
+    @SuppressWarnings("this-escape")
     AccessorProperty(final AccessorProperty property, final Object delegate) {
         super(property, property.getFlags() | IS_BOUND);
 
@@ -182,6 +183,7 @@ public class AccessorProperty extends Property {
      * @param objectGetter    object getter
      * @param objectSetter    object setter
      */
+    @SuppressWarnings("this-escape")
     protected AccessorProperty(final String key, final int flags, final int slot, final MethodHandle primitiveGetter,
             final MethodHandle primitiveSetter, final MethodHandle objectGetter, final MethodHandle objectSetter) {
         super(key, flags, slot);
@@ -206,6 +208,7 @@ public class AccessorProperty extends Property {
      * @param getter the property getter
      * @param setter the property setter or null if non writable, non configurable
      */
+    @SuppressWarnings("this-escape")
     private AccessorProperty(final String key, final int flags, final int slot, final MethodHandle getter, final MethodHandle setter) {
         super(key, flags | IS_BUILTIN | DUAL_FIELDS | (getter.type().returnType().isPrimitive() ? IS_NASGEN_PRIMITIVE : 0), slot);
         assert !isSpill();
@@ -249,6 +252,7 @@ public class AccessorProperty extends Property {
      * @param structure        structure for objects associated with this property
      * @param slot             property field number or spill slot
      */
+    @SuppressWarnings("this-escape")
     public AccessorProperty(final String key, final int flags, final Class<?> structure, final int slot) {
         super(key, flags, slot);
 
@@ -296,6 +300,7 @@ public class AccessorProperty extends Property {
      * @param owner        owner of property
      * @param initialValue initial value to which the property can be set
      */
+    @SuppressWarnings("this-escape")
     protected AccessorProperty(final String key, final int flags, final int slot, final ScriptObject owner, final Object initialValue) {
         this(key, flags, owner.getClass(), slot);
         setInitialValue(owner, initialValue);
@@ -311,6 +316,7 @@ public class AccessorProperty extends Property {
      * @param slot         field slot index
      * @param initialType  initial type of the property
      */
+    @SuppressWarnings("this-escape")
     public AccessorProperty(final String key, final int flags, final Class<?> structure, final int slot, final Class<?> initialType) {
         this(key, flags, structure, slot);
         setType(hasDualFields() ? initialType : Object.class);
@@ -323,6 +329,7 @@ public class AccessorProperty extends Property {
      * @param property property
      * @param newType  new type
      */
+    @SuppressWarnings("this-escape")
     protected AccessorProperty(final AccessorProperty property, final Class<?> newType) {
         super(property, property.getFlags());
 

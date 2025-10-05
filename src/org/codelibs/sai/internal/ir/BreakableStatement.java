@@ -32,6 +32,7 @@ import org.codelibs.sai.internal.codegen.Label;
 import org.codelibs.sai.internal.ir.annotations.Immutable;
 
 @Immutable
+@SuppressWarnings("serial")
 abstract class BreakableStatement extends LexicalContextStatement implements BreakableNode {
     private static final long serialVersionUID = 1L;
 

@@ -33,6 +33,7 @@ import java.util.Map;
 /**
  * Class representing a persistent compiled script.
  */
+@SuppressWarnings("serial")
 public final class StoredScript implements Serializable {
 
     /** Compilation id */

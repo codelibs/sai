@@ -105,6 +105,7 @@ public final class NativeDebug extends ScriptObject {
      * @param self self reference
      * @return context
      */
+    @SuppressWarnings("removal")
     @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
     public static Object getContext(final Object self) {
         final SecurityManager sm = System.getSecurityManager();

@@ -97,10 +97,13 @@ public class ClassLoaderGetterContextProvider {
      * Canonical instance of {@link AccessControlContext} with a single {@link RuntimePermission} for
      * {@code "getClassLoader"} permission.
      */
-    public static final AccessControlContext GET_CLASS_LOADER_CONTEXT;
-    static {
+    @SuppressWarnings("removal")
+    public static final AccessControlContext GET_CLASS_LOADER_CONTEXT = createContext();
+
+    @SuppressWarnings("removal")
+    private static AccessControlContext createContext() {
         final Permissions perms = new Permissions();
         perms.add(new RuntimePermission("getClassLoader"));
-        GET_CLASS_LOADER_CONTEXT = new AccessControlContext(new ProtectionDomain[] { new ProtectionDomain(null, perms) });
+        return new AccessControlContext(new ProtectionDomain[] { new ProtectionDomain(null, perms) });
     }
 }

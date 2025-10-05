@@ -54,6 +54,7 @@ import org.codelibs.sai.internal.runtime.linker.LinkerCallSite;
  * IR representation for function (or script.)
  */
 @Immutable
+@SuppressWarnings("serial")
 public final class FunctionNode extends LexicalContextExpression implements Flags<FunctionNode>, CompileUnitHolder {
     private static final long serialVersionUID = 1L;
 

@@ -20,6 +20,8 @@
 package org.codelibs.sai.internal.runtime.regexp.joni;
 
 /**
+ * Callback interface for handling warning messages in the Joni regular expression engine.
+ *
  * @author <a href="mailto:ola.bini@gmail.com">Ola Bini</a>
  */
 @SuppressWarnings("javadoc")

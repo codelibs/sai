@@ -875,8 +875,8 @@ public final class Source implements Loggable {
         path = path.substring(0, path.lastIndexOf('/') + 1);
         final int port = url.getPort();
         try {
-            return new URL(url.getProtocol(), url.getHost(), port, path).toString();
-        } catch (final MalformedURLException e) {
+            return new java.net.URI(url.getProtocol(), null, url.getHost(), port, path, null, null).toURL().toString();
+        } catch (final MalformedURLException | URISyntaxException e) {
             return null;
         }
     }

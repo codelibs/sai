@@ -81,9 +81,11 @@ import org.codelibs.sai.internal.runtime.ScriptObject;
 
 @SuppressWarnings("javadoc")
 public final class JavaAdapterFactory {
+    @SuppressWarnings("removal")
     private static final ProtectionDomain MINIMAL_PERMISSION_DOMAIN = createMinimalPermissionDomain();
 
     // context with permissions needs for AdapterInfo creation
+    @SuppressWarnings("removal")
     private static final AccessControlContext CREATE_ADAPTER_INFO_ACC_CTXT = ClassAndLoader.createPermAccCtxt("createClassLoader",
             "getClassLoader", "accessDeclaredMembers", "accessClassInPackage.org.codelibs.sai.internal.runtime");
 
@@ -138,6 +140,7 @@ public final class JavaAdapterFactory {
         return getAdapterClassFor(types, classOverrides, getProtectionDomain(lookup));
     }
 
+    @SuppressWarnings("removal")
     private static StaticClass getAdapterClassFor(final Class<?>[] types, final ScriptObject classOverrides,
             final ProtectionDomain protectionDomain) {
         assert types != null && types.length > 0;
@@ -153,6 +156,7 @@ public final class JavaAdapterFactory {
         return getAdapterInfo(types).getAdapterClass(classOverrides, protectionDomain);
     }
 
+    @SuppressWarnings("removal")
     private static ProtectionDomain getProtectionDomain(final MethodHandles.Lookup lookup) {
         if ((lookup.lookupModes() & Lookup.PRIVATE) == 0) {
             return MINIMAL_PERMISSION_DOMAIN;
@@ -160,6 +164,7 @@ public final class JavaAdapterFactory {
         return getProtectionDomain(lookup.lookupClass());
     }
 
+    @SuppressWarnings("removal")
     private static ProtectionDomain getProtectionDomain(final Class<?> clazz) {
         return AccessController.doPrivileged(new PrivilegedAction<ProtectionDomain>() {
             @Override
@@ -242,6 +247,7 @@ public final class JavaAdapterFactory {
       *
       * @return the adapter info for the class.
       */
+    @SuppressWarnings("removal")
     private static AdapterInfo createAdapterInfo(final Class<?>[] types, final ClassAndLoader definingClassAndLoader) {
         Class<?> superClass = null;
         final List<Class<?>> interfaces = new ArrayList<>(types.length);
@@ -377,6 +383,7 @@ public final class JavaAdapterFactory {
         }
     }
 
+    @SuppressWarnings("removal")
     private static ProtectionDomain createMinimalPermissionDomain() {
         // Generated classes need to have at least the permission to access Sai runtime and runtime.linker packages.
         final Permissions permissions = new Permissions();

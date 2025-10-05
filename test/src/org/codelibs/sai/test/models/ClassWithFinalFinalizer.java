@@ -25,7 +25,7 @@
 
 package org.codelibs.sai.test.models;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "removal"})
 public class ClassWithFinalFinalizer {
     @Override
     protected final void finalize() {

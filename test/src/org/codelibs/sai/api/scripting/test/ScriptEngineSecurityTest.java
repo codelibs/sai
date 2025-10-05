@@ -40,7 +40,7 @@ import org.testng.annotations.Test;
 /**
  * jsr223 tests for security access checks.
  */
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "removal", "deprecation"})
 public class ScriptEngineSecurityTest {
 
     private static void log(final String msg) {

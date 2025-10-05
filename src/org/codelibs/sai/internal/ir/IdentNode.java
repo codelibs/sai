@@ -40,6 +40,7 @@ import org.codelibs.sai.internal.parser.TokenType;
  * IR representation for an identifier.
  */
 @Immutable
+@SuppressWarnings("serial")
 public final class IdentNode extends Expression implements PropertyKey, FunctionCall, Optimistic, JoinPredecessor {
     private static final long serialVersionUID = 1L;
 

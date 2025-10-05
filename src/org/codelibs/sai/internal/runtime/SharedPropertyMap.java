@@ -38,6 +38,7 @@ import java.lang.invoke.SwitchPoint;
  * objects that the assumption of a single shared prototype map is no longer valid. The property map resulting
  * from the modification will no longer be an instance of this class.</p>
  */
+@SuppressWarnings("serial")
 public final class SharedPropertyMap extends PropertyMap {
 
     private SwitchPoint switchPoint;

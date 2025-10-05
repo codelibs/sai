@@ -134,6 +134,8 @@ public class LexicalContext {
     }
 
     /**
+     * Returns an iterator over all nodes in the LexicalContext.
+     *
      * @return all nodes in the LexicalContext.
      */
     public Iterator<LexicalContextNode> getAllNodes() {
@@ -189,6 +191,8 @@ public class LexicalContext {
     }
 
     /**
+     * Returns the number of elements in the lexical context.
+     *
      * @return the depth of the lexical context.
      */
     public int size() {
@@ -406,6 +410,8 @@ public class LexicalContext {
     }
 
     /**
+     * Returns the current (innermost) block in the lexical context.
+     *
      * @return the innermost block in the context.
      */
     public Block getCurrentBlock() {
@@ -413,6 +419,8 @@ public class LexicalContext {
     }
 
     /**
+     * Returns the current (innermost) function in the lexical context.
+     *
      * @return the innermost function in the context.
      */
     public FunctionNode getCurrentFunction() {
@@ -555,6 +563,8 @@ public class LexicalContext {
     }
 
     /**
+     * Returns the current loop node in the lexical context.
+     *
      * @return the loop header of the current loop, or {@code null} if not
      *         inside a loop.
      */

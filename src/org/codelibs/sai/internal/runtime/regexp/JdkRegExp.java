@@ -53,6 +53,7 @@ public class JdkRegExp extends RegExp {
      * @param flags RegExp flag string
      * @throws ParserException if flags is invalid or source string has syntax error.
      */
+    @SuppressWarnings("this-escape")
     public JdkRegExp(final String source, final String flags) throws ParserException {
         super(source, flags);
 

@@ -47,6 +47,7 @@ import org.codelibs.sai.internal.runtime.Undefined;
  * @param <T> the literal type
  */
 @Immutable
+@SuppressWarnings("serial")
 public abstract class LiteralNode<T> extends Expression implements PropertyKey {
     private static final long serialVersionUID = 1L;
 
@@ -260,6 +261,7 @@ public abstract class LiteralNode<T> extends Expression implements PropertyKey {
      *
      * @param <T> the literal type
      */
+    @SuppressWarnings("serial")
     public static class PrimitiveLiteralNode<T> extends LiteralNode<T> {
         private static final long serialVersionUID = 1L;
 
@@ -296,6 +298,7 @@ public abstract class LiteralNode<T> extends Expression implements PropertyKey {
     }
 
     @Immutable
+    @SuppressWarnings("serial")
     private static final class BooleanLiteralNode extends PrimitiveLiteralNode<Boolean> {
         private static final long serialVersionUID = 1L;
 
@@ -349,6 +352,7 @@ public abstract class LiteralNode<T> extends Expression implements PropertyKey {
     }
 
     @Immutable
+    @SuppressWarnings("serial")
     private static final class NumberLiteralNode extends PrimitiveLiteralNode<Number> {
         private static final long serialVersionUID = 1L;
 
@@ -412,6 +416,7 @@ public abstract class LiteralNode<T> extends Expression implements PropertyKey {
         return new NumberLiteralNode(parent.getToken(), parent.getFinish(), value);
     }
 
+    @SuppressWarnings("serial")
     private static class UndefinedLiteralNode extends PrimitiveLiteralNode<Undefined> {
         private static final long serialVersionUID = 1L;
 
@@ -450,6 +455,7 @@ public abstract class LiteralNode<T> extends Expression implements PropertyKey {
     }
 
     @Immutable
+    @SuppressWarnings("serial")
     private static class StringLiteralNode extends PrimitiveLiteralNode<String> {
         private static final long serialVersionUID = 1L;
 
@@ -495,6 +501,7 @@ public abstract class LiteralNode<T> extends Expression implements PropertyKey {
     }
 
     @Immutable
+    @SuppressWarnings("serial")
     private static class LexerTokenLiteralNode extends LiteralNode<LexerToken> {
         private static final long serialVersionUID = 1L;
 
@@ -569,6 +576,7 @@ public abstract class LiteralNode<T> extends Expression implements PropertyKey {
         return objectAsConstant(object) != POSTSET_MARKER;
     }
 
+    @SuppressWarnings("serial")
     private static final class NullLiteralNode extends PrimitiveLiteralNode<Object> {
         private static final long serialVersionUID = 1L;
 
@@ -600,6 +608,7 @@ public abstract class LiteralNode<T> extends Expression implements PropertyKey {
      * Array literal node class.
      */
     @Immutable
+    @SuppressWarnings("serial")
     public static final class ArrayLiteralNode extends LiteralNode<Expression[]> implements LexicalContextNode, Splittable {
         private static final long serialVersionUID = 1L;
 

@@ -167,6 +167,7 @@ public class TypeConverterFactory {
         }
     };
 
+    @SuppressWarnings("removal")
     private static final ClassLoader getClassLoader(final Class<?> clazz) {
         return AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
             @Override

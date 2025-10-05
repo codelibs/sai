@@ -81,6 +81,7 @@ import org.codelibs.sai.internal.runtime.options.Options;
  * unlike {@code FinalScriptFunctionData}
  */
 @Logger(name = "recompile")
+@SuppressWarnings("serial")
 public final class RecompilableScriptFunctionData extends ScriptFunctionData implements Loggable {
     /** Prefix used for all recompiled script classes */
     public static final String RECOMPILATION_PREFIX = "Recompilation$";

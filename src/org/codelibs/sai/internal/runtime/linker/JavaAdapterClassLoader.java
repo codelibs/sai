@@ -50,7 +50,9 @@ import org.codelibs.sai.internal.runtime.ScriptObject;
  * class are normally created by {@code JavaAdapterBytecodeGenerator}.
  */
 final class JavaAdapterClassLoader {
+    @SuppressWarnings("removal")
     private static final AccessControlContext CREATE_LOADER_ACC_CTXT = ClassAndLoader.createPermAccCtxt("createClassLoader");
+    @SuppressWarnings("removal")
     private static final AccessControlContext GET_CONTEXT_ACC_CTXT = ClassAndLoader.createPermAccCtxt(Context.SAI_GET_CONTEXT);
     private static final Collection<String> VISIBLE_INTERNAL_CLASS_NAMES = Collections.unmodifiableCollection(new HashSet<>(Arrays.asList(
             JavaAdapterServices.class.getName(), ScriptObject.class.getName(), ScriptFunction.class.getName(), JSType.class.getName())));
@@ -69,6 +71,7 @@ final class JavaAdapterClassLoader {
      * @param protectionDomain the protection domain for the generated class
      * @return the generated adapter class
      */
+    @SuppressWarnings("removal")
     StaticClass generateClass(final ClassLoader parentLoader, final ProtectionDomain protectionDomain) {
         assert protectionDomain != null;
         return AccessController.doPrivileged(new PrivilegedAction<StaticClass>() {
@@ -112,6 +115,7 @@ final class JavaAdapterClassLoader {
             }
 
             @Override
+            @SuppressWarnings("removal")
             protected Class<?> findClass(final String name) throws ClassNotFoundException {
                 if (name.equals(className)) {
                     assert classBytes != null : "what? already cleared .class bytes!!";

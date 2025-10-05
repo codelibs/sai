@@ -362,6 +362,7 @@ public class DynamicLinkerFactory {
                 internalObjectsFilter), prelinkFilter, runtimeContextArgCount, syncOnRelink, unstableRelinkThreshold);
     }
 
+    @SuppressWarnings("removal")
     private static ClassLoader getThreadContextClassLoader() {
         return AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
             @Override

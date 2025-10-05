@@ -85,6 +85,7 @@ public abstract class CodeStore implements Loggable {
      * @param context the current context
      * @return The instance, or null if code store could not be created
      */
+    @SuppressWarnings("removal")
     public static CodeStore newCodeStore(final Context context) {
         final Class<CodeStore> baseClass = CodeStore.class;
         try {
@@ -229,6 +230,7 @@ public abstract class CodeStore implements Loggable {
             this.minSize = minSize;
         }
 
+        @SuppressWarnings("removal")
         private static File checkDirectory(final String path, final ScriptEnvironment env, final boolean readOnly) throws IOException {
             try {
                 return AccessController.doPrivileged(new PrivilegedExceptionAction<File>() {
@@ -266,6 +268,7 @@ public abstract class CodeStore implements Loggable {
         }
 
         @Override
+        @SuppressWarnings("removal")
         public StoredScript load(final Source source, final String functionKey) {
             if (belowThreshold(source)) {
                 return null;
@@ -294,6 +297,7 @@ public abstract class CodeStore implements Loggable {
         }
 
         @Override
+        @SuppressWarnings("removal")
         public StoredScript store(final String functionKey, final Source source, final StoredScript script) {
             if (readOnly || script == null || belowThreshold(source)) {
                 return null;

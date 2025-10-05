@@ -23,11 +23,12 @@
  * questions.
  */
 
-package org.codelibs.sai.internal.objects;
-
 /**
+ * JavaScript object implementations for the Sai ECMAScript engine.
+ * <p>
  * Classes from this package should never be directly referred from
  * Sai runtime code. These classes can be referred by saigen though.
  * Runtime code should use (or extend) GlobalObject interface to access
  * Global object.
  */
+package org.codelibs.sai.internal.objects;

@@ -106,6 +106,12 @@ public class CallerSensitiveDetector {
 
     private static final DetectionStrategy DETECTION_STRATEGY = getDetectionStrategy();
 
+    /**
+     * Private constructor to prevent instantiation.
+     */
+    private CallerSensitiveDetector() {
+    }
+
     static boolean isCallerSensitive(final AccessibleObject ao) {
         return DETECTION_STRATEGY.isCallerSensitive(ao);
     }

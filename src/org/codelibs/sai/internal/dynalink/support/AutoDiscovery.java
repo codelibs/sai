@@ -92,7 +92,7 @@ import org.codelibs.sai.internal.dynalink.linker.GuardingDynamicLinker;
 
 /**
  * Provides methods for automatic discovery of all guarding dynamic linkers listed in the
- * <tt>/META-INF/services/org.codelibs.sai.internal.dynalink.linker.GuardingDynamicLinker</tt> resources of all JAR files for a
+ * <code>/META-INF/services/org.codelibs.sai.internal.dynalink.linker.GuardingDynamicLinker</code> resources of all JAR files for a
  * particular class loader. Ordinarily, you will not use this class directly, but you will use a
  * {@link DynamicLinkerFactory} instead.
  */

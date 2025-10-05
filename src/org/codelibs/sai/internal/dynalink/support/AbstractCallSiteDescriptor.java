@@ -95,6 +95,11 @@ import org.codelibs.sai.internal.dynalink.CallSiteDescriptor;
  * @author Attila Szegedi
  */
 public abstract class AbstractCallSiteDescriptor implements CallSiteDescriptor {
+    /**
+     * Creates a new abstract call site descriptor.
+     */
+    public AbstractCallSiteDescriptor() {
+    }
 
     @Override
     public String getName() {

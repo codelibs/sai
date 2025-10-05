@@ -46,6 +46,8 @@ import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.AccessControlContext;
 import java.security.AccessController;
@@ -201,6 +203,7 @@ public final class Context {
         }
 
         @Override
+        @SuppressWarnings("removal")
         public void initialize(final Collection<Class<?>> classes, final Source source, final Object[] constants) {
             try {
                 AccessController.doPrivileged(new PrivilegedExceptionAction<Void>() {
@@ -328,6 +331,7 @@ public final class Context {
      * Get context of the current global
      * @return current global scope's context.
      */
+    @SuppressWarnings("removal")
     public static Context getContext() {
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
@@ -399,35 +403,38 @@ public final class Context {
     private final ClassFilter classFilter;
 
     private static final ClassLoader myLoader = Context.class.getClassLoader();
-    /** Process-wide singleton structure loader */
-    private static final StructureLoader theStructLoader;
 
-    /*package-private*/@SuppressWarnings("static-method")
-    ClassLoader getStructLoader() {
-        return theStructLoader;
-    }
-
+    @SuppressWarnings("removal")
     private static AccessControlContext createNoPermAccCtxt() {
         return new AccessControlContext(new ProtectionDomain[] { new ProtectionDomain(null, new Permissions()) });
     }
 
+    @SuppressWarnings("removal")
     private static AccessControlContext createPermAccCtxt(final String permName) {
         final Permissions perms = new Permissions();
         perms.add(new RuntimePermission(permName));
         return new AccessControlContext(new ProtectionDomain[] { new ProtectionDomain(null, perms) });
     }
 
+    @SuppressWarnings("removal")
     private static final AccessControlContext NO_PERMISSIONS_ACC_CTXT = createNoPermAccCtxt();
+    @SuppressWarnings("removal")
     private static final AccessControlContext CREATE_LOADER_ACC_CTXT = createPermAccCtxt("createClassLoader");
+    @SuppressWarnings("removal")
     private static final AccessControlContext CREATE_GLOBAL_ACC_CTXT = createPermAccCtxt(SAI_CREATE_GLOBAL);
 
-    static {
-        theStructLoader = AccessController.doPrivileged(new PrivilegedAction<StructureLoader>() {
-            @Override
-            public StructureLoader run() {
-                return new StructureLoader(myLoader);
-            }
-        }, CREATE_LOADER_ACC_CTXT);
+    /** Process-wide singleton structure loader */
+    @SuppressWarnings("removal")
+    private static final StructureLoader theStructLoader = AccessController.doPrivileged(new PrivilegedAction<StructureLoader>() {
+        @Override
+        public StructureLoader run() {
+            return new StructureLoader(myLoader);
+        }
+    }, CREATE_LOADER_ACC_CTXT);
+
+    /*package-private*/@SuppressWarnings("static-method")
+    ClassLoader getStructLoader() {
+        return theStructLoader;
     }
 
     /**
@@ -492,6 +499,7 @@ public final class Context {
      * @param appLoader application class loader
      * @param classFilter class filter to use
      */
+    @SuppressWarnings("removal")
     public Context(final Options options, final ErrorManager errors, final PrintWriter out, final PrintWriter err,
             final ClassLoader appLoader, final ClassFilter classFilter) {
         final SecurityManager sm = System.getSecurityManager();
@@ -744,6 +752,7 @@ public final class Context {
         return new Scope(callerScope, PropertyMap.newMap(Scope.class));
     }
 
+    @SuppressWarnings("removal")
     private static Source loadInternal(final String srcStr, final String prefix, final String resourcePath) {
         if (srcStr.startsWith(prefix)) {
             final String resource = resourcePath + srcStr.substring(prefix.length());
@@ -795,8 +804,8 @@ public final class Context {
                         URL url;
                         try {
                             //check for malformed url. if malformed, it may still be a valid file
-                            url = new URL(srcStr);
-                        } catch (final MalformedURLException e) {
+                            url = new URI(srcStr).toURL();
+                        } catch (final MalformedURLException | URISyntaxException e) {
                             url = file.toURI().toURL();
                         }
                         source = sourceFor(url.toString(), url);
@@ -880,6 +889,7 @@ public final class Context {
      *
      * @throws IOException if source cannot be found or loaded
      */
+    @SuppressWarnings("removal")
     public Object loadWithNewGlobal(final Object from, final Object... args) throws IOException {
         final Global oldGlobal = getGlobal();
         final Global newGlobal = AccessController.doPrivileged(new PrivilegedAction<Global>() {
@@ -925,7 +935,7 @@ public final class Context {
      *
      * @throws ClassNotFoundException if structure class cannot be resolved
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "removal"})
     public static Class<? extends ScriptObject> forStructureClass(final String fullName) throws ClassNotFoundException {
         if (System.getSecurityManager() != null && !StructureLoader.isStructureClass(fullName)) {
             throw new ClassNotFoundException(fullName);
@@ -939,6 +949,7 @@ public final class Context {
      * @param clazz Class object
      * @throws SecurityException if not accessible
      */
+    @SuppressWarnings("removal")
     public static void checkPackageAccess(final Class<?> clazz) {
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
@@ -956,6 +967,7 @@ public final class Context {
      * @param pkgName package name
      * @throws SecurityException if not accessible
      */
+    @SuppressWarnings("removal")
     public static void checkPackageAccess(final String pkgName) {
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
@@ -970,6 +982,7 @@ public final class Context {
      * @param fullName fully qualified package name
      * @throw SecurityException if not accessible
      */
+    @SuppressWarnings("removal")
     private static void checkPackageAccess(final SecurityManager sm, final String fullName) {
         Objects.requireNonNull(sm);
         final int index = fullName.lastIndexOf('.');
@@ -1030,6 +1043,7 @@ public final class Context {
      *
      * @throws ClassNotFoundException if class cannot be resolved
      */
+    @SuppressWarnings("removal")
     public Class<?> findClass(final String fullName) throws ClassNotFoundException {
         if (fullName.indexOf('[') != -1 || fullName.indexOf('/') != -1) {
             // don't allow array class names or internal names.
@@ -1084,6 +1098,7 @@ public final class Context {
      *
      * @param bytecode bytecode to verify
      */
+    @SuppressWarnings("removal")
     public void verify(final byte[] bytecode) {
         if (env._verify_code) {
             // No verification when security manager is around as verifier
@@ -1326,6 +1341,7 @@ public final class Context {
         return script;
     }
 
+    @SuppressWarnings("removal")
     private ScriptLoader createNewLoader() {
         return AccessController.doPrivileged(new PrivilegedAction<ScriptLoader>() {
             @Override

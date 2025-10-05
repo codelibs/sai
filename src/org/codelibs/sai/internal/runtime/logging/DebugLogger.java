@@ -81,6 +81,7 @@ public final class DebugLogger {
         this.isEnabled = getLevel() != Level.OFF;
     }
 
+    @SuppressWarnings("removal")
     private static Logger instantiateLogger(final String name, final Level level) {
         final Logger logger = java.util.logging.Logger.getLogger(name);
         AccessController.doPrivileged(new PrivilegedAction<Void>() {
@@ -551,6 +552,7 @@ public final class DebugLogger {
      * Access control context for logger level and instantiation permissions
      * @return access control context
      */
+    @SuppressWarnings("removal")
     private static AccessControlContext createLoggerControlAccCtxt() {
         final Permissions perms = new Permissions();
         perms.add(new LoggingPermission("control", null));

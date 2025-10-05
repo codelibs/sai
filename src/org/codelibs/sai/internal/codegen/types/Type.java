@@ -129,7 +129,7 @@ public abstract class Type implements Comparable<Type>, BytecodeOps, Serializabl
     static final Call BOOTSTRAP = staticCallNoLookup(Bootstrap.class, "mathBootstrap", CallSite.class, MethodHandles.Lookup.class,
             String.class, MethodType.class, int.class);
 
-    static final Handle MATHBOOTSTRAP = new Handle(H_INVOKESTATIC, BOOTSTRAP.className(), "mathBootstrap", BOOTSTRAP.descriptor());
+    static final Handle MATHBOOTSTRAP = new Handle(H_INVOKESTATIC, BOOTSTRAP.className(), "mathBootstrap", BOOTSTRAP.descriptor(), false);
 
     /**
      * Constructor

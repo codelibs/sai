@@ -62,6 +62,7 @@ public class ExceptionsNotSerializable {
     }
 
     @Test
+    @SuppressWarnings("removal")
     public void unwarrantedOptimismExceptionNotSerializable() {
         tryToSerialize(new UnwarrantedOptimismException(new Double(1.0), 128));
     }

@@ -57,12 +57,14 @@ import org.codelibs.sai.internal.runtime.QuotedStringTokenizer;
  */
 public final class Options {
     // permission to just read sai.* System properties
+    @SuppressWarnings("removal")
     private static AccessControlContext createPropertyReadAccCtxt() {
         final Permissions perms = new Permissions();
         perms.add(new PropertyPermission("sai.*", "read"));
         return new AccessControlContext(new ProtectionDomain[] { new ProtectionDomain(null, perms) });
     }
 
+    @SuppressWarnings("removal")
     private static final AccessControlContext READ_PROPERTY_ACC_CTXT = createPropertyReadAccCtxt();
 
     /** Resource tag. */
@@ -150,6 +152,7 @@ public final class Options {
      * @param defValue default value of boolean property
      * @return true if set to true, default value if unset or set to false
      */
+    @SuppressWarnings("removal")
     public static boolean getBooleanProperty(final String name, final Boolean defValue) {
         checkPropertyName(name);
         return AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
@@ -186,6 +189,7 @@ public final class Options {
      * @param defValue the default value if unset
      * @return string property if set or default value
      */
+    @SuppressWarnings("removal")
     public static String getStringProperty(final String name, final String defValue) {
         checkPropertyName(name);
         return AccessController.doPrivileged(new PrivilegedAction<String>() {
@@ -208,6 +212,7 @@ public final class Options {
      * @param defValue the default value if unset
      * @return integer property if set or default value
      */
+    @SuppressWarnings("removal")
     public static int getIntProperty(final String name, final int defValue) {
         checkPropertyName(name);
         return AccessController.doPrivileged(new PrivilegedAction<Integer>() {

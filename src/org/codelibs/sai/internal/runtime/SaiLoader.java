@@ -28,6 +28,8 @@ package org.codelibs.sai.internal.runtime;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.CodeSource;
@@ -68,6 +70,7 @@ abstract class SaiLoader extends SecureClassLoader {
         super(parent);
     }
 
+    @SuppressWarnings("removal")
     protected static void checkPackageAccess(final String name) {
         final int i = name.lastIndexOf('.');
         if (i != -1) {
@@ -157,8 +160,8 @@ abstract class SaiLoader extends SecureClassLoader {
             name = name + "/";
         }
         try {
-            return new URL("file", "", name);
-        } catch (final MalformedURLException e) {
+            return new URI("file", "", name, null).toURL();
+        } catch (final MalformedURLException | URISyntaxException e) {
             throw new IllegalArgumentException("file");
         }
     }
