@@ -597,11 +597,9 @@ publishing {
             val isSnapshot = version.toString().endsWith("-SNAPSHOT")
 
             url = if (isSnapshot) {
-                // SNAPSHOT versions go to Maven Central snapshot repository
                 uri("https://central.sonatype.com/repository/maven-snapshots/")
             } else {
-                // Release versions go to Maven Central Portal Publisher API
-                uri("https://central.sonatype.com/api/v1/publisher")
+                uri("https://central.sonatype.com/api/v1/publish")
             }
 
             credentials {
