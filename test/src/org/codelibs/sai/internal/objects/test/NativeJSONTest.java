@@ -123,7 +123,7 @@ public class NativeJSONTest {
     public void testJSONParseWithReviver() throws ScriptException {
         // Test parse with reviver function
         Object result = engine.eval("var obj = JSON.parse('{\"a\":1,\"b\":2}', function(k,v){return typeof v === 'number' ? v * 2 : v;}); obj.a;");
-        assertEquals(result, 2);
+        assertEquals(((Number) result).intValue(), 2);
 
         // Test parse with reviver that filters
         result = engine.eval(

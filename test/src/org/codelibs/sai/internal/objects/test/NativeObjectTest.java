@@ -139,7 +139,7 @@ public class NativeObjectTest {
         Object result = engine.eval("var obj = {}; Object.defineProperties(obj, {"
                 + "a: {value: 1, writable: true, enumerable: true, configurable: true},"
                 + "b: {value: 2, writable: true, enumerable: true, configurable: true}" + "}); obj.a + obj.b;");
-        assertEquals(result, 3);
+        assertEquals(((Number) result).intValue(), 3);
     }
 
     @Test
@@ -361,10 +361,10 @@ public class NativeObjectTest {
     public void testObjectForInLoop() throws ScriptException {
         // Test for-in loop
         Object result = engine.eval("var obj = {a: 1, b: 2, c: 3}; var count = 0; for (var key in obj) count++; count;");
-        assertEquals(result, 3);
+        assertEquals(((Number) result).intValue(), 3);
 
         // Test for-in loop values
         result = engine.eval("var obj = {a: 1, b: 2}; var sum = 0; for (var key in obj) sum += obj[key]; sum;");
-        assertEquals(result, 3);
+        assertEquals(((Number) result).intValue(), 3);
     }
 }

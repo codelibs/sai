@@ -61,19 +61,19 @@ public class NativeDateTest {
 
         // Test Date constructor with milliseconds
         result = engine.eval("var d = new Date(0); d.getTime();");
-        assertEquals(result, 0);
+        assertEquals(((Number) result).intValue(), 0);
 
         // Test Date constructor with date string
         result = engine.eval("var d = new Date('2020-01-01'); d.getFullYear();");
-        assertEquals(result, 2020);
+        assertEquals(((Number) result).intValue(), 2020);
 
         // Test Date constructor with year, month
         result = engine.eval("var d = new Date(2020, 0); d.getFullYear();");
-        assertEquals(result, 2020);
+        assertEquals(((Number) result).intValue(), 2020);
 
         // Test Date constructor with year, month, day
         result = engine.eval("var d = new Date(2020, 0, 15); d.getDate();");
-        assertEquals(result, 15);
+        assertEquals(((Number) result).intValue(), 15);
     }
 
     @Test
@@ -114,7 +114,7 @@ public class NativeDateTest {
 
         // Test Date.UTC returns milliseconds
         result = engine.eval("Date.UTC(1970, 0, 1);");
-        assertEquals(result, 0);
+        assertEquals(((Number) result).intValue(), 0);
 
         // Test Date.UTC with full parameters
         result = engine.eval("typeof Date.UTC(2020, 0, 1, 12, 30, 45, 500);");
@@ -125,7 +125,7 @@ public class NativeDateTest {
     public void testGetTime() throws ScriptException {
         // Test getTime
         Object result = engine.eval("var d = new Date(1000); d.getTime();");
-        assertEquals(result, 1000);
+        assertEquals(((Number) result).intValue(), 1000);
 
         // Test getTime returns number
         result = engine.eval("typeof new Date().getTime();");
@@ -136,18 +136,18 @@ public class NativeDateTest {
     public void testSetTime() throws ScriptException {
         // Test setTime
         Object result = engine.eval("var d = new Date(); d.setTime(1000); d.getTime();");
-        assertEquals(result, 1000);
+        assertEquals(((Number) result).intValue(), 1000);
 
         // Test setTime returns timestamp
         result = engine.eval("var d = new Date(); d.setTime(2000);");
-        assertEquals(result, 2000);
+        assertEquals(((Number) result).intValue(), 2000);
     }
 
     @Test
     public void testGetFullYear() throws ScriptException {
         // Test getFullYear
         Object result = engine.eval("var d = new Date('2020-06-15'); d.getFullYear();");
-        assertEquals(result, 2020);
+        assertEquals(((Number) result).intValue(), 2020);
 
         // Test getFullYear returns number
         result = engine.eval("typeof new Date().getFullYear();");
@@ -158,55 +158,55 @@ public class NativeDateTest {
     public void testSetFullYear() throws ScriptException {
         // Test setFullYear
         Object result = engine.eval("var d = new Date('2020-06-15'); d.setFullYear(2021); d.getFullYear();");
-        assertEquals(result, 2021);
+        assertEquals(((Number) result).intValue(), 2021);
 
         // Test setFullYear with month and day
         result = engine.eval("var d = new Date(); d.setFullYear(2020, 5, 15); d.getFullYear();");
-        assertEquals(result, 2020);
+        assertEquals(((Number) result).intValue(), 2020);
     }
 
     @Test
     public void testGetMonth() throws ScriptException {
         // Test getMonth (0-based)
         Object result = engine.eval("var d = new Date('2020-06-15'); d.getMonth();");
-        assertEquals(result, 5); // June is month 5 (0-based)
+        assertEquals(((Number) result).intValue(), 5); // June is month 5 (0-based)
 
         // Test getMonth January
         result = engine.eval("var d = new Date('2020-01-15'); d.getMonth();");
-        assertEquals(result, 0);
+        assertEquals(((Number) result).intValue(), 0);
     }
 
     @Test
     public void testSetMonth() throws ScriptException {
         // Test setMonth
         Object result = engine.eval("var d = new Date('2020-01-15'); d.setMonth(5); d.getMonth();");
-        assertEquals(result, 5);
+        assertEquals(((Number) result).intValue(), 5);
 
         // Test setMonth with day
         result = engine.eval("var d = new Date('2020-01-15'); d.setMonth(5, 20); d.getDate();");
-        assertEquals(result, 20);
+        assertEquals(((Number) result).intValue(), 20);
     }
 
     @Test
     public void testGetDate() throws ScriptException {
         // Test getDate
         Object result = engine.eval("var d = new Date('2020-06-15'); d.getDate();");
-        assertEquals(result, 15);
+        assertEquals(((Number) result).intValue(), 15);
 
         // Test getDate first of month
         result = engine.eval("var d = new Date('2020-06-01'); d.getDate();");
-        assertEquals(result, 1);
+        assertEquals(((Number) result).intValue(), 1);
     }
 
     @Test
     public void testSetDate() throws ScriptException {
         // Test setDate
         Object result = engine.eval("var d = new Date('2020-06-15'); d.setDate(20); d.getDate();");
-        assertEquals(result, 20);
+        assertEquals(((Number) result).intValue(), 20);
 
         // Test setDate first of month
         result = engine.eval("var d = new Date('2020-06-15'); d.setDate(1); d.getDate();");
-        assertEquals(result, 1);
+        assertEquals(((Number) result).intValue(), 1);
     }
 
     @Test
@@ -224,7 +224,7 @@ public class NativeDateTest {
     public void testGetHours() throws ScriptException {
         // Test getHours
         Object result = engine.eval("var d = new Date(2020, 0, 1, 15, 30); d.getHours();");
-        assertEquals(result, 15);
+        assertEquals(((Number) result).intValue(), 15);
 
         // Test getHours returns number
         result = engine.eval("typeof new Date().getHours();");
@@ -235,18 +235,18 @@ public class NativeDateTest {
     public void testSetHours() throws ScriptException {
         // Test setHours
         Object result = engine.eval("var d = new Date(2020, 0, 1, 10, 30); d.setHours(15); d.getHours();");
-        assertEquals(result, 15);
+        assertEquals(((Number) result).intValue(), 15);
 
         // Test setHours with minutes, seconds, milliseconds
         result = engine.eval("var d = new Date(); d.setHours(15, 30, 45, 500); d.getHours();");
-        assertEquals(result, 15);
+        assertEquals(((Number) result).intValue(), 15);
     }
 
     @Test
     public void testGetMinutes() throws ScriptException {
         // Test getMinutes
         Object result = engine.eval("var d = new Date(2020, 0, 1, 15, 30); d.getMinutes();");
-        assertEquals(result, 30);
+        assertEquals(((Number) result).intValue(), 30);
 
         // Test getMinutes returns number
         result = engine.eval("typeof new Date().getMinutes();");
@@ -257,18 +257,18 @@ public class NativeDateTest {
     public void testSetMinutes() throws ScriptException {
         // Test setMinutes
         Object result = engine.eval("var d = new Date(2020, 0, 1, 15, 20); d.setMinutes(45); d.getMinutes();");
-        assertEquals(result, 45);
+        assertEquals(((Number) result).intValue(), 45);
 
         // Test setMinutes with seconds and milliseconds
         result = engine.eval("var d = new Date(); d.setMinutes(30, 45, 500); d.getMinutes();");
-        assertEquals(result, 30);
+        assertEquals(((Number) result).intValue(), 30);
     }
 
     @Test
     public void testGetSeconds() throws ScriptException {
         // Test getSeconds
         Object result = engine.eval("var d = new Date(2020, 0, 1, 15, 30, 45); d.getSeconds();");
-        assertEquals(result, 45);
+        assertEquals(((Number) result).intValue(), 45);
 
         // Test getSeconds returns number
         result = engine.eval("typeof new Date().getSeconds();");
@@ -279,18 +279,18 @@ public class NativeDateTest {
     public void testSetSeconds() throws ScriptException {
         // Test setSeconds
         Object result = engine.eval("var d = new Date(2020, 0, 1, 15, 30, 20); d.setSeconds(45); d.getSeconds();");
-        assertEquals(result, 45);
+        assertEquals(((Number) result).intValue(), 45);
 
         // Test setSeconds with milliseconds
         result = engine.eval("var d = new Date(); d.setSeconds(30, 500); d.getSeconds();");
-        assertEquals(result, 30);
+        assertEquals(((Number) result).intValue(), 30);
     }
 
     @Test
     public void testGetMilliseconds() throws ScriptException {
         // Test getMilliseconds
         Object result = engine.eval("var d = new Date(2020, 0, 1, 15, 30, 45, 500); d.getMilliseconds();");
-        assertEquals(result, 500);
+        assertEquals(((Number) result).intValue(), 500);
 
         // Test getMilliseconds returns number
         result = engine.eval("typeof new Date().getMilliseconds();");
@@ -301,7 +301,7 @@ public class NativeDateTest {
     public void testSetMilliseconds() throws ScriptException {
         // Test setMilliseconds
         Object result = engine.eval("var d = new Date(2020, 0, 1, 15, 30, 45, 100); d.setMilliseconds(500); d.getMilliseconds();");
-        assertEquals(result, 500);
+        assertEquals(((Number) result).intValue(), 500);
     }
 
     @Test

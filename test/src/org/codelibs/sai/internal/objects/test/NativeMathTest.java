@@ -112,76 +112,76 @@ public class NativeMathTest {
     public void testCeil() throws ScriptException {
         // Test ceil positive
         Object result = engine.eval("Math.ceil(4.3);");
-        assertEquals(result, 5);
+        assertEquals(((Number) result).intValue(), 5);
 
         // Test ceil negative
         result = engine.eval("Math.ceil(-4.3);");
-        assertEquals(result, -4);
+        assertEquals(((Number) result).intValue(), -4);
 
         // Test ceil integer
         result = engine.eval("Math.ceil(5);");
-        assertEquals(result, 5);
+        assertEquals(((Number) result).intValue(), 5);
 
         // Test ceil zero
         result = engine.eval("Math.ceil(0);");
-        assertEquals(result, 0);
+        assertEquals(((Number) result).intValue(), 0);
     }
 
     @Test
     public void testFloor() throws ScriptException {
         // Test floor positive
         Object result = engine.eval("Math.floor(4.7);");
-        assertEquals(result, 4);
+        assertEquals(((Number) result).intValue(), 4);
 
         // Test floor negative
         result = engine.eval("Math.floor(-4.3);");
-        assertEquals(result, -5);
+        assertEquals(((Number) result).intValue(), -5);
 
         // Test floor integer
         result = engine.eval("Math.floor(5);");
-        assertEquals(result, 5);
+        assertEquals(((Number) result).intValue(), 5);
 
         // Test floor zero
         result = engine.eval("Math.floor(0);");
-        assertEquals(result, 0);
+        assertEquals(((Number) result).intValue(), 0);
     }
 
     @Test
     public void testRound() throws ScriptException {
         // Test round up
         Object result = engine.eval("Math.round(4.6);");
-        assertEquals(result, 5);
+        assertEquals(((Number) result).intValue(), 5);
 
         // Test round down
         result = engine.eval("Math.round(4.4);");
-        assertEquals(result, 4);
+        assertEquals(((Number) result).intValue(), 4);
 
         // Test round half
         result = engine.eval("Math.round(4.5);");
-        assertEquals(result, 5);
+        assertEquals(((Number) result).intValue(), 5);
 
         // Test round negative
         result = engine.eval("Math.round(-4.6);");
-        assertEquals(result, -5);
+        assertEquals(((Number) result).intValue(), -5);
 
         // Test round zero
         result = engine.eval("Math.round(0);");
-        assertEquals(result, 0);
+        assertEquals(((Number) result).intValue(), 0);
     }
 
     @Test
     public void testMax() throws ScriptException {
         // Test max two values
         Object result = engine.eval("Math.max(5, 10);");
-        assertEquals(result, 10);
+        assertEquals(((Number) result).intValue(), 10);
 
         // Test max multiple values
         result = engine.eval("Math.max(1, 3, 2, 5, 4);");
-        assertEquals(result, 5);
+        assertEquals(((Number) result).intValue(), 5);
 
         // Test max single value
         result = engine.eval("Math.max(42);");
-        assertEquals(result, 42);
+        assertEquals(((Number) result).intValue(), 42);
 
         // Test max no values
         result = engine.eval("Math.max();");
@@ -189,22 +189,22 @@ public class NativeMathTest {
 
         // Test max with negative
         result = engine.eval("Math.max(-5, -10, -1);");
-        assertEquals(result, -1);
+        assertEquals(((Number) result).intValue(), -1);
     }
 
     @Test
     public void testMin() throws ScriptException {
         // Test min two values
         Object result = engine.eval("Math.min(5, 10);");
-        assertEquals(result, 5);
+        assertEquals(((Number) result).intValue(), 5);
 
         // Test min multiple values
         result = engine.eval("Math.min(1, 3, 2, 5, 4);");
-        assertEquals(result, 1);
+        assertEquals(((Number) result).intValue(), 1);
 
         // Test min single value
         result = engine.eval("Math.min(42);");
-        assertEquals(result, 42);
+        assertEquals(((Number) result).intValue(), 42);
 
         // Test min no values
         result = engine.eval("Math.min();");
@@ -212,7 +212,7 @@ public class NativeMathTest {
 
         // Test min with negative
         result = engine.eval("Math.min(-5, -10, -1);");
-        assertEquals(result, -10);
+        assertEquals(((Number) result).intValue(), -10);
     }
 
     @Test

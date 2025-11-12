@@ -86,19 +86,19 @@ public class NativeArrayTest {
     public void testPush() throws ScriptException {
         // Test push single element
         Object result = engine.eval("var arr = [1, 2]; arr.push(3); arr.length;");
-        assertEquals(result, 3);
+        assertEquals(((Number) result).intValue(), 3);
 
         // Test push multiple elements
         result = engine.eval("var arr = [1]; arr.push(2, 3, 4); arr.length;");
-        assertEquals(result, 4);
+        assertEquals(((Number) result).intValue(), 4);
 
         // Test push returns new length
         result = engine.eval("var arr = [1, 2]; arr.push(3);");
-        assertEquals(result, 3);
+        assertEquals(((Number) result).intValue(), 3);
 
         // Test array content after push
         result = engine.eval("var arr = [1, 2]; arr.push(3); arr[2];");
-        assertEquals(result, 3);
+        assertEquals(((Number) result).intValue(), 3);
     }
 
     @Test
@@ -143,19 +143,19 @@ public class NativeArrayTest {
     public void testUnshift() throws ScriptException {
         // Test unshift single element
         Object result = engine.eval("var arr = [2, 3]; arr.unshift(1); arr.length;");
-        assertEquals(result, 3);
+        assertEquals(((Number) result).intValue(), 3);
 
         // Test unshift multiple elements
         result = engine.eval("var arr = [3]; arr.unshift(1, 2); arr.length;");
-        assertEquals(result, 3);
+        assertEquals(((Number) result).intValue(), 3);
 
         // Test unshift returns new length
         result = engine.eval("var arr = [2, 3]; arr.unshift(1);");
-        assertEquals(result, 3);
+        assertEquals(((Number) result).intValue(), 3);
 
         // Test array content after unshift
         result = engine.eval("var arr = [2, 3]; arr.unshift(1); arr[0];");
-        assertEquals(result, 1);
+        assertEquals(((Number) result).intValue(), 1);
     }
 
     @Test
@@ -284,34 +284,34 @@ public class NativeArrayTest {
     public void testIndexOf() throws ScriptException {
         // Test indexOf found
         Object result = engine.eval("var arr = [1, 2, 3, 2, 1]; arr.indexOf(2);");
-        assertEquals(result, 1);
+        assertEquals(((Number) result).intValue(), 1);
 
         // Test indexOf not found
         result = engine.eval("var arr = [1, 2, 3]; arr.indexOf(5);");
-        assertEquals(result, -1);
+        assertEquals(((Number) result).intValue(), -1);
 
         // Test indexOf with fromIndex
         result = engine.eval("var arr = [1, 2, 3, 2, 1]; arr.indexOf(2, 2);");
-        assertEquals(result, 3);
+        assertEquals(((Number) result).intValue(), 3);
 
         // Test indexOf exact match (no type coercion)
         result = engine.eval("var arr = [1, 2, 3]; arr.indexOf('2');");
-        assertEquals(result, -1);
+        assertEquals(((Number) result).intValue(), -1);
     }
 
     @Test
     public void testLastIndexOf() throws ScriptException {
         // Test lastIndexOf found
         Object result = engine.eval("var arr = [1, 2, 3, 2, 1]; arr.lastIndexOf(2);");
-        assertEquals(result, 3);
+        assertEquals(((Number) result).intValue(), 3);
 
         // Test lastIndexOf not found
         result = engine.eval("var arr = [1, 2, 3]; arr.lastIndexOf(5);");
-        assertEquals(result, -1);
+        assertEquals(((Number) result).intValue(), -1);
 
         // Test lastIndexOf with fromIndex
         result = engine.eval("var arr = [1, 2, 3, 2, 1]; arr.lastIndexOf(2, 2);");
-        assertEquals(result, 1);
+        assertEquals(((Number) result).intValue(), 1);
     }
 
     @Test
@@ -348,7 +348,7 @@ public class NativeArrayTest {
     public void testForEach() throws ScriptException {
         // Test forEach executes callback
         Object result = engine.eval("var sum = 0; var arr = [1, 2, 3]; arr.forEach(function(x){sum += x;}); sum;");
-        assertEquals(result, 6);
+        assertEquals(((Number) result).intValue(), 6);
 
         // Test forEach with index
         result = engine.eval(
@@ -390,22 +390,22 @@ public class NativeArrayTest {
     public void testReduce() throws ScriptException {
         // Test reduce sum
         Object result = engine.eval("var arr = [1, 2, 3, 4, 5]; arr.reduce(function(acc, x){return acc + x;}, 0);");
-        assertEquals(result, 15);
+        assertEquals(((Number) result).intValue(), 15);
 
         // Test reduce without initial value
         result = engine.eval("var arr = [1, 2, 3, 4]; arr.reduce(function(acc, x){return acc + x;});");
-        assertEquals(result, 10);
+        assertEquals(((Number) result).intValue(), 10);
 
         // Test reduce max
         result = engine.eval("var arr = [1, 5, 3, 9, 2]; arr.reduce(function(max, x){return x > max ? x : max;});");
-        assertEquals(result, 9);
+        assertEquals(((Number) result).intValue(), 9);
     }
 
     @Test
     public void testReduceRight() throws ScriptException {
         // Test reduceRight
         Object result = engine.eval("var arr = [1, 2, 3, 4]; arr.reduceRight(function(acc, x){return acc - x;}, 0);");
-        assertEquals(result, -10);
+        assertEquals(((Number) result).intValue(), -10);
 
         // Test reduceRight order
         result = engine.eval("var arr = ['a', 'b', 'c']; arr.reduceRight(function(acc, x){return acc + x;}, '');");

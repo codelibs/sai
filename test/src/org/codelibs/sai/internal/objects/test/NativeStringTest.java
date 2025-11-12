@@ -91,11 +91,11 @@ public class NativeStringTest {
     public void testCharCodeAt() throws ScriptException {
         // Test charCodeAt
         Object result = engine.eval("'hello'.charCodeAt(0);");
-        assertEquals(result, 104); // 'h'
+        assertEquals(((Number) result).intValue(), 104); // 'h'
 
         // Test charCodeAt various positions
         result = engine.eval("'ABC'.charCodeAt(0);");
-        assertEquals(result, 65); // 'A'
+        assertEquals(((Number) result).intValue(), 65); // 'A'
 
         // Test charCodeAt out of bounds returns NaN
         result = engine.eval("isNaN('hello'.charCodeAt(10));");
