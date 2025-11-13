@@ -293,7 +293,7 @@ public class PropertyMapTest {
 
         // Test hasOwnProperty with undefined value
         result = engine.eval("var obj = {x: undefined}; obj.hasOwnProperty('x');");
-        assertEquals((Boolean) result, true);
+        assertTrue((Boolean) result);
     }
 
     @Test
@@ -304,7 +304,7 @@ public class PropertyMapTest {
 
         // Test hasOwnProperty with null value
         result = engine.eval("var obj = {x: null}; obj.hasOwnProperty('x');");
-        assertEquals((Boolean) result, true);
+        assertTrue((Boolean) result);
     }
 
     @Test
