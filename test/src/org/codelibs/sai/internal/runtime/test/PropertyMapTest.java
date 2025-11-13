@@ -58,37 +58,37 @@ public class PropertyMapTest {
     public void testPropertyAddition() throws ScriptException {
         // Test adding properties to object
         Object result = engine.eval("var obj = {}; obj.a = 1; obj.b = 2; obj.c = 3; obj.a;");
-        assertEquals(result, 1);
+        assertEquals(((Number) result).intValue(), 1);
 
         // Test property count
         result = engine.eval("var obj = {}; obj.a = 1; obj.b = 2; Object.keys(obj).length;");
-        assertEquals(result, 2);
+        assertEquals(((Number) result).intValue(), 2);
     }
 
     @Test
     public void testPropertyAccess() throws ScriptException {
         // Test dot notation access
         Object result = engine.eval("var obj = {x: 10, y: 20}; obj.x;");
-        assertEquals(result, 10);
+        assertEquals(((Number) result).intValue(), 10);
 
         // Test bracket notation access
         result = engine.eval("var obj = {x: 10, y: 20}; obj['y'];");
-        assertEquals(result, 20);
+        assertEquals(((Number) result).intValue(), 20);
 
         // Test dynamic property access
         result = engine.eval("var obj = {x: 10, y: 20}; var key = 'x'; obj[key];");
-        assertEquals(result, 10);
+        assertEquals(((Number) result).intValue(), 10);
     }
 
     @Test
     public void testPropertyUpdate() throws ScriptException {
         // Test property update
         Object result = engine.eval("var obj = {x: 10}; obj.x = 20; obj.x;");
-        assertEquals(result, 20);
+        assertEquals(((Number) result).intValue(), 20);
 
         // Test multiple updates
         result = engine.eval("var obj = {x: 10}; obj.x = 20; obj.x = 30; obj.x;");
-        assertEquals(result, 30);
+        assertEquals(((Number) result).intValue(), 30);
     }
 
     @Test
@@ -99,7 +99,7 @@ public class PropertyMapTest {
 
         // Test deletion reduces property count
         result = engine.eval("var obj = {x: 10, y: 20}; delete obj.x; Object.keys(obj).length;");
-        assertEquals(result, 1);
+        assertEquals(((Number) result).intValue(), 1);
 
         // Test deletion returns true
         result = engine.eval("var obj = {x: 10}; delete obj.x;");
@@ -110,11 +110,11 @@ public class PropertyMapTest {
     public void testPropertyEnumeration() throws ScriptException {
         // Test for-in loop
         Object result = engine.eval("var obj = {a: 1, b: 2, c: 3}; var count = 0; for (var k in obj) count++; count;");
-        assertEquals(result, 3);
+        assertEquals(((Number) result).intValue(), 3);
 
         // Test Object.keys
         result = engine.eval("var obj = {a: 1, b: 2, c: 3}; Object.keys(obj).length;");
-        assertEquals(result, 3);
+        assertEquals(((Number) result).intValue(), 3);
 
         // Test property order
         result = engine.eval("var obj = {a: 1, b: 2, c: 3}; Object.keys(obj)[0];");
@@ -125,21 +125,21 @@ public class PropertyMapTest {
     public void testPropertyDescriptors() throws ScriptException {
         // Test writable property
         Object result = engine.eval("var obj = {}; Object.defineProperty(obj, 'x', {value: 10, writable: true}); obj.x = 20; obj.x;");
-        assertEquals(result, 20);
+        assertEquals(((Number) result).intValue(), 20);
 
         // Test non-writable property
         result = engine.eval("var obj = {}; Object.defineProperty(obj, 'x', {value: 10, writable: false}); obj.x = 20; obj.x;");
-        assertEquals(result, 10);
+        assertEquals(((Number) result).intValue(), 10);
 
         // Test enumerable property
         result = engine.eval(
                 "var obj = {}; Object.defineProperty(obj, 'x', {value: 10, enumerable: true}); Object.keys(obj).length;");
-        assertEquals(result, 1);
+        assertEquals(((Number) result).intValue(), 1);
 
         // Test non-enumerable property
         result = engine.eval(
                 "var obj = {}; Object.defineProperty(obj, 'x', {value: 10, enumerable: false}); Object.keys(obj).length;");
-        assertEquals(result, 0);
+        assertEquals(((Number) result).intValue(), 0);
     }
 
     @Test
@@ -152,18 +152,18 @@ public class PropertyMapTest {
         // Test non-configurable property cannot be deleted
         result = engine.eval(
                 "var obj = {}; Object.defineProperty(obj, 'x', {value: 10, configurable: false}); delete obj.x; obj.x;");
-        assertEquals(result, 10);
+        assertEquals(((Number) result).intValue(), 10);
     }
 
     @Test
     public void testPropertyInheritance() throws ScriptException {
         // Test prototype property access
         Object result = engine.eval("var proto = {x: 10}; var obj = Object.create(proto); obj.x;");
-        assertEquals(result, 10);
+        assertEquals(((Number) result).intValue(), 10);
 
         // Test own property shadows prototype
         result = engine.eval("var proto = {x: 10}; var obj = Object.create(proto); obj.x = 20; obj.x;");
-        assertEquals(result, 20);
+        assertEquals(((Number) result).intValue(), 20);
 
         // Test hasOwnProperty
         result = engine.eval("var proto = {x: 10}; var obj = Object.create(proto); obj.hasOwnProperty('x');");
@@ -178,22 +178,22 @@ public class PropertyMapTest {
     public void testPropertyWithGetter() throws ScriptException {
         // Test getter property
         Object result = engine.eval("var obj = {get x() { return 42; }}; obj.x;");
-        assertEquals(result, 42);
+        assertEquals(((Number) result).intValue(), 42);
 
         // Test getter with computation
         result = engine.eval("var obj = {y: 10, get x() { return this.y * 2; }}; obj.x;");
-        assertEquals(result, 20);
+        assertEquals(((Number) result).intValue(), 20);
     }
 
     @Test
     public void testPropertyWithSetter() throws ScriptException {
         // Test setter property
         Object result = engine.eval("var obj = {_x: 0, set x(v) { this._x = v * 2; }}; obj.x = 10; obj._x;");
-        assertEquals(result, 20);
+        assertEquals(((Number) result).intValue(), 20);
 
         // Test getter and setter
         result = engine.eval("var obj = {_x: 0, get x() { return this._x; }, set x(v) { this._x = v; }}; obj.x = 10; obj.x;");
-        assertEquals(result, 10);
+        assertEquals(((Number) result).intValue(), 10);
     }
 
     @Test
@@ -231,43 +231,43 @@ public class PropertyMapTest {
 
         // Test computed property names
         result = engine.eval("var key = 'dynamic'; var obj = {}; obj[key] = 10; obj.dynamic;");
-        assertEquals(result, 10);
+        assertEquals(((Number) result).intValue(), 10);
     }
 
     @Test
     public void testPropertyMapSharing() throws ScriptException {
         // Test objects with same structure share property map (implicit test)
         Object result = engine.eval("var obj1 = {x: 1, y: 2}; var obj2 = {x: 3, y: 4}; obj1.x + obj2.x;");
-        assertEquals(result, 4);
+        assertEquals(((Number) result).intValue(), 4);
     }
 
     @Test
     public void testPropertyMapTransitions() throws ScriptException {
         // Test property map transitions when adding properties
         Object result = engine.eval("var obj = {}; obj.a = 1; obj.b = 2; obj.c = 3; Object.keys(obj).length;");
-        assertEquals(result, 3);
+        assertEquals(((Number) result).intValue(), 3);
 
         // Test property map transitions when deleting properties
         result = engine.eval("var obj = {a: 1, b: 2, c: 3}; delete obj.b; Object.keys(obj).length;");
-        assertEquals(result, 2);
+        assertEquals(((Number) result).intValue(), 2);
     }
 
     @Test
     public void testManyProperties() throws ScriptException {
         // Test object with many properties
         Object result = engine.eval("var obj = {}; for (var i = 0; i < 100; i++) obj['p' + i] = i; obj.p50;");
-        assertEquals(result, 50);
+        assertEquals(((Number) result).intValue(), 50);
 
         // Test property count
         result = engine.eval("var obj = {}; for (var i = 0; i < 100; i++) obj['p' + i] = i; Object.keys(obj).length;");
-        assertEquals(result, 100);
+        assertEquals(((Number) result).intValue(), 100);
     }
 
     @Test
     public void testPropertyOverwrite() throws ScriptException {
         // Test property overwrite
         Object result = engine.eval("var obj = {x: 1}; obj.x = 2; obj.x = 3; obj.x;");
-        assertEquals(result, 3);
+        assertEquals(((Number) result).intValue(), 3);
 
         // Test type change
         result = engine.eval("var obj = {x: 1}; obj.x = 'string'; obj.x;");
@@ -293,7 +293,7 @@ public class PropertyMapTest {
 
         // Test hasOwnProperty with undefined value
         result = engine.eval("var obj = {x: undefined}; obj.hasOwnProperty('x');");
-        assertEquals(result, true);
+        assertEquals((Boolean) result, true);
     }
 
     @Test
@@ -304,7 +304,7 @@ public class PropertyMapTest {
 
         // Test hasOwnProperty with null value
         result = engine.eval("var obj = {x: null}; obj.hasOwnProperty('x');");
-        assertEquals(result, true);
+        assertEquals((Boolean) result, true);
     }
 
     @Test
@@ -326,6 +326,6 @@ public class PropertyMapTest {
     public void testObjectLiteralShorthand() throws ScriptException {
         // Test property value shorthand (ES6 feature check)
         Object result = engine.eval("var x = 10; var obj = {x: x}; obj.x;");
-        assertEquals(result, 10);
+        assertEquals(((Number) result).intValue(), 10);
     }
 }
