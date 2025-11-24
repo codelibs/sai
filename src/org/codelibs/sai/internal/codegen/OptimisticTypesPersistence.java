@@ -116,6 +116,12 @@ public final class OptimisticTypesPersistence {
         } else {
             scheduledCleanup = new AtomicBoolean();
             cleanupTimer = new Timer(true);
+            // Register shutdown hook to cancel timer and prevent resource leaks
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                if (cleanupTimer != null) {
+                    cleanupTimer.cancel();
+                }
+            }, "OptimisticTypesPersistence-Cleanup"));
         }
     }
 

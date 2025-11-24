@@ -93,7 +93,7 @@ public final class ConsString implements CharSequence {
         return new CharSequence[] { left, right };
     }
 
-    private CharSequence flattened(final boolean flattenNested) {
+    private synchronized CharSequence flattened(final boolean flattenNested) {
         if (state != STATE_FLATTENED) {
             flatten(flattenNested);
         }

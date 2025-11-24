@@ -303,10 +303,13 @@ public final class Context {
      * @param global the global scope
      */
     public static void setGlobal(final ScriptObject global) {
-        if (global != null && !(global instanceof Global)) {
+        if (global == null) {
+            setGlobal((Global) null);
+        } else if (!(global instanceof Global)) {
             throw new IllegalArgumentException("not a global!");
+        } else {
+            setGlobal((Global) global);
         }
-        setGlobal((Global) global);
     }
 
     /**
