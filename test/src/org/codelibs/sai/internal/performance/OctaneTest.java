@@ -117,7 +117,7 @@ public class OctaneTest {
         public void zlibTest() {
             genericTest("zlib");
         }/*/
-    public void genericTest(final String benchmark) {
+    private void genericTest(final String benchmark) {
         try {
             final String mainScript = "test/script/basic/run-octane.js";
             final String benchmarkScript = "test/script/external/octane/benchmarks/" + benchmark.toLowerCase() + ".js";
@@ -145,7 +145,7 @@ public class OctaneTest {
         }
     }
 
-    public Double genericSaiTest(final String benchmark, final String testPath, final String[] args) throws Throwable {
+    private Double genericSaiTest(final String benchmark, final String testPath, final String[] args) throws Throwable {
         try {
             final PerformanceWrapper wrapper = new PerformanceWrapper();
 
@@ -172,7 +172,7 @@ public class OctaneTest {
     }
 
     @SuppressWarnings("deprecation")
-    public Double genericRhinoTest(final String benchmark, final String[] testPath, final String jarPath) throws Throwable {
+    private Double genericRhinoTest(final String benchmark, final String[] testPath, final String jarPath) throws Throwable {
 
         final PrintStream systemOut = System.out;
 
@@ -203,7 +203,7 @@ public class OctaneTest {
     }
 
     @SuppressWarnings("deprecation")
-    public Double genericV8Test(final String benchmark, final String testPath) throws Throwable {
+    private Double genericV8Test(final String benchmark, final String testPath) throws Throwable {
 
         System.out.println("genericV8Test");
         if (!checkV8Presence()) {
@@ -231,7 +231,7 @@ public class OctaneTest {
         }
     }
 
-    protected List<String> outputToStrings(final byte[] output) throws IOException {
+    private List<String> outputToStrings(final byte[] output) throws IOException {
         final ByteArrayInputStream bais = new ByteArrayInputStream(output);
         final InputStreamReader reader = new InputStreamReader(bais);
         final BufferedReader bufReader = new BufferedReader(reader);
@@ -242,7 +242,7 @@ public class OctaneTest {
         return list;
     }
 
-    protected Double filterBenchmark(final List<String> output, final String benchmarkName) throws Exception {
+    private Double filterBenchmark(final List<String> output, final String benchmarkName) throws Exception {
         Double currentScore = 0.;
         for (final String s : output) {
             //if (s.trim().startsWith(benchmarkName)) {
@@ -267,7 +267,7 @@ public class OctaneTest {
         return currentScore;
     }
 
-    void generateOutput(final String benchmark, final Double sai, final Double rhino, final Double v8) throws Exception {
+    private void generateOutput(final String benchmark, final Double sai, final Double rhino, final Double v8) throws Exception {
         Double saiToRhino = null;
         Double saiToV8 = null;
         if (rhino != null && rhino != 0) {
@@ -299,7 +299,7 @@ public class OctaneTest {
         }
     }
 
-    boolean checkRhinoPresence() {
+    private boolean checkRhinoPresence() {
         final String rhinojar = System.getProperty("rhino.jar");
         if (rhinojar != null) {
             // System.out.println("Rhino jar found; performing comparison testing");
@@ -308,7 +308,7 @@ public class OctaneTest {
         return false;
     }
 
-    boolean checkV8Presence() {
+    private boolean checkV8Presence() {
         final String v8shell = System.getProperty("v8.shell.full.path");
         if (v8shell != null) {
             // System.out.println("d8 found; performing comparison testing");
