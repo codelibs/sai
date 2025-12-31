@@ -32,7 +32,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * These tests verify that concurrent operations on ConsString do not cause
  * race conditions or data corruption.
  */
-@Test
 public class ConsStringThreadSafetyTest {
 
     /**

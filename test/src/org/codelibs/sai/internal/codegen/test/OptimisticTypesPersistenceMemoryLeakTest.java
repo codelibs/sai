@@ -27,7 +27,6 @@ import java.lang.management.ThreadMXBean;
  * These tests verify that the shutdown hook properly cancels the cleanup timer
  * and prevents timer thread leaks.
  */
-@Test
 public class OptimisticTypesPersistenceMemoryLeakTest {
 
     /**

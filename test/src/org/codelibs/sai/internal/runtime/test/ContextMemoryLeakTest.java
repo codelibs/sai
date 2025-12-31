@@ -32,7 +32,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * These tests verify that ThreadLocal usage does not cause memory leaks
  * when threads are created and destroyed.
  */
-@Test
 public class ContextMemoryLeakTest {
 
     /**
