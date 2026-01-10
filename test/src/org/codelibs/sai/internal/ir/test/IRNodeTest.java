@@ -301,11 +301,11 @@ public class IRNodeTest {
     public void testLiteralNodeGetNumber() {
         final LiteralNode<?> intLiteral = LiteralNode.newInstance(
                 Token.toDesc(TokenType.DECIMAL, 0, 2), 2, 42);
-        assertEquals(intLiteral.getNumber().intValue(), 42);
+        assertEquals(intLiteral.getNumber(), 42.0, 0.0);
 
         final LiteralNode<?> floatLiteral = LiteralNode.newInstance(
                 Token.toDesc(TokenType.FLOATING, 0, 4), 4, 3.14);
-        assertEquals(floatLiteral.getNumber().doubleValue(), 3.14, 0.001);
+        assertEquals(floatLiteral.getNumber(), 3.14, 0.001);
     }
 
     @Test
