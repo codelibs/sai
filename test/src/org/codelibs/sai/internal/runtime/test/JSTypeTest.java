@@ -85,8 +85,81 @@ public class JSTypeTest {
         assertEquals(JSType.toNumber(Boolean.TRUE), 1.0, 0.0);
         assertEquals(JSType.toNumber(Boolean.FALSE), 0.0, 0.0);
         assertEquals(JSType.toNumber(3.14), 3.14, 0.0);
-        // FIXME: add more assertions for specific String to number cases
-        // FIXME: add case for Object type (JSObject with getDefaultValue)
+    }
+
+    /**
+     * Test of toNumber with String input - covers various string to number conversions.
+     */
+    @Test
+    public void testToNumber_String() {
+        // Empty string should be 0
+        assertEquals(JSType.toNumber(""), 0.0, 0.0);
+
+        // Whitespace only should be 0
+        assertEquals(JSType.toNumber("   "), 0.0, 0.0);
+        assertEquals(JSType.toNumber("\t\n"), 0.0, 0.0);
+
+        // Integer strings
+        assertEquals(JSType.toNumber("42"), 42.0, 0.0);
+        assertEquals(JSType.toNumber("-42"), -42.0, 0.0);
+        assertEquals(JSType.toNumber("+42"), 42.0, 0.0);
+
+        // Floating point strings
+        assertEquals(JSType.toNumber("3.14"), 3.14, 0.0001);
+        assertEquals(JSType.toNumber("-3.14"), -3.14, 0.0001);
+        assertEquals(JSType.toNumber(".5"), 0.5, 0.0);
+        assertEquals(JSType.toNumber("-.5"), -0.5, 0.0);
+
+        // Scientific notation
+        assertEquals(JSType.toNumber("1e10"), 1e10, 0.0);
+        assertEquals(JSType.toNumber("1E10"), 1E10, 0.0);
+        assertEquals(JSType.toNumber("1e-10"), 1e-10, 0.0);
+        assertEquals(JSType.toNumber("2.5e3"), 2500.0, 0.0);
+
+        // Hexadecimal
+        assertEquals(JSType.toNumber("0x10"), 16.0, 0.0);
+        assertEquals(JSType.toNumber("0X10"), 16.0, 0.0);
+        assertEquals(JSType.toNumber("0xFF"), 255.0, 0.0);
+        assertEquals(JSType.toNumber("0x0"), 0.0, 0.0);
+
+        // Octal (ES5 strict mode does not support octal literals, but legacy support)
+        assertEquals(JSType.toNumber("010"), 10.0, 0.0); // Treated as decimal in ES5
+
+        // Infinity
+        assertEquals(JSType.toNumber("Infinity"), Double.POSITIVE_INFINITY, 0.0);
+        assertEquals(JSType.toNumber("-Infinity"), Double.NEGATIVE_INFINITY, 0.0);
+        assertEquals(JSType.toNumber("+Infinity"), Double.POSITIVE_INFINITY, 0.0);
+
+        // NaN cases
+        assertTrue(Double.isNaN(JSType.toNumber("NaN")));
+        assertTrue(Double.isNaN(JSType.toNumber("hello")));
+        assertTrue(Double.isNaN(JSType.toNumber("12abc")));
+        assertTrue(Double.isNaN(JSType.toNumber("abc12")));
+
+        // Strings with leading/trailing whitespace
+        assertEquals(JSType.toNumber("  42  "), 42.0, 0.0);
+        assertEquals(JSType.toNumber("\t42\n"), 42.0, 0.0);
+    }
+
+    /**
+     * Test of toNumber with special double values.
+     */
+    @Test
+    public void testToNumber_SpecialDoubles() {
+        // Positive and negative zero
+        assertEquals(JSType.toNumber(0.0), 0.0, 0.0);
+        assertEquals(JSType.toNumber(-0.0), -0.0, 0.0);
+
+        // Infinity
+        assertEquals(JSType.toNumber(Double.POSITIVE_INFINITY), Double.POSITIVE_INFINITY, 0.0);
+        assertEquals(JSType.toNumber(Double.NEGATIVE_INFINITY), Double.NEGATIVE_INFINITY, 0.0);
+
+        // NaN
+        assertTrue(Double.isNaN(JSType.toNumber(Double.NaN)));
+
+        // Max and min values
+        assertEquals(JSType.toNumber(Double.MAX_VALUE), Double.MAX_VALUE, 0.0);
+        assertEquals(JSType.toNumber(Double.MIN_VALUE), Double.MIN_VALUE, 0.0);
     }
 
     /**
@@ -104,8 +177,127 @@ public class JSTypeTest {
         assertEquals(JSType.toString(Double.POSITIVE_INFINITY), "Infinity");
         assertEquals(JSType.toString(Double.NEGATIVE_INFINITY), "-Infinity");
         assertEquals(JSType.toString(0.0), "0");
-        // FIXME: add more number-to-string test cases
-        // FIXME: add case for Object type (JSObject with getDefaultValue)
+    }
+
+    /**
+     * Test of toString with various number types.
+     */
+    @Test
+    public void testToString_Numbers() {
+        // Integers
+        assertEquals(JSType.toString(1), "1");
+        assertEquals(JSType.toString(42), "42");
+        assertEquals(JSType.toString(-42), "-42");
+        assertEquals(JSType.toString(0), "0");
+
+        // Negative zero
+        assertEquals(JSType.toString(-0.0), "0");
+
+        // Large integers
+        assertEquals(JSType.toString(1000000), "1000000");
+        assertEquals(JSType.toString(Integer.MAX_VALUE), String.valueOf(Integer.MAX_VALUE));
+        assertEquals(JSType.toString(Integer.MIN_VALUE), String.valueOf(Integer.MIN_VALUE));
+
+        // Floating point
+        assertEquals(JSType.toString(3.14), "3.14");
+        assertEquals(JSType.toString(-3.14), "-3.14");
+        assertEquals(JSType.toString(0.5), "0.5");
+        assertEquals(JSType.toString(0.1), "0.1");
+
+        // Very small numbers use exponential notation
+        assertEquals(JSType.toString(1e-7), "1e-7");
+        assertEquals(JSType.toString(0.0000001), "1e-7");
+
+        // Very large numbers use exponential notation
+        assertEquals(JSType.toString(1e20), "100000000000000000000");
+        assertEquals(JSType.toString(1e21), "1e+21");
+
+        // Integer-valued doubles
+        assertEquals(JSType.toString(1.0), "1");
+        assertEquals(JSType.toString(42.0), "42");
+        assertEquals(JSType.toString(100.0), "100");
+    }
+
+    /**
+     * Test of toString with Long values.
+     * Note: Long values go through toString(Object) which converts to double first.
+     */
+    @Test
+    public void testToString_Long() {
+        assertEquals(JSType.toString(1L), "1");
+        assertEquals(JSType.toString(42L), "42");
+        assertEquals(JSType.toString(-42L), "-42");
+        assertEquals(JSType.toString(0L), "0");
+        // Large longs lose precision when converted to double
+        assertEquals(JSType.toString(1000000L), "1000000");
+    }
+
+    /**
+     * Test isNumber method.
+     */
+    @Test
+    public void testIsNumber() {
+        assertTrue(JSType.isNumber(42));
+        assertTrue(JSType.isNumber(3.14));
+        assertTrue(JSType.isNumber(3.14f));
+        assertTrue(JSType.isNumber(Double.NaN));
+        assertTrue(JSType.isNumber(Double.POSITIVE_INFINITY));
+        assertTrue(JSType.isNumber((short) 1));
+        assertTrue(JSType.isNumber((byte) 1));
+
+        // Long is not considered a number in JSType.isNumber
+        assertFalse(JSType.isNumber(42L));
+        assertFalse(JSType.isNumber("42"));
+        assertFalse(JSType.isNumber(null));
+        assertFalse(JSType.isNumber(ScriptRuntime.UNDEFINED));
+        assertFalse(JSType.isNumber(Boolean.TRUE));
+        assertFalse(JSType.isNumber(new Object()));
+    }
+
+    /**
+     * Test isString method.
+     */
+    @Test
+    public void testIsString() {
+        assertTrue(JSType.isString(""));
+        assertTrue(JSType.isString("hello"));
+        assertTrue(JSType.isString("42"));
+
+        assertFalse(JSType.isString(42));
+        assertFalse(JSType.isString(null));
+        assertFalse(JSType.isString(ScriptRuntime.UNDEFINED));
+        assertFalse(JSType.isString(Boolean.TRUE));
+        assertFalse(JSType.isString(new Object()));
+    }
+
+    /**
+     * Test type name conversions.
+     */
+    @Test
+    public void testTypeOf() {
+        assertEquals(JSType.UNDEFINED.typeName(), "undefined");
+        assertEquals(JSType.NULL.typeName(), "object");
+        assertEquals(JSType.BOOLEAN.typeName(), "boolean");
+        assertEquals(JSType.NUMBER.typeName(), "number");
+        assertEquals(JSType.STRING.typeName(), "string");
+        assertEquals(JSType.OBJECT.typeName(), "object");
+        assertEquals(JSType.FUNCTION.typeName(), "function");
+    }
+
+    /**
+     * Test toInteger conversion.
+     */
+    @Test
+    public void testToInteger() {
+        assertEquals(JSType.toInteger(3.7), 3);
+        assertEquals(JSType.toInteger(3.2), 3);
+        assertEquals(JSType.toInteger(-3.7), -3);
+        assertEquals(JSType.toInteger(-3.2), -3);
+        assertEquals(JSType.toInteger(0.0), 0);
+        assertEquals(JSType.toInteger(-0.0), 0);
+        assertEquals(JSType.toInteger(Double.NaN), 0);
+        assertEquals(JSType.toInteger(Double.POSITIVE_INFINITY), Integer.MAX_VALUE);
+        assertEquals(JSType.toInteger(Double.NEGATIVE_INFINITY), Integer.MIN_VALUE);
     }
 
     /**
