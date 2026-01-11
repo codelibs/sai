@@ -248,13 +248,13 @@ public class IRNodeTest {
 
     @Test
     public void testLiteralNodeBoolean() {
-        final LiteralNode<?> trueLiteral = LiteralNode.newInstance(
-                Token.toDesc(TokenType.TRUE, 0, 4), 4);
-        assertTrue((Boolean) trueLiteral.getValue());
+        final LiteralNode<Boolean> trueLiteral = LiteralNode.newInstance(
+                Token.toDesc(TokenType.TRUE, 0, 4), 4, true);
+        assertTrue(trueLiteral.getValue());
 
-        final LiteralNode<?> falseLiteral = LiteralNode.newInstance(
-                Token.toDesc(TokenType.FALSE, 0, 5), 5);
-        assertFalse((Boolean) falseLiteral.getValue());
+        final LiteralNode<Boolean> falseLiteral = LiteralNode.newInstance(
+                Token.toDesc(TokenType.FALSE, 0, 5), 5, false);
+        assertFalse(falseLiteral.getValue());
     }
 
     @Test

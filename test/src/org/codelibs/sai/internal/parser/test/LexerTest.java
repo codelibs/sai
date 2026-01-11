@@ -54,49 +54,61 @@ public class LexerTest {
         assertNotNull(engine, "Sai engine should be available");
     }
 
+    private int evalInt(String script) throws ScriptException {
+        return ((Number) engine.eval(script)).intValue();
+    }
+
+    private double evalDouble(String script) throws ScriptException {
+        return ((Number) engine.eval(script)).doubleValue();
+    }
+
+    private long evalLong(String script) throws ScriptException {
+        return ((Number) engine.eval(script)).longValue();
+    }
+
     // Number literal tests
 
     @Test
     public void testDecimalLiterals() throws ScriptException {
-        assertEquals(engine.eval("0"), 0);
-        assertEquals(engine.eval("42"), 42);
-        assertEquals(engine.eval("123456789"), 123456789);
+        assertEquals(evalInt("0"), 0);
+        assertEquals(evalInt("42"), 42);
+        assertEquals(evalInt("123456789"), 123456789);
     }
 
     @Test
     public void testFloatingPointLiterals() throws ScriptException {
-        assertEquals(((Number) engine.eval("3.14")).doubleValue(), 3.14, 0.0001);
-        assertEquals(((Number) engine.eval(".5")).doubleValue(), 0.5, 0.0001);
-        assertEquals(((Number) engine.eval("0.123")).doubleValue(), 0.123, 0.0001);
-        assertEquals(((Number) engine.eval("10.0")).doubleValue(), 10.0, 0.0001);
+        assertEquals(evalDouble("3.14"), 3.14, 0.0001);
+        assertEquals(evalDouble(".5"), 0.5, 0.0001);
+        assertEquals(evalDouble("0.123"), 0.123, 0.0001);
+        assertEquals(evalDouble("10.0"), 10.0, 0.0001);
     }
 
     @Test
     public void testScientificNotation() throws ScriptException {
-        assertEquals(((Number) engine.eval("1e10")).doubleValue(), 1e10, 0.0);
-        assertEquals(((Number) engine.eval("1E10")).doubleValue(), 1E10, 0.0);
-        assertEquals(((Number) engine.eval("1e+10")).doubleValue(), 1e+10, 0.0);
-        assertEquals(((Number) engine.eval("1e-10")).doubleValue(), 1e-10, 0.0);
-        assertEquals(((Number) engine.eval("2.5e3")).doubleValue(), 2500.0, 0.0);
-        assertEquals(((Number) engine.eval("2.5E-3")).doubleValue(), 0.0025, 0.0001);
+        assertEquals(evalDouble("1e10"), 1e10, 0.0);
+        assertEquals(evalDouble("1E10"), 1E10, 0.0);
+        assertEquals(evalDouble("1e+10"), 1e+10, 0.0);
+        assertEquals(evalDouble("1e-10"), 1e-10, 0.0);
+        assertEquals(evalDouble("2.5e3"), 2500.0, 0.0);
+        assertEquals(evalDouble("2.5E-3"), 0.0025, 0.0001);
     }
 
     @Test
     public void testHexadecimalLiterals() throws ScriptException {
-        assertEquals(engine.eval("0x0"), 0);
-        assertEquals(engine.eval("0x10"), 16);
-        assertEquals(engine.eval("0X10"), 16);
-        assertEquals(engine.eval("0xff"), 255);
-        assertEquals(engine.eval("0xFF"), 255);
-        assertEquals(engine.eval("0xDEADBEEF"), 0xDEADBEEF);
+        assertEquals(evalInt("0x0"), 0);
+        assertEquals(evalInt("0x10"), 16);
+        assertEquals(evalInt("0X10"), 16);
+        assertEquals(evalInt("0xff"), 255);
+        assertEquals(evalInt("0xFF"), 255);
+        assertEquals(evalLong("0xDEADBEEF"), 0xDEADBEEFL);
     }
 
     @Test
     public void testOctalLiterals() throws ScriptException {
         // In ES5 strict mode, octal is not allowed
         // But in non-strict mode, legacy octal support
-        assertEquals(engine.eval("010"), 8);
-        assertEquals(engine.eval("0777"), 511);
+        assertEquals(evalInt("010"), 8);
+        assertEquals(evalInt("0777"), 511);
     }
 
     // String literal tests
@@ -136,10 +148,10 @@ public class LexerTest {
 
     @Test
     public void testKeywords() throws ScriptException {
-        assertEquals(engine.eval("var x = 1; x"), 1);
-        assertEquals(engine.eval("function f() { return 42; } f()"), 42);
-        assertEquals(engine.eval("if (true) { 1 } else { 2 }"), 1);
-        assertEquals(engine.eval("if (false) { 1 } else { 2 }"), 2);
+        assertEquals(evalInt("var x = 1; x"), 1);
+        assertEquals(evalInt("function f() { return 42; } f()"), 42);
+        assertEquals(evalInt("if (true) { 1 } else { 2 }"), 1);
+        assertEquals(evalInt("if (false) { 1 } else { 2 }"), 2);
     }
 
     @Test
@@ -157,11 +169,11 @@ public class LexerTest {
 
     @Test
     public void testArithmeticOperators() throws ScriptException {
-        assertEquals(engine.eval("1 + 2"), 3);
-        assertEquals(engine.eval("5 - 3"), 2);
-        assertEquals(engine.eval("4 * 3"), 12);
-        assertEquals(engine.eval("10 / 2"), 5.0);
-        assertEquals(engine.eval("10 % 3"), 1.0);
+        assertEquals(evalInt("1 + 2"), 3);
+        assertEquals(evalInt("5 - 3"), 2);
+        assertEquals(evalInt("4 * 3"), 12);
+        assertEquals(evalDouble("10 / 2"), 5.0, 0.0);
+        assertEquals(evalDouble("10 % 3"), 1.0, 0.0);
     }
 
     @Test
@@ -188,37 +200,37 @@ public class LexerTest {
 
     @Test
     public void testBitwiseOperators() throws ScriptException {
-        assertEquals(engine.eval("5 & 3"), 1);
-        assertEquals(engine.eval("5 | 3"), 7);
-        assertEquals(engine.eval("5 ^ 3"), 6);
-        assertEquals(engine.eval("~5"), -6);
-        assertEquals(engine.eval("5 << 1"), 10);
-        assertEquals(engine.eval("5 >> 1"), 2);
-        assertEquals(engine.eval("-1 >>> 0"), 4294967295L);
+        assertEquals(evalInt("5 & 3"), 1);
+        assertEquals(evalInt("5 | 3"), 7);
+        assertEquals(evalInt("5 ^ 3"), 6);
+        assertEquals(evalInt("~5"), -6);
+        assertEquals(evalInt("5 << 1"), 10);
+        assertEquals(evalInt("5 >> 1"), 2);
+        assertEquals(evalLong("-1 >>> 0"), 4294967295L);
     }
 
     @Test
     public void testAssignmentOperators() throws ScriptException {
-        assertEquals(engine.eval("var x = 10; x"), 10);
-        assertEquals(engine.eval("var x = 10; x += 5; x"), 15);
-        assertEquals(engine.eval("var x = 10; x -= 5; x"), 5);
-        assertEquals(engine.eval("var x = 10; x *= 2; x"), 20);
-        assertEquals(engine.eval("var x = 10; x /= 2; x"), 5.0);
-        assertEquals(engine.eval("var x = 10; x %= 3; x"), 1.0);
+        assertEquals(evalInt("var x = 10; x"), 10);
+        assertEquals(evalInt("var x = 10; x += 5; x"), 15);
+        assertEquals(evalInt("var x = 10; x -= 5; x"), 5);
+        assertEquals(evalInt("var x = 10; x *= 2; x"), 20);
+        assertEquals(evalDouble("var x = 10; x /= 2; x"), 5.0, 0.0);
+        assertEquals(evalDouble("var x = 10; x %= 3; x"), 1.0, 0.0);
     }
 
     @Test
     public void testIncrementDecrementOperators() throws ScriptException {
-        assertEquals(engine.eval("var x = 5; ++x"), 6);
-        assertEquals(engine.eval("var x = 5; x++"), 5);
-        assertEquals(engine.eval("var x = 5; --x"), 4);
-        assertEquals(engine.eval("var x = 5; x--"), 5);
+        assertEquals(evalInt("var x = 5; ++x"), 6);
+        assertEquals(evalInt("var x = 5; x++"), 5);
+        assertEquals(evalInt("var x = 5; --x"), 4);
+        assertEquals(evalInt("var x = 5; x--"), 5);
     }
 
     @Test
     public void testTernaryOperator() throws ScriptException {
-        assertEquals(engine.eval("true ? 1 : 2"), 1);
-        assertEquals(engine.eval("false ? 1 : 2"), 2);
+        assertEquals(evalInt("true ? 1 : 2"), 1);
+        assertEquals(evalInt("false ? 1 : 2"), 2);
         assertEquals(engine.eval("5 > 3 ? 'yes' : 'no'"), "yes");
     }
 
@@ -226,46 +238,46 @@ public class LexerTest {
 
     @Test
     public void testSingleLineComments() throws ScriptException {
-        assertEquals(engine.eval("1 + 2 // this is a comment"), 3);
-        assertEquals(engine.eval("// comment at start\n42"), 42);
+        assertEquals(evalInt("1 + 2 // this is a comment"), 3);
+        assertEquals(evalInt("// comment at start\n42"), 42);
     }
 
     @Test
     public void testMultiLineComments() throws ScriptException {
-        assertEquals(engine.eval("1 + /* add two */ 2"), 3);
-        assertEquals(engine.eval("/* comment\nacross\nlines */ 42"), 42);
+        assertEquals(evalInt("1 + /* add two */ 2"), 3);
+        assertEquals(evalInt("/* comment\nacross\nlines */ 42"), 42);
     }
 
     // Identifier tests
 
     @Test
     public void testIdentifiers() throws ScriptException {
-        assertEquals(engine.eval("var x = 1; x"), 1);
-        assertEquals(engine.eval("var _x = 2; _x"), 2);
-        assertEquals(engine.eval("var $x = 3; $x"), 3);
-        assertEquals(engine.eval("var x123 = 4; x123"), 4);
-        assertEquals(engine.eval("var camelCase = 5; camelCase"), 5);
+        assertEquals(evalInt("var x = 1; x"), 1);
+        assertEquals(evalInt("var _x = 2; _x"), 2);
+        assertEquals(evalInt("var $x = 3; $x"), 3);
+        assertEquals(evalInt("var x123 = 4; x123"), 4);
+        assertEquals(evalInt("var camelCase = 5; camelCase"), 5);
     }
 
     @Test
     public void testUnicodeIdentifiers() throws ScriptException {
-        assertEquals(engine.eval("var 変数 = 42; 変数"), 42);
-        assertEquals(engine.eval("var π = 3.14159; π"), 3.14159);
+        assertEquals(evalInt("var 変数 = 42; 変数"), 42);
+        assertEquals(evalDouble("var π = 3.14159; π"), 3.14159, 0.00001);
     }
 
     // Bracket and punctuation tests
 
     @Test
     public void testBrackets() throws ScriptException {
-        assertEquals(engine.eval("(1 + 2) * 3"), 9);
-        assertEquals(engine.eval("var arr = [1, 2, 3]; arr[1]"), 2);
-        assertEquals(engine.eval("var obj = {a: 1}; obj.a"), 1);
+        assertEquals(evalInt("(1 + 2) * 3"), 9);
+        assertEquals(evalInt("var arr = [1, 2, 3]; arr[1]"), 2);
+        assertEquals(evalInt("var obj = {a: 1}; obj.a"), 1);
     }
 
     @Test
     public void testSemicolonInsertion() throws ScriptException {
-        assertEquals(engine.eval("var x = 1\nx"), 1);
-        assertEquals(engine.eval("var x = 1; var y = 2\nx + y"), 3);
+        assertEquals(evalInt("var x = 1\nx"), 1);
+        assertEquals(evalInt("var x = 1; var y = 2\nx + y"), 3);
     }
 
     // Regex literal tests
@@ -290,7 +302,7 @@ public class LexerTest {
     @Test
     public void testDivisionVsRegex() throws ScriptException {
         // Division context
-        assertEquals(((Number) engine.eval("10 / 2")).doubleValue(), 5.0, 0.0);
+        assertEquals(evalDouble("10 / 2"), 5.0, 0.0);
 
         // Regex context (after operator or keyword)
         assertTrue((Boolean) engine.eval("/a/.test('a')"));
@@ -298,28 +310,28 @@ public class LexerTest {
 
     @Test
     public void testWhitespaceHandling() throws ScriptException {
-        assertEquals(engine.eval("  42  "), 42);
-        assertEquals(engine.eval("\t42\t"), 42);
-        assertEquals(engine.eval("\n42\n"), 42);
-        assertEquals(engine.eval("1    +    2"), 3);
+        assertEquals(evalInt("  42  "), 42);
+        assertEquals(evalInt("\t42\t"), 42);
+        assertEquals(evalInt("\n42\n"), 42);
+        assertEquals(evalInt("1    +    2"), 3);
     }
 
     @Test
     public void testMultipleStatements() throws ScriptException {
-        assertEquals(engine.eval("var a = 1; var b = 2; a + b"), 3);
-        assertEquals(engine.eval("function f(x) { return x * 2; } f(5)"), 10);
+        assertEquals(evalInt("var a = 1; var b = 2; a + b"), 3);
+        assertEquals(evalInt("function f(x) { return x * 2; } f(5)"), 10);
     }
 
     @Test
     public void testNestedExpressions() throws ScriptException {
-        assertEquals(engine.eval("((1 + 2) * (3 + 4))"), 21);
-        assertEquals(engine.eval("var arr = [[1, 2], [3, 4]]; arr[0][1]"), 2);
+        assertEquals(evalInt("((1 + 2) * (3 + 4))"), 21);
+        assertEquals(evalInt("var arr = [[1, 2], [3, 4]]; arr[0][1]"), 2);
     }
 
     @Test
     public void testSpecialNumbers() throws ScriptException {
-        assertTrue(Double.isNaN(((Number) engine.eval("NaN")).doubleValue()));
-        assertEquals(engine.eval("Infinity"), Double.POSITIVE_INFINITY);
-        assertEquals(engine.eval("-Infinity"), Double.NEGATIVE_INFINITY);
+        assertTrue(Double.isNaN(evalDouble("NaN")));
+        assertEquals(evalDouble("Infinity"), Double.POSITIVE_INFINITY, 0.0);
+        assertEquals(evalDouble("-Infinity"), Double.NEGATIVE_INFINITY, 0.0);
     }
 }

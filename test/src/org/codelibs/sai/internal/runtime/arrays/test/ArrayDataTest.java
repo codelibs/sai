@@ -125,7 +125,7 @@ public class ArrayDataTest {
                         "var count = 0; " +
                         "for (var i in arr) count++; " +
                         "count");
-        assertEquals(result, 2);
+        assertEquals(((Number) result).intValue(), 2);
     }
 
     @Test
@@ -311,7 +311,7 @@ public class ArrayDataTest {
                         "var count = 0; " +
                         "for (var i in arr) count++; " +
                         "count");
-        assertEquals(result, 4);
+        assertEquals(((Number) result).intValue(), 4);
     }
 
     // Array method tests on modified arrays
@@ -342,7 +342,7 @@ public class ArrayDataTest {
                 "var arr = []; " +
                         "arr[0] = 1; arr[2] = 3; arr[4] = 5; " +
                         "arr.reduce(function(acc, x) { return acc + x; }, 0)");
-        assertEquals(result, 9);
+        assertEquals(((Number) result).intValue(), 9);
     }
 
     // Negative index tests
