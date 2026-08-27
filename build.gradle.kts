@@ -86,29 +86,24 @@ dependencies {
 
 // Custom Tasks
 
-// Generate version.properties file
-val generateVersionProperties = tasks.register("generateVersionProperties") {
+// version.properties is read at runtime to report the engine version, so it is generated
+// from the project version rather than kept in step by hand.
+val generatedResources = layout.buildDirectory.dir("generated/resources")
+
+val generateVersionProperties = tasks.register<WriteProperties>("generateVersionProperties") {
     group = "build"
-    description = "Generate version.properties file"
+    description = "Generate version.properties"
 
-    val outputDir = layout.buildDirectory.dir("generated/resources")
-    outputs.dir(outputDir)
-
-    doLast {
-        val versionFile = outputDir.get().file(
-            "org/codelibs/sai/internal/runtime/resources/version.properties"
-        ).asFile
-        versionFile.parentFile.mkdirs()
-        versionFile.writeText("""full=${version}
-release=${version}
-""")
+    destinationFile = generatedResources.map {
+        it.file("org/codelibs/sai/internal/runtime/resources/version.properties")
     }
+    property("full", version.toString())
+    property("release", version.toString())
 }
 
-// Process resources including generated version.properties
 tasks.processResources {
     dependsOn(generateVersionProperties)
-    from(layout.buildDirectory.dir("generated/resources"))
+    from(generatedResources)
 }
 
 // Saigen post-processing
@@ -202,10 +197,12 @@ tasks.jar {
     }
 }
 
-// Copy runtime dependencies to build/lib for external Shell processes
+// test/script/nosecurity/JDK-8055034.js forks a Shell process and builds its classpath as
+// `<sai.jar>/../../lib/*`, which resolves to build/lib. The path is assembled at runtime, so
+// grepping for "build/lib" does not find this use - do not remove this task.
 val copyLibs = tasks.register<Copy>("copyLibs") {
     group = "build"
-    description = "Copy runtime dependencies to build/lib directory"
+    description = "Stage runtime dependencies in build/lib for forked Shell processes"
 
     from(configurations.runtimeClasspath)
     into(layout.buildDirectory.dir("lib"))
@@ -219,271 +216,131 @@ fun engineTestClasspath(): FileCollection =
         files(tasks.jar) +
         configurations.testRuntimeClasspath.get()
 
+// SourceTest reads a resource from build/test/classes, and the harness writes each script's
+// .OUTPUT/.ERROR under build/test, so this has to be in place before any test runs.
+val stageTestResources = tasks.register<Sync>("stageTestResources") {
+    group = "verification"
+    description = "Stage test resources where the script test harness looks for them"
+
+    from(tasks.processTestResources)
+    into(layout.buildDirectory.dir("test/classes"))
+}
+
+// `test` runs the Java tests plus the scripts that need no security manager;
+// testOptimistic/testPessimistic run the full script corpus.
+val nosecurityScriptRoots = "test/script/nosecurity"
+val fullScriptRoots =
+    "test/script/basic test/script/maptests test/script/error test/script/sandbox test/script/trusted"
+
+// These need a SecurityManager, which is disabled by default from Java 18 on.
+val securityManagerTests =
+    "JDK-8010946.js JDK-8020508.js JDK-8031359.js JDK-8043232.js JDK-8055762.js " +
+        "JDK-8067136.js JDK-8068580.js JDK-8137134.js JDK-8158467.js classloader.js " +
+        "javaexceptions.js JDK-8031106.js classbind.js"
+
+/**
+ * Wiring shared by every script-driven test task.
+ *
+ * The roots/includes/list selectors can be overridden from the command line, so narrowing a
+ * run does not mean editing this file:
+ *
+ *   ./gradlew testOptimistic -Psai.test.roots=test/script/basic
+ *   ./gradlew testOptimistic -Psai.test.includes=JDK-80*.js
+ *   ./gradlew testOptimistic -Psai.test.list=JDK-8006220.js
+ */
+fun Test.configureScriptTests(defaultRoots: String) {
+    dependsOn(stageTestResources, copyLibs)
+
+    maxHeapSize = "2G"
+    jvmArgs("-server", "-ea", "-Dfile.encoding=UTF-8", "-Duser.language=tr", "-Duser.country=TR")
+
+    classpath = engineTestClasspath()
+    // Custom Test tasks stop inheriting this by convention in Gradle 9.
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    workingDir = projectDir
+
+    val buildDirPath = layout.buildDirectory.get().asFile.absolutePath
+    val saiJarPath = tasks.jar.flatMap { it.archiveFile }.get().asFile.absolutePath
+    val codeCacheDir = layout.buildDirectory.dir("sai_code_cache").get().asFile
+
+    // A run has to start from an empty code cache or it can pick up another run's classes.
+    doFirst {
+        codeCacheDir.deleteRecursively()
+    }
+
+    systemProperty("build.dir", buildDirPath)
+    systemProperty("test.dir", "test")
+    systemProperty("test.js.framework", "test/script/assert.js")
+    systemProperty("test.basic.dir", "test/script/basic")
+    systemProperty("sai.jar", saiJarPath)
+    systemProperty("sai.version", version.toString())
+    systemProperty("sai.fullversion", version.toString())
+
+    systemProperty("parsertest.verbose", "false")
+    systemProperty("parsertest.scripting", "true")
+    systemProperty("compilertest.verbose", "false")
+    systemProperty("compilertest.scripting", "true")
+
+    systemProperty(
+        "test.js.roots",
+        providers.gradleProperty("sai.test.roots").getOrElse(defaultRoots),
+    )
+    providers.gradleProperty("sai.test.includes").orNull?.let {
+        systemProperty("test.js.includes", it)
+    }
+    providers.gradleProperty("sai.test.list").orNull?.let {
+        systemProperty("test.js.list", it)
+    }
+
+    // The script tests fork a JVM of their own, which needs the same engine on its classpath.
+    val forkClasspath = engineTestClasspath().files
+        .joinToString(File.pathSeparator) { it.absolutePath }
+    systemProperty("test.fork.jvm.options", "-Xmx${maxHeapSize} -cp ${forkClasspath}")
+}
+
 // Test Configuration
 tasks.test {
-    dependsOn(copyLibs)
-
     useTestNG {
         testLogging.showStandardStreams = true
         listeners.add("org.codelibs.sai.internal.test.framework.JSJUnitReportReporter")
     }
 
-    maxHeapSize = "2G"
+    configureScriptTests(nosecurityScriptRoots)
+
     minHeapSize = "2G"
 
-    jvmArgs(
-        "-server",
-        "-ea",
-        "-Dfile.encoding=UTF-8",
-        "-Duser.language=tr",
-        "-Duser.country=TR"
-    )
-
-    // Create build/test directory and copy test resources to Ant-compatible location
-    doFirst {
-        val buildDir = layout.buildDirectory.get().asFile
-        file("$buildDir/test").mkdirs()
-
-        // Copy test resources to build/test/classes for Ant compatibility
-        val testResourcesDir = file("$buildDir/resources/test")
-        val antTestClassesDir = file("$buildDir/test/classes")
-        if (testResourcesDir.exists()) {
-            copy {
-                from(testResourcesDir)
-                into(antTestClassesDir)
-            }
-        }
-
-        // Clean code cache directory for test isolation
-        val codeCacheDir = file("$buildDir/sai_code_cache")
-        if (codeCacheDir.exists()) {
-            codeCacheDir.deleteRecursively()
-        }
-    }
-
-    // Run against the JAR, not the class dirs (see engineTestClasspath)
-    classpath = engineTestClasspath()
-
-    // Work from project root
-    workingDir = projectDir
-
-    systemProperty("build.dir", layout.buildDirectory.get().asFile.absolutePath)
-    systemProperty("test.dir", "test")
-    systemProperty("test.js.roots", "test/script/nosecurity")
-    systemProperty("test.js.framework", "test/script/assert.js")
-    systemProperty("test.basic.dir", "test/script/basic")
-    systemProperty("sai.jar", tasks.jar.get().archiveFile.get().asFile.absolutePath)
-    systemProperty("sai.version", version.toString())
-    systemProperty("sai.fullversion", version.toString())
-
-    // Parser and compiler test properties
-    systemProperty("parsertest.verbose", "false")
-    systemProperty("parsertest.scripting", "true")
     systemProperty("parsertest.test262", "false")
-    systemProperty("compilertest.verbose", "false")
-    systemProperty("compilertest.scripting", "true")
     systemProperty("compilertest.test262", "false")
-
-    // Exclude external tests by default
     systemProperty("test.js.exclude.dir", "test/script/currently-failing test/script/external")
     systemProperty("test.js.unchecked.dir", "")
-
-    // Fork JVM options for script tests - include sai.jar and all test runtime dependencies (including TestNG)
-    val forkClasspath = engineTestClasspath().files
-        .joinToString(File.pathSeparator) { it.absolutePath }
-    systemProperty("test.fork.jvm.options", "-Xmx${maxHeapSize} -cp ${forkClasspath}")
 }
 
-// Optimistic mode test
-val testOptimistic = tasks.register<Test>("testOptimistic") {
-    group = "verification"
-    description = "Run tests in optimistic mode"
+// Optimistic typing is the engine's default. Both settings are exercised so a regression in
+// either code path shows up.
+fun registerModeTest(name: String, reportDir: String, optimistic: Boolean) =
+    tasks.register<Test>(name) {
+        group = "verification"
+        description = "Run the script test suite with optimistic types ${if (optimistic) "on" else "off"}"
 
-    dependsOn(copyLibs)
+        useTestNG()
+        configureScriptTests(fullScriptRoots)
 
-    useTestNG()
+        systemProperty("optimistic.override", optimistic.toString())
+        systemProperty("test.js.exclude.list", securityManagerTests)
 
-    maxHeapSize = "2G"
-    jvmArgs("-server", "-ea", "-Dfile.encoding=UTF-8", "-Duser.language=tr", "-Duser.country=TR")
-
-    // Create build/test directory and copy test resources
-    doFirst {
-        val buildDir = layout.buildDirectory.get().asFile
-        file("$buildDir/test").mkdirs()
-
-        // Copy test resources to build/test/classes for Ant compatibility
-        val testResourcesDir = file("$buildDir/resources/test")
-        val antTestClassesDir = file("$buildDir/test/classes")
-        if (testResourcesDir.exists()) {
-            copy {
-                from(testResourcesDir)
-                into(antTestClassesDir)
-            }
-        }
-
-        // Copy test/script directory to build/test/script for .EXPECTED file resolution
-        val testScriptDir = file("test/script")
-        val buildTestScriptDir = file("$buildDir/test/script")
-        if (testScriptDir.exists()) {
-            copy {
-                from(testScriptDir)
-                into(buildTestScriptDir)
-                include("**/*.EXPECTED")
-            }
-        }
-
-        // Clean code cache directory for test isolation
-        val codeCacheDir = file("$buildDir/sai_code_cache")
-        if (codeCacheDir.exists()) {
-            codeCacheDir.deleteRecursively()
+        reports {
+            html.outputLocation.set(layout.buildDirectory.dir("reports/tests/$reportDir"))
         }
     }
 
-    // Run against the JAR, not the class dirs (see engineTestClasspath)
-    classpath = engineTestClasspath()
+val testOptimistic = registerModeTest("testOptimistic", "optimistic", optimistic = true)
+val testPessimistic = registerModeTest("testPessimistic", "pessimistic", optimistic = false)
 
-    // Work from project root
-    workingDir = projectDir
-
-    systemProperty("build.dir", layout.buildDirectory.get().asFile.absolutePath)
-    systemProperty("optimistic.override", "true")
-    systemProperty("test.dir", "test")
-    systemProperty("test.js.roots", "test/script/basic test/script/maptests test/script/error test/script/sandbox test/script/trusted")
-    systemProperty("test.js.framework", "test/script/assert.js")
-    systemProperty("test.basic.dir", "test/script/basic")
-    systemProperty("sai.jar", tasks.jar.get().archiveFile.get().asFile.absolutePath)
-    systemProperty("sai.version", version.toString())
-    systemProperty("sai.fullversion", version.toString())
-    systemProperty("parsertest.verbose", "false")
-    systemProperty("parsertest.scripting", "true")
-    systemProperty("compilertest.verbose", "false")
-    systemProperty("compilertest.scripting", "true")
-
-    // Exclude security-related tests (require SecurityManager which is deprecated/removed in Java 17+)
-    systemProperty("test.js.exclude.list", "JDK-8010946.js JDK-8020508.js JDK-8031359.js JDK-8043232.js JDK-8055762.js JDK-8067136.js JDK-8068580.js JDK-8137134.js JDK-8158467.js classloader.js javaexceptions.js JDK-8031106.js classbind.js")
-
-    // Fork JVM options for script tests - include sai.jar and all test runtime dependencies
-    val forkClasspath = engineTestClasspath().files
-        .joinToString(File.pathSeparator) { it.absolutePath }
-    systemProperty("test.fork.jvm.options", "-Xmx${maxHeapSize} -cp ${forkClasspath}")
-
-    reports {
-        html.outputLocation.set(layout.buildDirectory.dir("reports/tests/optimistic"))
-    }
-}
-
-// Pessimistic mode test
-val testPessimistic = tasks.register<Test>("testPessimistic") {
-    group = "verification"
-    description = "Run tests in pessimistic mode"
-
-    dependsOn(copyLibs)
-
-    useTestNG()
-
-    maxHeapSize = "2G"
-    jvmArgs("-server", "-ea", "-Dfile.encoding=UTF-8", "-Duser.language=tr", "-Duser.country=TR")
-
-    // Create build/test directory and copy test resources
-    doFirst {
-        val buildDir = layout.buildDirectory.get().asFile
-        file("$buildDir/test").mkdirs()
-
-        // Copy test resources to build/test/classes for Ant compatibility
-        val testResourcesDir = file("$buildDir/resources/test")
-        val antTestClassesDir = file("$buildDir/test/classes")
-        if (testResourcesDir.exists()) {
-            copy {
-                from(testResourcesDir)
-                into(antTestClassesDir)
-            }
-        }
-
-        // Copy test/script directory to build/test/script for .EXPECTED file resolution
-        val testScriptDir = file("test/script")
-        val buildTestScriptDir = file("$buildDir/test/script")
-        if (testScriptDir.exists()) {
-            copy {
-                from(testScriptDir)
-                into(buildTestScriptDir)
-                include("**/*.EXPECTED")
-            }
-        }
-
-        // Clean code cache directory for test isolation
-        val codeCacheDir = file("$buildDir/sai_code_cache")
-        if (codeCacheDir.exists()) {
-            codeCacheDir.deleteRecursively()
-        }
-    }
-
-    // Run against the JAR, not the class dirs (see engineTestClasspath)
-    classpath = engineTestClasspath()
-
-    // Work from project root
-    workingDir = projectDir
-
-    systemProperty("build.dir", layout.buildDirectory.get().asFile.absolutePath)
-    systemProperty("optimistic.override", "false")
-    systemProperty("test.dir", "test")
-    systemProperty("test.js.roots", "test/script/basic test/script/maptests test/script/error test/script/sandbox test/script/trusted")
-    systemProperty("test.js.framework", "test/script/assert.js")
-    systemProperty("test.basic.dir", "test/script/basic")
-    systemProperty("sai.jar", tasks.jar.get().archiveFile.get().asFile.absolutePath)
-    systemProperty("sai.version", version.toString())
-    systemProperty("sai.fullversion", version.toString())
-    systemProperty("parsertest.verbose", "false")
-    systemProperty("parsertest.scripting", "true")
-    systemProperty("compilertest.verbose", "false")
-    systemProperty("compilertest.scripting", "true")
-
-    // Exclude security-related tests (require SecurityManager which is deprecated/removed in Java 17+)
-    systemProperty("test.js.exclude.list", "JDK-8010946.js JDK-8020508.js JDK-8031359.js JDK-8043232.js JDK-8055762.js JDK-8067136.js JDK-8068580.js JDK-8137134.js JDK-8158467.js classloader.js javaexceptions.js JDK-8031106.js classbind.js")
-
-    // Fork JVM options for script tests - include sai.jar and all test runtime dependencies
-    val forkClasspath = engineTestClasspath().files
-        .joinToString(File.pathSeparator) { it.absolutePath }
-    systemProperty("test.fork.jvm.options", "-Xmx${maxHeapSize} -cp ${forkClasspath}")
-
-    reports {
-        html.outputLocation.set(layout.buildDirectory.dir("reports/tests/pessimistic"))
-    }
-}
-
-// Generate security policy file
-val generateSecurityPolicy = tasks.register("generateSecurityPolicy") {
-    group = "build"
-    description = "Generate sai.policy file for security tests"
-
-    val policyFile = layout.buildDirectory.file("sai.policy")
-    outputs.file(policyFile)
-
-    doLast {
-        val jarPath = tasks.jar.get().archiveFile.get().asFile.absolutePath
-        val testJarPath = layout.buildDirectory.file("libs/sai-${version}-test.jar").get().asFile.absolutePath
-
-        policyFile.get().asFile.writeText("""
-grant codeBase "file:/${jarPath}" {
-    permission java.security.AllPermission;
-};
-
-grant codeBase "file:/${testJarPath}" {
-    permission java.security.AllPermission;
-};
-
-grant codeBase "file:/${"$"}{basedir}/test/script/trusted/*" {
-    permission java.security.AllPermission;
-};
-
-grant codeBase "file:/${"$"}{basedir}/test/script/basic/*" {
-    permission java.io.FilePermission "${"$"}{basedir}/test/script/-", "read";
-    permission java.io.FilePermission "${"$"}{user.dir}", "read";
-    permission java.util.PropertyPermission "user.dir", "read";
-    permission java.util.PropertyPermission "sai.test.*", "read";
-};
-        """.trimIndent())
-    }
-}
+// CodeStoreAndPathTest hard-codes build/sai_code_cache, so all three tasks read and write one
+// shared directory and each clears it before it starts. Overlapping runs would corrupt each
+// other's cache, so keep them strictly ordered whenever more than one is scheduled.
+testOptimistic.configure { mustRunAfter(tasks.test) }
+testPessimistic.configure { mustRunAfter(tasks.test, testOptimistic) }
 
 // Javadoc Configuration
 tasks.javadoc {
@@ -545,18 +402,14 @@ val test262 = tasks.register<Test>("test262") {
     group = "verification"
     description = "Run test262 ECMAScript compliance tests"
 
-    dependsOn(downloadTest262)
+    dependsOn(downloadTest262, stageTestResources)
 
     useTestNG()
     maxHeapSize = "2G"
     jvmArgs("-server", "-ea")
 
     classpath = engineTestClasspath()
-
-    // Create build/test directory before running tests
-    doFirst {
-        file("${layout.buildDirectory.get()}/test").mkdirs()
-    }
+    testClassesDirs = sourceSets.test.get().output.classesDirs
 
     systemProperty("build.dir", layout.buildDirectory.get().asFile.absolutePath)
     systemProperty("test.dir", "test")
@@ -573,18 +426,13 @@ val test262Parallel = tasks.register<JavaExec>("test262Parallel") {
     group = "verification"
     description = "Run test262 tests in parallel"
 
-    dependsOn(downloadTest262, tasks.compileTestJava, tasks.jar)
+    dependsOn(downloadTest262, tasks.compileTestJava, tasks.jar, stageTestResources)
 
     mainClass.set("org.codelibs.sai.internal.test.framework.ParallelTestRunner")
     classpath = engineTestClasspath()
 
     maxHeapSize = "2G"
     jvmArgs("-server", "-Dsai.typeInfo.disabled=true")
-
-    // Create build/test directory
-    doFirst {
-        file("${layout.buildDirectory.get()}/test").mkdirs()
-    }
 
     systemProperty("build.dir", layout.buildDirectory.get().asFile.absolutePath)
     systemProperty("test.dir", "test")
