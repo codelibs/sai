@@ -3,6 +3,9 @@
  * Gradle Build Script
  */
 
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+
 plugins {
     java
     `maven-publish`
@@ -108,36 +111,82 @@ tasks.processResources {
     from(layout.buildDirectory.dir("generated/resources"))
 }
 
-// Run saigen tool to generate additional classes
+// Saigen post-processing
+//
+// Saigen instruments the @ScriptClass types in `internal.objects` and emits their
+// $Prototype/$Constructor companions. Its Main takes <input-dir> <packages> <output-dir>
+// as three separate arguments; passing the same directory for input and output made it
+// rewrite compileJava's own output after that task had already reported success, which
+// left incremental builds and the build cache unable to reason about the result.
+//
+// Here it reads the pristine javac output and writes to a tree of its own. That tree
+// starts as a full mirror of the compiled classes, so it is a self-contained image of
+// exactly what we ship, and compileJava's output is never touched.
+val instrumentedClasses = layout.buildDirectory.dir("classes/saigen/main")
+
 val runSaigen = tasks.register<JavaExec>("runSaigen") {
     dependsOn(tasks.compileJava, tasks.named("compileSaigenJava"))
 
     group = "build"
-    description = "Run saigen to generate additional classes"
+    description = "Instrument @ScriptClass types and generate their companion classes"
+
+    val pristineClasses = tasks.compileJava.flatMap { it.destinationDirectory }
+    val outputDir = instrumentedClasses
+
+    inputs.dir(pristineClasses)
+        .withPropertyName("pristineClasses")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(outputDir).withPropertyName("instrumentedClasses")
+    outputs.cacheIf { true }
 
     mainClass.set("org.codelibs.sai.internal.tools.saigen.Main")
-    classpath = sourceSets["saigen"].runtimeClasspath
+    // The output tree is on the classpath as well: saigen verifies each instrumented class
+    // with ASM, and that resolves the $Prototype/$Constructor types it writes as it goes.
+    // Because that directory is also this task's output, its fingerprint changes once after
+    // a clean build, so the first build after `clean` is followed by one extra run of this
+    // task before it settles as UP-TO-DATE.
+    classpath = sourceSets["saigen"].runtimeClasspath + files(outputDir)
 
-    val outputDir = sourceSets.main.get().output.classesDirs.singleFile
-    args(
-        outputDir.absolutePath,
-        "org.codelibs.sai.internal.objects",
-        outputDir.absolutePath
-    )
+    // Supplied lazily so the absolute paths stay out of the task's input fingerprint.
+    argumentProviders.add(CommandLineArgumentProvider {
+        listOf(
+            pristineClasses.get().asFile.absolutePath,
+            "org.codelibs.sai.internal.objects",
+            outputDir.get().asFile.absolutePath,
+        )
+    })
 
-    // Output to standard output for debugging
-    standardOutput = System.out
-    errorOutput = System.err
-}
-
-// Ensure saigen runs after compiling main classes but before creating JAR
-tasks.classes {
-    finalizedBy(runSaigen)
+    doFirst {
+        // Saigen writes only the classes it rewrites or generates, and requires its output
+        // directory to already exist. Seed it with every compiled class so the result is a
+        // complete replacement for the javac output.
+        val source = pristineClasses.get().asFile.toPath()
+        val target = outputDir.get().asFile
+        target.deleteRecursively()
+        target.mkdirs()
+        Files.walk(source).use { paths ->
+            paths.forEach { path ->
+                val destination = target.toPath().resolve(source.relativize(path))
+                if (Files.isDirectory(path)) {
+                    Files.createDirectories(destination)
+                } else {
+                    Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING)
+                }
+            }
+        }
+    }
 }
 
 // JAR Configuration
 tasks.jar {
     dependsOn(runSaigen)
+
+    // The Java plugin wires main's classes dir in first and duplicates resolve to whichever
+    // copy was added first, so the pristine javac output has to be filtered out by source
+    // location for the saigen-instrumented tree to be the one that ships.
+    val pristineClassesPath = tasks.compileJava.get().destinationDirectory.get().asFile.absolutePath
+    exclude { it.file.absolutePath.startsWith(pristineClassesPath) }
+    from(instrumentedClasses)
 
     manifest {
         attributes(
@@ -161,6 +210,14 @@ val copyLibs = tasks.register<Copy>("copyLibs") {
     from(configurations.runtimeClasspath)
     into(layout.buildDirectory.dir("lib"))
 }
+
+// The engine under test is the JAR. Only the JAR carries the saigen-instrumented classes,
+// so the pristine `main` classes dir must stay off the test classpath - on it, javac's
+// uninstrumented copies would shadow the ones we actually ship.
+fun engineTestClasspath(): FileCollection =
+    sourceSets.test.get().output +
+        files(tasks.jar) +
+        configurations.testRuntimeClasspath.get()
 
 // Test Configuration
 tasks.test {
@@ -204,8 +261,8 @@ tasks.test {
         }
     }
 
-    // Add sai.jar to classpath
-    classpath = sourceSets.test.get().runtimeClasspath + files(tasks.jar.get().archiveFile)
+    // Run against the JAR, not the class dirs (see engineTestClasspath)
+    classpath = engineTestClasspath()
 
     // Work from project root
     workingDir = projectDir
@@ -232,7 +289,7 @@ tasks.test {
     systemProperty("test.js.unchecked.dir", "")
 
     // Fork JVM options for script tests - include sai.jar and all test runtime dependencies (including TestNG)
-    val forkClasspath = (sourceSets.test.get().runtimeClasspath.files + tasks.jar.get().archiveFile.get().asFile)
+    val forkClasspath = engineTestClasspath().files
         .joinToString(File.pathSeparator) { it.absolutePath }
     systemProperty("test.fork.jvm.options", "-Xmx${maxHeapSize} -cp ${forkClasspath}")
 }
@@ -282,8 +339,8 @@ val testOptimistic = tasks.register<Test>("testOptimistic") {
         }
     }
 
-    // Add sai.jar to classpath
-    classpath = sourceSets.test.get().runtimeClasspath + files(tasks.jar.get().archiveFile)
+    // Run against the JAR, not the class dirs (see engineTestClasspath)
+    classpath = engineTestClasspath()
 
     // Work from project root
     workingDir = projectDir
@@ -306,7 +363,7 @@ val testOptimistic = tasks.register<Test>("testOptimistic") {
     systemProperty("test.js.exclude.list", "JDK-8010946.js JDK-8020508.js JDK-8031359.js JDK-8043232.js JDK-8055762.js JDK-8067136.js JDK-8068580.js JDK-8137134.js JDK-8158467.js classloader.js javaexceptions.js JDK-8031106.js classbind.js")
 
     // Fork JVM options for script tests - include sai.jar and all test runtime dependencies
-    val forkClasspath = (sourceSets.test.get().runtimeClasspath.files + tasks.jar.get().archiveFile.get().asFile)
+    val forkClasspath = engineTestClasspath().files
         .joinToString(File.pathSeparator) { it.absolutePath }
     systemProperty("test.fork.jvm.options", "-Xmx${maxHeapSize} -cp ${forkClasspath}")
 
@@ -360,8 +417,8 @@ val testPessimistic = tasks.register<Test>("testPessimistic") {
         }
     }
 
-    // Add sai.jar to classpath
-    classpath = sourceSets.test.get().runtimeClasspath + files(tasks.jar.get().archiveFile)
+    // Run against the JAR, not the class dirs (see engineTestClasspath)
+    classpath = engineTestClasspath()
 
     // Work from project root
     workingDir = projectDir
@@ -384,7 +441,7 @@ val testPessimistic = tasks.register<Test>("testPessimistic") {
     systemProperty("test.js.exclude.list", "JDK-8010946.js JDK-8020508.js JDK-8031359.js JDK-8043232.js JDK-8055762.js JDK-8067136.js JDK-8068580.js JDK-8137134.js JDK-8158467.js classloader.js javaexceptions.js JDK-8031106.js classbind.js")
 
     // Fork JVM options for script tests - include sai.jar and all test runtime dependencies
-    val forkClasspath = (sourceSets.test.get().runtimeClasspath.files + tasks.jar.get().archiveFile.get().asFile)
+    val forkClasspath = engineTestClasspath().files
         .joinToString(File.pathSeparator) { it.absolutePath }
     systemProperty("test.fork.jvm.options", "-Xmx${maxHeapSize} -cp ${forkClasspath}")
 
@@ -494,6 +551,8 @@ val test262 = tasks.register<Test>("test262") {
     maxHeapSize = "2G"
     jvmArgs("-server", "-ea")
 
+    classpath = engineTestClasspath()
+
     // Create build/test directory before running tests
     doFirst {
         file("${layout.buildDirectory.get()}/test").mkdirs()
@@ -517,7 +576,7 @@ val test262Parallel = tasks.register<JavaExec>("test262Parallel") {
     dependsOn(downloadTest262, tasks.compileTestJava, tasks.jar)
 
     mainClass.set("org.codelibs.sai.internal.test.framework.ParallelTestRunner")
-    classpath = sourceSets.test.get().runtimeClasspath
+    classpath = engineTestClasspath()
 
     maxHeapSize = "2G"
     jvmArgs("-server", "-Dsai.typeInfo.disabled=true")
