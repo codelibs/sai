@@ -101,7 +101,8 @@ public enum TokenType {
     //  VOLATILE       (FUTURE,   "volatile"),
     WHILE(KEYWORD, "while"), WITH(KEYWORD, "with"), YIELD(FUTURESTRICT, "yield"),
 
-    DECIMAL(LITERAL, null), OCTAL(LITERAL, null), HEXADECIMAL(LITERAL, null), FLOATING(LITERAL, null), STRING(LITERAL, null), ESCSTRING(
+    DECIMAL(LITERAL, null), HEXADECIMAL(LITERAL, null), OCTAL_LEGACY(LITERAL, null), OCTAL(LITERAL, null), BINARY_NUMBER(
+            LITERAL, null), FLOATING(LITERAL, null), STRING(LITERAL, null), ESCSTRING(
             LITERAL, null), EXECSTRING(LITERAL, null), IDENT(LITERAL, null), REGEX(LITERAL, null), XML(LITERAL, null), OBJECT(LITERAL, null), ARRAY(
             LITERAL, null),
 

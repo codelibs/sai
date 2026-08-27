@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2026, CodeLibs Project and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +27,7 @@
 package org.codelibs.sai.internal.parser;
 
 import static org.codelibs.sai.internal.parser.TokenType.ADD;
+import static org.codelibs.sai.internal.parser.TokenType.BINARY_NUMBER;
 import static org.codelibs.sai.internal.parser.TokenType.COMMENT;
 import static org.codelibs.sai.internal.parser.TokenType.DECIMAL;
 import static org.codelibs.sai.internal.parser.TokenType.DIRECTIVE_COMMENT;
@@ -40,6 +42,7 @@ import static org.codelibs.sai.internal.parser.TokenType.HEXADECIMAL;
 import static org.codelibs.sai.internal.parser.TokenType.LBRACE;
 import static org.codelibs.sai.internal.parser.TokenType.LPAREN;
 import static org.codelibs.sai.internal.parser.TokenType.OCTAL;
+import static org.codelibs.sai.internal.parser.TokenType.OCTAL_LEGACY;
 import static org.codelibs.sai.internal.parser.TokenType.RBRACE;
 import static org.codelibs.sai.internal.parser.TokenType.REGEX;
 import static org.codelibs.sai.internal.parser.TokenType.RPAREN;
@@ -75,6 +78,9 @@ public class Lexer extends Scanner {
 
     /** True if here and edit strings are supported. */
     private final boolean scripting;
+
+    /** True if ES6 language mode is enabled. */
+    private final boolean es6;
 
     /** True if a nested scan. (scan to completion, no EOF.) */
     private final boolean nested;
@@ -168,7 +174,7 @@ public class Lexer extends Scanner {
      * @param stream    the token stream to lex
      */
     public Lexer(final Source source, final TokenStream stream) {
-        this(source, stream, false);
+        this(source, stream, false, false);
     }
 
     /**
@@ -177,9 +183,10 @@ public class Lexer extends Scanner {
      * @param source    the source
      * @param stream    the token stream to lex
      * @param scripting are we in scripting mode
+     * @param es6       are we in ES6 language mode
      */
-    public Lexer(final Source source, final TokenStream stream, final boolean scripting) {
-        this(source, 0, source.getLength(), stream, scripting, false);
+    public Lexer(final Source source, final TokenStream stream, final boolean scripting, final boolean es6) {
+        this(source, 0, source.getLength(), stream, scripting, false, es6);
     }
 
     /**
@@ -193,14 +200,16 @@ public class Lexer extends Scanner {
      * @param pauseOnFunctionBody if true, lexer will return from {@link #lexify()} when it encounters a
      * function body. This is used with the feature where the parser is skipping nested function bodies to
      * avoid reading ahead unnecessarily when we skip the function bodies.
+     * @param es6       are we in ES6 language mode
      */
 
     public Lexer(final Source source, final int start, final int len, final TokenStream stream, final boolean scripting,
-            final boolean pauseOnFunctionBody) {
+            final boolean pauseOnFunctionBody, final boolean es6) {
         super(source.getContent(), 1, start, len);
         this.source = source;
         this.stream = stream;
         this.scripting = scripting;
+        this.es6 = es6;
         this.nested = false;
         this.pendingLine = 1;
         this.last = EOL;
@@ -214,6 +223,7 @@ public class Lexer extends Scanner {
         source = lexer.source;
         stream = lexer.stream;
         scripting = lexer.scripting;
+        es6 = lexer.es6;
         nested = true;
 
         pendingLine = state.pendingLine;
@@ -1079,6 +1089,24 @@ public class Lexer extends Scanner {
             }
 
             type = HEXADECIMAL;
+        } else if (digit == 0 && es6 && (ch1 == 'o' || ch1 == 'O') && convertDigit(ch2, 8) != -1) {
+            // Skip over 0oN.
+            skip(3);
+            // Skip over remaining digits.
+            while (convertDigit(ch0, 8) != -1) {
+                skip(1);
+            }
+
+            type = OCTAL;
+        } else if (digit == 0 && es6 && (ch1 == 'b' || ch1 == 'B') && convertDigit(ch2, 2) != -1) {
+            // Skip over 0bN.
+            skip(3);
+            // Skip over remaining digits.
+            while (convertDigit(ch0, 2) != -1) {
+                skip(1);
+            }
+
+            type = BINARY_NUMBER;
         } else {
             // Check for possible octal constant.
             boolean octal = digit == 0;
@@ -1096,7 +1124,7 @@ public class Lexer extends Scanner {
             }
 
             if (octal && position - start > 1) {
-                type = OCTAL;
+                type = OCTAL_LEGACY;
             } else if (ch0 == '.' || ch0 == 'E' || ch0 == 'e') {
                 // Must be a double.
                 if (ch0 == '.') {
@@ -1628,8 +1656,12 @@ public class Lexer extends Scanner {
         switch (Token.descType(token)) {
         case DECIMAL:
             return Lexer.valueOf(source.getString(start, len), 10); // number
-        case OCTAL:
+        case OCTAL_LEGACY:
             return Lexer.valueOf(source.getString(start, len), 8); // number
+        case OCTAL:
+            return Lexer.valueOf(source.getString(start + 2, len - 2), 8); // number
+        case BINARY_NUMBER:
+            return Lexer.valueOf(source.getString(start + 2, len - 2), 2); // number
         case HEXADECIMAL:
             return Lexer.valueOf(source.getString(start + 2, len - 2), 16); // number
         case FLOATING:
