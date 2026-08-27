@@ -7,7 +7,7 @@
 # ASM is the bytecode backend for both the code generator and saigen.
 asm = "9.7"
 # The test stack is pinned to what the Nashorn-era harness was written against.
-testng = "6.8"
+testng = "7.12.0"
 jcommander = "1.27"
 bsh = "2.0b4"
 snakeyaml = "1.6"
