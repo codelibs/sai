@@ -1,13 +1,19 @@
-# This workflow will build a Java project with Gradle
-# For more information see: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions
-
 name: Java CI with Gradle
 
 on:
   push:
     branches: [ master ]
+  # Every pull request, not just those targeting master, so the intermediate
+  # branches in a stacked series are checked too.
   pull_request:
-    branches: [ master ]
+
+permissions:
+  contents: read
+
+# A new push to the same branch makes the in-flight run redundant.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -21,17 +27,23 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
-        cache: 'gradle'
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+    # Caches the Gradle user home and the configuration cache, and writes a build
+    # summary onto the job page. Replaces setup-java's `cache: gradle`.
+    - name: Set up Gradle
+      uses: gradle/actions/setup-gradle@v4
 
-    - name: Run tests
-      run: ./gradlew test
+    # One invocation rather than three: `build` covers compile, test, javadoc and
+    # the JARs, and the mode tests share a code cache so they must not overlap.
+    - name: Build and test
+      run: ./gradlew build testOptimistic testPessimistic
 
-    - name: Run tests in optimistic mode
-      run: ./gradlew testOptimistic
-
-    - name: Run tests in pessimistic mode
-      run: ./gradlew testPessimistic
-
+    - name: Upload test reports
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-reports
+        path: |
+          build/reports/tests/
+          build/test-results/
+        retention-days: 7
