@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2026, CodeLibs Project and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,9 +65,18 @@ public class CompilerTest {
 
     private Context context;
     private Global global;
+    private Context es6Context;
+    private Global es6Global;
 
     @BeforeClass
     public void setupTest() {
+        this.context = newContext(null);
+        this.global = context.createGlobal();
+        this.es6Context = newContext("es6");
+        this.es6Global = es6Context.createGlobal();
+    }
+
+    private static Context newContext(final String language) {
         final Options options = new Options("sai");
         options.set("anon.functions", true);
         options.set("compile.only", true);
@@ -75,6 +85,9 @@ public class CompilerTest {
         options.set("scripting", true);
         options.set("const.as.var", true);
         options.set("verify.code", true);
+        if (language != null) {
+            options.set("language", language);
+        }
 
         final ErrorManager errors = new ErrorManager() {
             @Override
@@ -85,14 +98,16 @@ public class CompilerTest {
 
         final StringWriter sw = new StringWriter();
         final PrintWriter pw = new PrintWriter(sw);
-        this.context = new Context(options, errors, pw, pw, Thread.currentThread().getContextClassLoader());
-        this.global = context.createGlobal();
+
+        return new Context(options, errors, pw, pw, Thread.currentThread().getContextClassLoader());
     }
 
     @AfterClass
     public void tearDownTest() {
         this.context = null;
         this.global = null;
+        this.es6Context = null;
+        this.es6Global = null;
     }
 
     @Test
@@ -103,19 +118,26 @@ public class CompilerTest {
                 public boolean exclude(final File file, final String content) {
                     return content != null && content.contains("@negative");
                 }
-            });
+            }, context, global);
         }
         compileTestSet(new File(TEST_BASIC_DIR), new TestFilter() {
             @Override
             public boolean exclude(final File file, final String content) {
                 return file.getName().equals("es6");
             }
-        });
-        compileTestSet(new File(TEST_NODE_DIR, "node"), null);
-        compileTestSet(new File(TEST_NODE_DIR, "src"), null);
+        }, context, global);
+
+        // The es6 directory is excluded above because the context above is in the
+        // default language mode, where its contents are not valid. Sweep it separately
+        // in the mode it is written for.
+        compileTestSet(new File(TEST_BASIC_DIR, "es6"), null, es6Context, es6Global);
+
+        compileTestSet(new File(TEST_NODE_DIR, "node"), null, context, global);
+        compileTestSet(new File(TEST_NODE_DIR, "src"), null, context, global);
     }
 
-    private void compileTestSet(final File testSetDir, final TestFilter filter) {
+    private void compileTestSet(final File testSetDir, final TestFilter filter, final Context compileContext,
+            final Global compileGlobal) {
         passed = 0;
         failed = 0;
         skipped = 0;
@@ -124,7 +146,7 @@ public class CompilerTest {
             return;
         }
         log(testSetDir.getAbsolutePath());
-        compileJSDirectory(testSetDir, filter);
+        compileJSDirectory(testSetDir, filter, compileContext, compileGlobal);
 
         log(testSetDir + " compile done!");
         log("compile ok: " + passed);
@@ -143,20 +165,22 @@ public class CompilerTest {
     // skipped for now.
     private int skipped;
 
-    private void compileJSDirectory(final File dir, final TestFilter filter) {
+    private void compileJSDirectory(final File dir, final TestFilter filter, final Context compileContext,
+            final Global compileGlobal) {
         if (filter != null && filter.exclude(dir, null)) {
             return;
         }
         for (final File f : dir.listFiles()) {
             if (f.isDirectory()) {
-                compileJSDirectory(f, filter);
+                compileJSDirectory(f, filter, compileContext, compileGlobal);
             } else if (f.getName().endsWith(".js")) {
-                compileJSFile(f, filter);
+                compileJSFile(f, filter, compileContext, compileGlobal);
             }
         }
     }
 
-    private void compileJSFile(final File file, final TestFilter filter) {
+    private void compileJSFile(final File file, final TestFilter filter, final Context compileContext,
+            final Global compileGlobal) {
         if (VERBOSE) {
             log("Begin compiling " + file.getAbsolutePath());
         }
@@ -185,8 +209,8 @@ public class CompilerTest {
                 Context.setGlobal(global);
             }
             final Source source = sourceFor(file.getAbsolutePath(), buffer);
-            final ScriptFunction script = context.compileScript(source, global);
-            if (script == null || context.getErrorManager().getNumberOfErrors() > 0) {
+            final ScriptFunction script = compileContext.compileScript(source, compileGlobal);
+            if (script == null || compileContext.getErrorManager().getNumberOfErrors() > 0) {
                 log("Compile failed: " + file.getAbsolutePath());
                 failed++;
             } else {
