@@ -1,0 +1,9 @@
+test/script/error/param_default_es5.js:26:16 Expected , but found =
+function f(a, b = 1) {
+                ^
+test/script/error/param_default_es5.js:27:4 Invalid return statement
+    return a + b;
+    ^
+test/script/error/param_default_es5.js:28:0 Expected eof but found }
+}
+^

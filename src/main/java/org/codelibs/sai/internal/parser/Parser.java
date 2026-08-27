@@ -122,6 +122,7 @@ import org.codelibs.sai.internal.runtime.JSErrorType;
 import org.codelibs.sai.internal.runtime.ParserException;
 import org.codelibs.sai.internal.runtime.RecompilableScriptFunctionData;
 import org.codelibs.sai.internal.runtime.ScriptEnvironment;
+import org.codelibs.sai.internal.runtime.ScriptRuntime;
 import org.codelibs.sai.internal.runtime.ScriptingFunctions;
 import org.codelibs.sai.internal.runtime.Source;
 import org.codelibs.sai.internal.runtime.Timing;
@@ -329,7 +330,7 @@ public class Parser extends AbstractParser implements Loggable {
             k = -1;
             next();
 
-            return formalParameterList(TokenType.EOF);
+            return formalParameterList(TokenType.EOF, null);
         } catch (final Exception e) {
             handleParseException(e);
             return null;
@@ -2316,7 +2317,7 @@ public class Parser extends AbstractParser implements Loggable {
         expect(LPAREN);
         expect(RPAREN);
         final FunctionNode functionNode =
-                functionBody(getSetToken, getNameNode, new ArrayList<IdentNode>(), FunctionNode.Kind.GETTER, functionLine);
+                functionBody(getSetToken, getNameNode, new ArrayList<IdentNode>(), null, FunctionNode.Kind.GETTER, functionLine);
 
         return new PropertyFunction(getIdent, functionNode);
     }
@@ -2340,7 +2341,7 @@ public class Parser extends AbstractParser implements Loggable {
         if (argIdent != null) {
             parameters.add(argIdent);
         }
-        final FunctionNode functionNode = functionBody(getSetToken, setNameNode, parameters, FunctionNode.Kind.SETTER, functionLine);
+        final FunctionNode functionNode = functionBody(getSetToken, setNameNode, parameters, null, FunctionNode.Kind.SETTER, functionLine);
 
         return new PropertyFunction(setIdent, functionNode);
     }
@@ -2700,7 +2701,8 @@ public class Parser extends AbstractParser implements Loggable {
         }
 
         expect(LPAREN);
-        final List<IdentNode> parameters = formalParameterList();
+        final List<Expression> parameterDefaults = new ArrayList<>();
+        final List<IdentNode> parameters = formalParameterList(parameterDefaults);
         expect(RPAREN);
 
         FunctionNode functionNode;
@@ -2708,7 +2710,7 @@ public class Parser extends AbstractParser implements Loggable {
         // If we didn't hide the current default name, then the innermost anonymous function would receive "x3".
         hideDefaultName();
         try {
-            functionNode = functionBody(functionToken, name, parameters, FunctionNode.Kind.NORMAL, functionLine);
+            functionNode = functionBody(functionToken, name, parameters, parameterDefaults, FunctionNode.Kind.NORMAL, functionLine);
         } finally {
             defaultNames.pop();
         }
@@ -2839,15 +2841,17 @@ public class Parser extends AbstractParser implements Loggable {
         final int arrowLine = line;
 
         final List<IdentNode> parameters;
+        final List<Expression> parameterDefaults = new ArrayList<>();
 
         if (type == LPAREN) {
             next();
-            parameters = formalParameterList();
+            parameters = formalParameterList(parameterDefaults);
             expect(RPAREN);
         } else {
             final IdentNode parameter = getIdent();
             verifyStrictIdent(parameter, "function parameter");
             parameters = Collections.singletonList(parameter);
+            parameterDefaults.add(null);
         }
 
         expect(ARROW);
@@ -2858,7 +2862,7 @@ public class Parser extends AbstractParser implements Loggable {
         FunctionNode functionNode;
         hideDefaultName();
         try {
-            functionNode = functionBody(arrowToken, name, parameters, FunctionNode.Kind.ARROW, arrowLine);
+            functionNode = functionBody(arrowToken, name, parameters, parameterDefaults, FunctionNode.Kind.ARROW, arrowLine);
         } finally {
             defaultNames.pop();
         }
@@ -2930,7 +2934,18 @@ public class Parser extends AbstractParser implements Loggable {
      * @return List of parameter nodes.
      */
     private List<IdentNode> formalParameterList() {
-        return formalParameterList(RPAREN);
+        return formalParameterList(RPAREN, null);
+    }
+
+    /**
+     * Parse a formal parameter list, collecting ES6 default values.
+     *
+     * @param defaults filled with one entry per parameter, null where the parameter
+     *                 has no default. Pass null where defaults are not accepted.
+     * @return the parameters
+     */
+    private List<IdentNode> formalParameterList(final List<Expression> defaults) {
+        return formalParameterList(RPAREN, defaults);
     }
 
     /**
@@ -2946,7 +2961,7 @@ public class Parser extends AbstractParser implements Loggable {
      * Parse function parameter list.
      * @return List of parameter nodes.
      */
-    private List<IdentNode> formalParameterList(final TokenType endType) {
+    private List<IdentNode> formalParameterList(final TokenType endType, final List<Expression> defaults) {
         // Prepare to gather parameters.
         final ArrayList<IdentNode> parameters = new ArrayList<>();
         // Track commas.
@@ -2967,6 +2982,17 @@ public class Parser extends AbstractParser implements Loggable {
             verifyStrictIdent(ident, "function parameter");
 
             parameters.add(ident);
+
+            if (defaults != null) {
+                Expression defaultValue = null;
+
+                if (isES6() && type == ASSIGN) {
+                    next();
+                    defaultValue = assignmentExpression(false);
+                }
+
+                defaults.add(defaultValue);
+            }
         }
 
         parameters.trimToSize();
@@ -2983,7 +3009,7 @@ public class Parser extends AbstractParser implements Loggable {
      * @return function node (body.)
      */
     private FunctionNode functionBody(final long firstToken, final IdentNode ident, final List<IdentNode> parameters,
-            final FunctionNode.Kind kind, final int functionLine) {
+            final List<Expression> parameterDefaults, final FunctionNode.Kind kind, final int functionLine) {
         FunctionNode functionNode = null;
         long lastToken = 0L;
 
@@ -3058,6 +3084,7 @@ public class Parser extends AbstractParser implements Loggable {
                 functionNode.setFinish(finish);
             }
 
+            applyParameterDefaults(functionNode, parameters, parameterDefaults);
             declareArrowThis(functionNode);
         } finally {
             functionNode = restoreFunctionNode(functionNode, lastToken);
@@ -3550,6 +3577,59 @@ public class Parser extends AbstractParser implements Loggable {
 
         prependStatement(new VarNode(functionNode.getLineNumber(), Token.recast(firstToken, TokenType.VAR), start, binding,
                 thisNode));
+    }
+
+    /**
+     * Prepend the default value handling for the parameters of the function being
+     * parsed. A default becomes {@code if (p === undefined) { p = <default>; }} at the
+     * top of the body, so a default may read a parameter declared before it and is
+     * re-evaluated on every call that needs it.
+     *
+     * The statements are prepended back to front so that they end up in declaration
+     * order.
+     *
+     * @param functionNode the function whose body is currently open
+     * @param parameters the parameters
+     * @param parameterDefaults one entry per parameter, null where there is no
+     *                          default; null altogether where defaults are not
+     *                          accepted
+     */
+    private void applyParameterDefaults(final FunctionNode functionNode, final List<IdentNode> parameters,
+            final List<Expression> parameterDefaults) {
+        if (parameterDefaults == null) {
+            return;
+        }
+
+        assert parameterDefaults.size() == parameters.size();
+
+        for (int i = parameterDefaults.size() - 1; i >= 0; i--) {
+            final Expression defaultValue = parameterDefaults.get(i);
+
+            if (defaultValue == null) {
+                continue;
+            }
+
+            final IdentNode parameter = parameters.get(i);
+            final long token = defaultValue.getToken();
+            final int finish = defaultValue.getFinish();
+            final int lineNumber = functionNode.getLineNumber();
+
+            final Expression test = new BinaryNode(Token.recast(token, TokenType.EQ_STRICT), referenceTo(parameter),
+                    LiteralNode.newInstance(token, finish, ScriptRuntime.UNDEFINED));
+            final Expression assignment =
+                    new BinaryNode(Token.recast(token, TokenType.ASSIGN), referenceTo(parameter), defaultValue);
+            final Block pass = new Block(token, finish, new ExpressionStatement(lineNumber, token, finish, assignment));
+
+            prependStatement(new IfNode(lineNumber, token, finish, test, pass, null));
+        }
+    }
+
+    /**
+     * A fresh IdentNode naming the same thing. Nodes are not shared between places in
+     * the tree, since each one is given its own symbol.
+     */
+    private static IdentNode referenceTo(final IdentNode ident) {
+        return new IdentNode(ident.getToken(), ident.getFinish(), ident.getName());
     }
 
     private static void markEval(final LexicalContext lc) {
