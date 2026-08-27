@@ -1,0 +1,30 @@
+name: Feature request
+description: Suggest a change to the engine or the build
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do that Sai makes hard or impossible?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+
+  - type: markdown
+    attributes:
+      value: >
+        Note that Sai targets ECMAScript 5.1, inherited from Nashorn. Requests for later
+        ECMAScript features are a large undertaking - please say how far you would expect
+        the support to go.
