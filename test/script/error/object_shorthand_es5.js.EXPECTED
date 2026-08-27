@@ -1,0 +1,3 @@
+test/script/error/object_shorthand_es5.js:27:11 Expected : but found ,
+var o = { x, y };
+           ^
