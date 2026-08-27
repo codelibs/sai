@@ -1,0 +1,3 @@
+test/script/error/tagged_template_es6.js:28:12 Tagged template literals are not supported
+var r = tag`hello`;
+            ^

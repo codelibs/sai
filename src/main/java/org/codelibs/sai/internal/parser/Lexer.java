@@ -47,6 +47,10 @@ import static org.codelibs.sai.internal.parser.TokenType.RBRACE;
 import static org.codelibs.sai.internal.parser.TokenType.REGEX;
 import static org.codelibs.sai.internal.parser.TokenType.RPAREN;
 import static org.codelibs.sai.internal.parser.TokenType.STRING;
+import static org.codelibs.sai.internal.parser.TokenType.TEMPLATE;
+import static org.codelibs.sai.internal.parser.TokenType.TEMPLATE_HEAD;
+import static org.codelibs.sai.internal.parser.TokenType.TEMPLATE_MIDDLE;
+import static org.codelibs.sai.internal.parser.TokenType.TEMPLATE_TAIL;
 import static org.codelibs.sai.internal.parser.TokenType.XML;
 
 import java.io.Serializable;
@@ -1163,6 +1167,152 @@ public class Lexer extends Scanner {
     }
 
     /**
+     * Scan over a template literal.
+     *
+     * A template with no substitutions becomes a single TEMPLATE token. One with
+     * substitutions becomes TEMPLATE_HEAD, the tokens of the first substitution
+     * expression, then TEMPLATE_MIDDLE and the tokens of the next expression for
+     * every further substitution, and finally TEMPLATE_TAIL. The parser turns that
+     * sequence into a string concatenation.
+     */
+    private void scanTemplate() {
+        assert ch0 == '`';
+
+        // Skip over the opening quote.
+        skip(1);
+
+        boolean first = true;
+
+        while (true) {
+            // Record the beginning of this literal part.
+            final State partState = saveState();
+
+            // Scan to the end of the part.
+            while (true) {
+                if (atEOF()) {
+                    error(Lexer.message("missing.close.quote"), TEMPLATE, position, limit);
+                    return;
+                }
+
+                if (ch0 == '`' || ch0 == '$' && ch1 == '{') {
+                    break;
+                }
+
+                if (ch0 == '\\') {
+                    // Skip over the escape so that an escaped quote or dollar does
+                    // not end the part.
+                    skip(1);
+
+                    if (atEOF()) {
+                        error(Lexer.message("missing.close.quote"), TEMPLATE, position, limit);
+                        return;
+                    }
+                } else if (isEOL(ch0)) {
+                    // A template literal spans lines.
+                    skipEOL(false);
+                    continue;
+                }
+
+                skip(1);
+            }
+
+            // Record the end of the part and emit it.
+            partState.setLimit(position);
+            final boolean last = ch0 == '`';
+            add(first ? last ? TEMPLATE : TEMPLATE_HEAD : last ? TEMPLATE_TAIL : TEMPLATE_MIDDLE, partState.position,
+                    partState.limit);
+
+            if (last) {
+                // Skip over the closing quote.
+                skip(1);
+                return;
+            }
+
+            // Skip over ${.
+            skip(2);
+
+            // Record the beginning of the substitution expression.
+            final State expressionState = saveState();
+
+            // Start with one open brace.
+            int braceCount = 1;
+
+            // Scan for the matching brace.
+            while (!atEOF()) {
+                if (ch0 == '}') {
+                    if (--braceCount == 0) {
+                        break;
+                    }
+                } else if (ch0 == '{') {
+                    braceCount++;
+                } else if (ch0 == '"' || ch0 == '\'' || ch0 == '`') {
+                    // Skip over a string so that a brace inside it is not counted.
+                    // A malformed string is left to the lexer that scans the
+                    // expression, which reports it in place.
+                    skipStringInSubstitution();
+                    continue;
+                } else if (isEOL(ch0)) {
+                    skipEOL(false);
+                    continue;
+                }
+
+                skip(1);
+            }
+
+            // If braces don't match then report an error.
+            if (braceCount != 0) {
+                error(Lexer.message("edit.string.missing.brace"), LBRACE, expressionState.position - 1, 1);
+                return;
+            }
+
+            // Mark the end of the expression and skip over the closing brace.
+            expressionState.setLimit(position);
+            skip(1);
+
+            // Lex the expression into this same stream. The nested lexer inherits
+            // the ES6 flag, so templates nest.
+            final Lexer expressionLexer = new Lexer(this, expressionState);
+            expressionLexer.lexify();
+
+            first = false;
+        }
+    }
+
+    /**
+     * Skip over a string literal while looking for the brace that closes a template
+     * substitution. Only the extent matters here, so escapes are skipped wholesale
+     * rather than interpreted.
+     */
+    private void skipStringInSubstitution() {
+        final char quote = ch0;
+
+        // Skip over the opening quote.
+        skip(1);
+
+        while (!atEOF() && ch0 != quote) {
+            if (ch0 == '\\') {
+                skip(1);
+
+                if (atEOF()) {
+                    return;
+                }
+            }
+
+            if (isEOL(ch0)) {
+                skipEOL(false);
+                continue;
+            }
+
+            skip(1);
+        }
+
+        if (!atEOF()) {
+            // Skip over the closing quote.
+            skip(1);
+        }
+    }
+
+    /**
      * Convert a regex token to a token object.
      *
      * @param start  Position in source content.
@@ -1629,6 +1779,11 @@ public class Lexer extends Scanner {
             } else if (Character.isJavaIdentifierStart(ch0) || ch0 == '\\' && ch1 == 'u') {
                 // Scan and add identifier or keyword.
                 scanIdentifierOrKeyword();
+            } else if (es6 && ch0 == '`') {
+                // Scan and add a template literal. This is checked before
+                // isStringDelimiter so that a template wins over the scripting
+                // mode exec string, which uses the same quote character.
+                scanTemplate();
             } else if (isStringDelimiter(ch0)) {
                 // Scan and add a string.
                 scanString(true);
@@ -1683,6 +1838,10 @@ public class Lexer extends Scanner {
         case STRING:
             return source.getString(start, len); // String
         case ESCSTRING:
+        case TEMPLATE:
+        case TEMPLATE_HEAD:
+        case TEMPLATE_MIDDLE:
+        case TEMPLATE_TAIL:
             return valueOfString(start, len, strict); // String
         case IDENT:
             return valueOfIdent(start, len); // String
