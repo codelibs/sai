@@ -31,7 +31,7 @@ jobs:
     # Caches the Gradle user home and the configuration cache, and writes a build
     # summary onto the job page. Replaces setup-java's `cache: gradle`.
     - name: Set up Gradle
-      uses: gradle/actions/setup-gradle@v4
+      uses: gradle/actions/setup-gradle@v6
 
     # One invocation rather than three: `build` covers compile, test, javadoc and
     # the JARs, and the mode tests share a code cache so they must not overlap.
