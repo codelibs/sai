@@ -20,10 +20,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Set up JDK 21
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v6
       with:
         java-version: '21'
         distribution: 'temurin'
@@ -31,7 +31,7 @@ jobs:
     # Caches the Gradle user home and the configuration cache, and writes a build
     # summary onto the job page. Replaces setup-java's `cache: gradle`.
     - name: Set up Gradle
-      uses: gradle/actions/setup-gradle@v4
+      uses: gradle/actions/setup-gradle@v5
 
     # One invocation rather than three: `build` covers compile, test, javadoc and
     # the JARs, and the mode tests share a code cache so they must not overlap.
@@ -40,7 +40,7 @@ jobs:
 
     - name: Upload test reports
       if: failure()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: test-reports
         path: |
