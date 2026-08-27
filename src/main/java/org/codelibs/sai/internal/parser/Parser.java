@@ -2556,7 +2556,7 @@ public class Parser extends AbstractParser implements Loggable {
         expect(LPAREN);
         expect(RPAREN);
         final FunctionNode functionNode =
-                functionBody(getSetToken, getNameNode, new ArrayList<IdentNode>(), null, FunctionNode.Kind.GETTER, functionLine);
+                functionBody(getSetToken, getNameNode, new Parameters(), FunctionNode.Kind.GETTER, functionLine);
 
         return new PropertyFunction(getIdent, functionNode);
     }
@@ -2576,11 +2576,12 @@ public class Parser extends AbstractParser implements Loggable {
             argIdent = null;
         }
         expect(RPAREN);
-        final List<IdentNode> parameters = new ArrayList<>();
+        final Parameters parameters = new Parameters();
         if (argIdent != null) {
-            parameters.add(argIdent);
+            parameters.list.add(argIdent);
+            parameters.setups.add(null);
         }
-        final FunctionNode functionNode = functionBody(getSetToken, setNameNode, parameters, null, FunctionNode.Kind.SETTER, functionLine);
+        final FunctionNode functionNode = functionBody(getSetToken, setNameNode, parameters, FunctionNode.Kind.SETTER, functionLine);
 
         return new PropertyFunction(setIdent, functionNode);
     }
@@ -2947,8 +2948,9 @@ public class Parser extends AbstractParser implements Loggable {
         }
 
         expect(LPAREN);
-        final List<ParameterSetup> parameterSetups = new ArrayList<>();
-        final List<IdentNode> parameters = formalParameterList(parameterSetups);
+        final Parameters allParameters = new Parameters();
+        formalParameterList(RPAREN, allParameters);
+        final List<IdentNode> parameters = allParameters.list;
         expect(RPAREN);
 
         FunctionNode functionNode;
@@ -2956,7 +2958,7 @@ public class Parser extends AbstractParser implements Loggable {
         // If we didn't hide the current default name, then the innermost anonymous function would receive "x3".
         hideDefaultName();
         try {
-            functionNode = functionBody(functionToken, name, parameters, parameterSetups, FunctionNode.Kind.NORMAL, functionLine);
+            functionNode = functionBody(functionToken, name, allParameters, FunctionNode.Kind.NORMAL, functionLine);
         } finally {
             defaultNames.pop();
         }
@@ -3086,18 +3088,17 @@ public class Parser extends AbstractParser implements Loggable {
         final long arrowToken = token;
         final int arrowLine = line;
 
-        final List<IdentNode> parameters;
-        final List<ParameterSetup> parameterSetups = new ArrayList<>();
+        final Parameters parameters = new Parameters();
 
         if (type == LPAREN) {
             next();
-            parameters = formalParameterList(parameterSetups);
+            formalParameterList(RPAREN, parameters);
             expect(RPAREN);
         } else {
             final IdentNode parameter = getIdent();
             verifyStrictIdent(parameter, "function parameter");
-            parameters = Collections.singletonList(parameter);
-            parameterSetups.add(null);
+            parameters.list.add(parameter);
+            parameters.setups.add(null);
         }
 
         expect(ARROW);
@@ -3108,7 +3109,7 @@ public class Parser extends AbstractParser implements Loggable {
         FunctionNode functionNode;
         hideDefaultName();
         try {
-            functionNode = functionBody(arrowToken, name, parameters, parameterSetups, FunctionNode.Kind.ARROW, arrowLine);
+            functionNode = functionBody(arrowToken, name, parameters, FunctionNode.Kind.ARROW, arrowLine);
         } finally {
             defaultNames.pop();
         }
@@ -3184,17 +3185,6 @@ public class Parser extends AbstractParser implements Loggable {
     }
 
     /**
-     * Parse a formal parameter list, collecting ES6 default values.
-     *
-     * @param defaults filled with one entry per parameter, null where the parameter
-     *                 has no default. Pass null where defaults are not accepted.
-     * @return the parameters
-     */
-    private List<IdentNode> formalParameterList(final List<ParameterSetup> setups) {
-        return formalParameterList(RPAREN, setups);
-    }
-
-    /**
      * Same as the other method of the same name - except that the end
      * token type expected is passed as argument to this method.
      *
@@ -3207,9 +3197,11 @@ public class Parser extends AbstractParser implements Loggable {
      * Parse function parameter list.
      * @return List of parameter nodes.
      */
-    private List<IdentNode> formalParameterList(final TokenType endType, final List<ParameterSetup> setups) {
-        // Prepare to gather parameters.
-        final ArrayList<IdentNode> parameters = new ArrayList<>();
+    private List<IdentNode> formalParameterList(final TokenType endType, final Parameters out) {
+        // Prepare to gather parameters. ES6 defaults, patterns and rest are only
+        // accepted where the body that has to apply them is parsed as well.
+        final List<IdentNode> parameters = out == null ? new ArrayList<IdentNode>() : out.list;
+        final List<ParameterSetup> setups = out == null ? null : out.setups;
         // Track commas.
         boolean first = true;
 
@@ -3219,6 +3211,16 @@ public class Parser extends AbstractParser implements Loggable {
                 expect(COMMARIGHT);
             } else {
                 first = false;
+            }
+
+            if (out != null && isES6() && type == ELLIPSIS) {
+                // A rest binding ends the list, and is declared in the body rather than
+                // taking a parameter slot.
+                next();
+                out.rest = getIdent();
+                verifyStrictIdent(out.rest, "function parameter");
+
+                break;
             }
 
             if (setups != null && isES6() && (type == LBRACKET || type == LBRACE)) {
@@ -3247,7 +3249,6 @@ public class Parser extends AbstractParser implements Loggable {
             }
         }
 
-        parameters.trimToSize();
         return parameters;
     }
 
@@ -3260,8 +3261,8 @@ public class Parser extends AbstractParser implements Loggable {
      * Parse function body.
      * @return function node (body.)
      */
-    private FunctionNode functionBody(final long firstToken, final IdentNode ident, final List<IdentNode> parameters,
-            final List<ParameterSetup> parameterSetups, final FunctionNode.Kind kind, final int functionLine) {
+    private FunctionNode functionBody(final long firstToken, final IdentNode ident, final Parameters parameters,
+            final FunctionNode.Kind kind, final int functionLine) {
         FunctionNode functionNode = null;
         long lastToken = 0L;
 
@@ -3271,7 +3272,7 @@ public class Parser extends AbstractParser implements Loggable {
         temporaries = new ArrayList<>();
         try {
             // Create a new function block.
-            functionNode = newFunctionNode(firstToken, ident, parameters, kind, functionLine);
+            functionNode = newFunctionNode(firstToken, ident, parameters.list, kind, functionLine);
             assert functionNode != null;
             final int functionId = functionNode.getId();
             parseBody = reparsedFunction == null || functionId <= reparsedFunction.getFunctionNodeId();
@@ -3338,7 +3339,8 @@ public class Parser extends AbstractParser implements Loggable {
                 functionNode.setFinish(finish);
             }
 
-            applyParameterSetups(functionNode, parameters, parameterSetups);
+            declareRestParameter(functionNode, parameters);
+            applyParameterSetups(functionNode, parameters.list, parameters.setups);
             declareArrowThis(functionNode);
             declareTemporaries(functionNode);
         } finally {
@@ -3850,6 +3852,33 @@ public class Parser extends AbstractParser implements Loggable {
      *                          default; null altogether where defaults are not
      *                          accepted
      */
+    /**
+     * Declare the rest binding of the function being parsed, as an array of the
+     * arguments past the last formal parameter:
+     *
+     * <pre>
+     * function f(a, ...r)   gets   var r = TO_ARRAY(arguments, 1);
+     * </pre>
+     *
+     * @param functionNode the function whose body is currently open
+     * @param parameters the parameters, carrying the rest binding if there is one
+     */
+    private void declareRestParameter(final FunctionNode functionNode, final Parameters parameters) {
+        if (parameters.rest == null) {
+            return;
+        }
+
+        lc.setFlag(functionNode, FunctionNode.USES_ARGUMENTS);
+
+        final long restToken = parameters.rest.getToken();
+        final Expression value = new RuntimeNode(restToken, finish, RuntimeNode.Request.TO_ARRAY,
+                identifierFor(restToken, ARGUMENTS_NAME),
+                LiteralNode.newInstance(restToken, finish, Integer.valueOf(parameters.list.size())));
+
+        prependStatement(new VarNode(functionNode.getLineNumber(), restToken, finish,
+                parameters.rest.setIsDeclaredHere(), value));
+    }
+
     private void applyParameterSetups(final FunctionNode functionNode, final List<IdentNode> parameters,
             final List<ParameterSetup> parameterSetups) {
         if (parameterSetups == null) {
@@ -4230,6 +4259,20 @@ public class Parser extends AbstractParser implements Loggable {
 
     private IdentNode identifierFor(final long token, final String name) {
         return createIdentNode(Token.recast(token, IDENT), finish, name);
+    }
+
+    /**
+     * The parameters of a function: the formal parameter list, what each of them needs
+     * doing to it at the top of the body, and the rest binding if there is one.
+     *
+     * A rest binding is deliberately not a formal parameter. It is declared in the
+     * body, so that it does not count towards the function's length and so that
+     * assigning to it cannot write through the mapped arguments object.
+     */
+    private static final class Parameters {
+        private final List<IdentNode> list = new ArrayList<>();
+        private final List<ParameterSetup> setups = new ArrayList<>();
+        private IdentNode rest;
     }
 
     /**
