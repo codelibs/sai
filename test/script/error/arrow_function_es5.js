@@ -17,8 +17,8 @@
  */
 
 /**
- * Arrow function syntax is not supported yet, so it has to be reported as a
- * syntax error instead of crashing the code generator with an AssertionError.
+ * Arrow functions are an ES6 feature. In the default es5 language mode the arrow
+ * stays a syntax error rather than crashing the code generator.
  *
  * @test/compile-error
  */
