@@ -726,6 +726,54 @@ public class Lexer extends Scanner {
     }
 
     /**
+     * Get the value of a unicode escape, with the backslash and the u already read.
+     * The ES6 form is a braced code point of any length; otherwise it is the four
+     * digits of ES5.
+     *
+     * @param type Type of token to report against.
+     * @return Code point, or < 0 if malformed.
+     */
+    private int unicodeEscapeSequence(final TokenType type) {
+        if (!es6 || ch0 != '{') {
+            return hexSequence(4, type);
+        }
+
+        // Skip over the opening brace.
+        skip(1);
+
+        int value = 0;
+        int digits = 0;
+
+        while (ch0 != '}') {
+            final int digit = convertDigit(ch0, 16);
+
+            if (digit == -1) {
+                error(Lexer.message("invalid.hex"), type, position, limit);
+                return -1;
+            }
+
+            value = digit | value << 4;
+            digits++;
+            skip(1);
+
+            if (value > Character.MAX_CODE_POINT) {
+                error(Lexer.message("invalid.hex"), type, position, limit);
+                return -1;
+            }
+        }
+
+        if (digits == 0) {
+            error(Lexer.message("invalid.hex"), type, position, limit);
+            return -1;
+        }
+
+        // Skip over the closing brace.
+        skip(1);
+
+        return value;
+    }
+
+    /**
      * Get the value of an octal numeric sequence. This parses up to 3 digits with a maximum value of 255.
      *
      * @return Value of sequence.
@@ -923,14 +971,15 @@ public class Lexer extends Scanner {
                 }
                     break;
                 case 'u': {
-                    // Unicode sequence.
-                    final int ch = hexSequence(4, STRING);
+                    // Unicode sequence. The ES6 braced form can name a code point
+                    // outside the basic plane, which becomes a surrogate pair.
+                    final int ch = unicodeEscapeSequence(STRING);
 
                     if (ch < 0) {
                         sb.append('\\');
                         sb.append('u');
                     } else {
-                        sb.append((char) ch);
+                        sb.appendCodePoint(ch);
                     }
                 }
                     break;
