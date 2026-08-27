@@ -1,0 +1,12 @@
+test/script/error/param_destructuring_es5.js:26:11 Expected ident but found {
+function f({ a, b }) {
+           ^
+test/script/error/param_destructuring_es5.js:26:19 Expected ; but found )
+function f({ a, b }) {
+                   ^
+test/script/error/param_destructuring_es5.js:27:4 Invalid return statement
+    return a + b;
+    ^
+test/script/error/param_destructuring_es5.js:28:0 Expected eof but found }
+}
+^

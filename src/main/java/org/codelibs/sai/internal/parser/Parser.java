@@ -158,6 +158,12 @@ public class Parser extends AbstractParser implements Loggable {
      */
     private static final String TEMPORARY_PREFIX = ":pt";
 
+    /**
+     * Prefix of the name given to a parameter that is written as a pattern. Unlike a
+     * temporary it is a real parameter, so it is not declared in the body.
+     */
+    private static final String PATTERN_PARAMETER_PREFIX = ":pp";
+
     /** Names of the temporaries the function currently being parsed has to declare. */
     private List<String> temporaries;
 
@@ -2928,8 +2934,8 @@ public class Parser extends AbstractParser implements Loggable {
         }
 
         expect(LPAREN);
-        final List<Expression> parameterDefaults = new ArrayList<>();
-        final List<IdentNode> parameters = formalParameterList(parameterDefaults);
+        final List<ParameterSetup> parameterSetups = new ArrayList<>();
+        final List<IdentNode> parameters = formalParameterList(parameterSetups);
         expect(RPAREN);
 
         FunctionNode functionNode;
@@ -2937,7 +2943,7 @@ public class Parser extends AbstractParser implements Loggable {
         // If we didn't hide the current default name, then the innermost anonymous function would receive "x3".
         hideDefaultName();
         try {
-            functionNode = functionBody(functionToken, name, parameters, parameterDefaults, FunctionNode.Kind.NORMAL, functionLine);
+            functionNode = functionBody(functionToken, name, parameters, parameterSetups, FunctionNode.Kind.NORMAL, functionLine);
         } finally {
             defaultNames.pop();
         }
@@ -3068,17 +3074,17 @@ public class Parser extends AbstractParser implements Loggable {
         final int arrowLine = line;
 
         final List<IdentNode> parameters;
-        final List<Expression> parameterDefaults = new ArrayList<>();
+        final List<ParameterSetup> parameterSetups = new ArrayList<>();
 
         if (type == LPAREN) {
             next();
-            parameters = formalParameterList(parameterDefaults);
+            parameters = formalParameterList(parameterSetups);
             expect(RPAREN);
         } else {
             final IdentNode parameter = getIdent();
             verifyStrictIdent(parameter, "function parameter");
             parameters = Collections.singletonList(parameter);
-            parameterDefaults.add(null);
+            parameterSetups.add(null);
         }
 
         expect(ARROW);
@@ -3089,7 +3095,7 @@ public class Parser extends AbstractParser implements Loggable {
         FunctionNode functionNode;
         hideDefaultName();
         try {
-            functionNode = functionBody(arrowToken, name, parameters, parameterDefaults, FunctionNode.Kind.ARROW, arrowLine);
+            functionNode = functionBody(arrowToken, name, parameters, parameterSetups, FunctionNode.Kind.ARROW, arrowLine);
         } finally {
             defaultNames.pop();
         }
@@ -3171,8 +3177,8 @@ public class Parser extends AbstractParser implements Loggable {
      *                 has no default. Pass null where defaults are not accepted.
      * @return the parameters
      */
-    private List<IdentNode> formalParameterList(final List<Expression> defaults) {
-        return formalParameterList(RPAREN, defaults);
+    private List<IdentNode> formalParameterList(final List<ParameterSetup> setups) {
+        return formalParameterList(RPAREN, setups);
     }
 
     /**
@@ -3188,7 +3194,7 @@ public class Parser extends AbstractParser implements Loggable {
      * Parse function parameter list.
      * @return List of parameter nodes.
      */
-    private List<IdentNode> formalParameterList(final TokenType endType, final List<Expression> defaults) {
+    private List<IdentNode> formalParameterList(final TokenType endType, final List<ParameterSetup> setups) {
         // Prepare to gather parameters.
         final ArrayList<IdentNode> parameters = new ArrayList<>();
         // Track commas.
@@ -3202,6 +3208,18 @@ public class Parser extends AbstractParser implements Loggable {
                 first = false;
             }
 
+            if (setups != null && isES6() && (type == LBRACKET || type == LBRACE)) {
+                // ES6 pattern parameter. It becomes an ordinary parameter under a name of
+                // its own, and the bindings it stands for are declared in the body.
+                final long patternToken = token;
+                final List<Binding> pattern = destructuringPattern();
+
+                parameters.add(createIdentNode(Token.recast(patternToken, IDENT), finish, newPatternParameter()));
+                setups.add(new ParameterSetup(defaultValue(), pattern));
+
+                continue;
+            }
+
             // Get and add parameter.
             final IdentNode ident = getIdent();
 
@@ -3210,15 +3228,9 @@ public class Parser extends AbstractParser implements Loggable {
 
             parameters.add(ident);
 
-            if (defaults != null) {
-                Expression defaultValue = null;
-
-                if (isES6() && type == ASSIGN) {
-                    next();
-                    defaultValue = assignmentExpression(false);
-                }
-
-                defaults.add(defaultValue);
+            if (setups != null) {
+                final Expression defaultValue = isES6() ? defaultValue() : null;
+                setups.add(defaultValue == null ? null : new ParameterSetup(defaultValue, null));
             }
         }
 
@@ -3236,7 +3248,7 @@ public class Parser extends AbstractParser implements Loggable {
      * @return function node (body.)
      */
     private FunctionNode functionBody(final long firstToken, final IdentNode ident, final List<IdentNode> parameters,
-            final List<Expression> parameterDefaults, final FunctionNode.Kind kind, final int functionLine) {
+            final List<ParameterSetup> parameterSetups, final FunctionNode.Kind kind, final int functionLine) {
         FunctionNode functionNode = null;
         long lastToken = 0L;
 
@@ -3313,7 +3325,7 @@ public class Parser extends AbstractParser implements Loggable {
                 functionNode.setFinish(finish);
             }
 
-            applyParameterDefaults(functionNode, parameters, parameterDefaults);
+            applyParameterSetups(functionNode, parameters, parameterSetups);
             declareArrowThis(functionNode);
             declareTemporaries(functionNode);
         } finally {
@@ -3825,22 +3837,39 @@ public class Parser extends AbstractParser implements Loggable {
      *                          default; null altogether where defaults are not
      *                          accepted
      */
-    private void applyParameterDefaults(final FunctionNode functionNode, final List<IdentNode> parameters,
-            final List<Expression> parameterDefaults) {
-        if (parameterDefaults == null) {
+    private void applyParameterSetups(final FunctionNode functionNode, final List<IdentNode> parameters,
+            final List<ParameterSetup> parameterSetups) {
+        if (parameterSetups == null) {
             return;
         }
 
-        assert parameterDefaults.size() == parameters.size();
+        assert parameterSetups.size() == parameters.size();
 
-        for (int i = parameterDefaults.size() - 1; i >= 0; i--) {
-            final Expression defaultValue = parameterDefaults.get(i);
+        final int lineNumber = functionNode.getLineNumber();
 
-            if (defaultValue == null) {
+        for (int i = parameterSetups.size() - 1; i >= 0; i--) {
+            final ParameterSetup setup = parameterSetups.get(i);
+
+            if (setup == null) {
                 continue;
             }
 
-            prependStatement(newUndefinedGuard(parameters.get(i), defaultValue, functionNode.getLineNumber()));
+            final IdentNode parameter = parameters.get(i);
+
+            // Prepended back to front, so the pattern goes in before the default that
+            // has to run ahead of it.
+            if (setup.pattern != null) {
+                final List<Statement> statements = new ArrayList<>();
+                declareBindings(parameter.getName(), setup.pattern, lineNumber, 0, new ArrayList<VarNode>(), statements);
+
+                for (int j = statements.size() - 1; j >= 0; j--) {
+                    prependStatement(statements.get(j));
+                }
+            }
+
+            if (setup.defaultValue != null) {
+                prependStatement(newUndefinedGuard(parameter, setup.defaultValue, lineNumber));
+            }
         }
     }
 
@@ -3905,7 +3934,13 @@ public class Parser extends AbstractParser implements Loggable {
 
         final String source = newTemporary();
         appendStatement(assignTemporary(varLine, varToken, source, init));
-        declareBindings(source, pattern, varLine, varFlags, vars);
+
+        final List<Statement> statements = new ArrayList<>();
+        declareBindings(source, pattern, varLine, varFlags, vars, statements);
+
+        for (final Statement statement : statements) {
+            appendStatement(statement);
+        }
     }
 
     private List<Binding> destructuringPattern() {
@@ -4010,30 +4045,30 @@ public class Parser extends AbstractParser implements Loggable {
      * the given source. A nested pattern gets a temporary of its own.
      */
     private void declareBindings(final String source, final List<Binding> bindings, final int varLine, final int varFlags,
-            final List<VarNode> vars) {
+            final List<VarNode> vars, final List<Statement> out) {
         for (final Binding binding : bindings) {
             final Expression value = readFrom(binding.token, source, binding.key);
 
             if (binding.name != null) {
                 final VarNode var = new VarNode(varLine, binding.token, finish, binding.name.setIsDeclaredHere(), value, varFlags);
                 vars.add(var);
-                appendStatement(var);
+                out.add(var);
 
                 if (binding.defaultValue != null) {
-                    appendStatement(newUndefinedGuard(binding.name, binding.defaultValue, varLine));
+                    out.add(newUndefinedGuard(binding.name, binding.defaultValue, varLine));
                 }
 
                 continue;
             }
 
             final String nested = newTemporary();
-            appendStatement(assignTemporary(varLine, binding.token, nested, value));
+            out.add(assignTemporary(varLine, binding.token, nested, value));
 
             if (binding.defaultValue != null) {
-                appendStatement(newUndefinedGuard(identifierFor(binding.token, nested), binding.defaultValue, varLine));
+                out.add(newUndefinedGuard(identifierFor(binding.token, nested), binding.defaultValue, varLine));
             }
 
-            declareBindings(nested, binding.nested, varLine, varFlags, vars);
+            declareBindings(nested, binding.nested, varLine, varFlags, vars, out);
         }
     }
 
@@ -4050,6 +4085,20 @@ public class Parser extends AbstractParser implements Loggable {
 
     private IdentNode identifierFor(final long token, final String name) {
         return createIdentNode(Token.recast(token, IDENT), finish, name);
+    }
+
+    /**
+     * What a parameter needs doing to it at the top of the body: a default value to
+     * fill in when the argument is missing, a pattern to take apart, or both.
+     */
+    private static final class ParameterSetup {
+        private final Expression defaultValue;
+        private final List<Binding> pattern;
+
+        ParameterSetup(final Expression defaultValue, final List<Binding> pattern) {
+            this.defaultValue = defaultValue;
+            this.pattern = pattern;
+        }
     }
 
     /** One binding of a destructuring pattern, parsed before the source is known. */
@@ -4082,6 +4131,17 @@ public class Parser extends AbstractParser implements Loggable {
         temporaries.add(name);
 
         return name;
+    }
+
+    /**
+     * Name a parameter that was written as a pattern. It shares the temporary counter
+     * so that the names cannot collide, but it is a parameter rather than a local and
+     * so is not declared in the body.
+     *
+     * @return the name of the parameter
+     */
+    private String newPatternParameter() {
+        return PATTERN_PARAMETER_PREFIX + temporaryCount++;
     }
 
     /**
