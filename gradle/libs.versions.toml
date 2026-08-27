@@ -10,7 +10,7 @@ asm = "9.7"
 testng = "6.8"
 jcommander = "1.27"
 bsh = "2.0b4"
-snakeyaml = "1.6"
+snakeyaml = "2.6"
 
 [libraries]
 asm-core = { module = "org.ow2.asm:asm", version.ref = "asm" }
