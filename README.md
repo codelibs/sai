@@ -23,7 +23,7 @@ Add the following dependency to your pom.xml:
 <dependency>
     <groupId>org.codelibs</groupId>
     <artifactId>sai</artifactId>
-    <version>0.3.0-SNAPSHOT</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
@@ -33,7 +33,7 @@ Add the following dependency to your build.gradle:
 
 ```gradle
 dependencies {
-    implementation 'org.codelibs:sai:0.3.0-SNAPSHOT'
+    implementation 'org.codelibs:sai:0.3.0'
 }
 ```
 
@@ -41,16 +41,19 @@ Or in build.gradle.kts:
 
 ```kotlin
 dependencies {
-    implementation("org.codelibs:sai:0.3.0-SNAPSHOT")
+    implementation("org.codelibs:sai:0.3.0")
 }
 ```
 
 ## Build
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the project layout, the script test
+convention, and how to narrow a test run.
+
 ### Requirements
 
-- Java 21 or later
-- Gradle 8.x (included via wrapper)
+- Java 21. The build declares a Java 21 toolchain, so Gradle provisions one if needed.
+- No local Gradle install; use the wrapper.
 
 ### Build Commands
 
@@ -113,3 +116,17 @@ After building, you'll find the following artifacts in `build/libs/`:
 - `sai-X.X.X.jar` - Main JAR file
 - `sai-X.X.X-sources.jar` - Source code JAR
 - `sai-X.X.X-javadoc.jar` - Javadoc JAR
+
+Note that `./gradlew compileJava` on its own does not produce a usable engine: the
+`@ScriptClass` types are instrumented after compilation and only the JAR carries the
+result. Build `jar`, or anything that depends on it.
+
+## Contributing
+
+Bug reports and pull requests are welcome - see [CONTRIBUTING.md](CONTRIBUTING.md).
+For security issues, follow [SECURITY.md](SECURITY.md) rather than opening an issue.
+
+## License
+
+GPLv2 with the Classpath Exception, inherited from Nashorn. See [LICENSE](LICENSE) and
+[ASSEMBLY_EXCEPTION](ASSEMBLY_EXCEPTION).

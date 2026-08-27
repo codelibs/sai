@@ -1,0 +1,47 @@
+name: Bug report
+description: Something in the engine behaves incorrectly
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: What did you observe, and what did you expect instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproducer
+      description: >
+        The smallest script or Java snippet that shows the problem. If it only reproduces
+        through the JSR-223 API, include the engine setup too.
+      render: javascript
+    validations:
+      required: true
+
+  - type: input
+    id: sai-version
+    attributes:
+      label: Sai version
+      placeholder: "0.3.0"
+    validations:
+      required: true
+
+  - type: input
+    id: jdk
+    attributes:
+      label: JDK
+      description: Output of `java -version`
+      placeholder: "temurin 21.0.6+7-LTS"
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: >
+        Stack traces, whether it differs between `--optimistic-types=true` and `false`,
+        or whether Nashorn behaved differently.
