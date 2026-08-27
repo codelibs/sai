@@ -3513,6 +3513,10 @@ public class Parser extends AbstractParser implements Loggable {
             return arrowFunction();
         }
 
+        if (isES6() && isDestructuringAssignment()) {
+            return destructuringAssignment();
+        }
+
         final int unaryLine = line;
         final long unaryToken = token;
 
@@ -3945,6 +3949,106 @@ public class Parser extends AbstractParser implements Loggable {
     }
 
     /**
+     * Look ahead for the {@code =} that turns a bracketed or braced list into a
+     * destructuring assignment. Without this the list would parse as an array or
+     * object literal, which is a different shape entirely.
+     *
+     * @return true if a destructuring assignment starts at the current token
+     */
+    private boolean isDestructuringAssignment() {
+        if (type != LBRACKET && type != LBRACE) {
+            return false;
+        }
+
+        final TokenType open = type;
+        final TokenType close = open == LBRACKET ? RBRACKET : RBRACE;
+        int depth = 0;
+
+        for (int i = k;; i++) {
+            final TokenType tokenType = T(i);
+
+            if (tokenType == open) {
+                depth++;
+            } else if (tokenType == close) {
+                if (--depth == 0) {
+                    return T(i + 1) == ASSIGN;
+                }
+            } else if (tokenType == EOF) {
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Parse a destructuring assignment, which unlike a destructuring declaration is an
+     * expression and has to produce a value. The right hand side goes into a temporary,
+     * every target is assigned from it, and the temporary is the result:
+     *
+     * <pre>
+     * [a, b] = rhs   becomes   (:pt0 = rhs, a = :pt0[0], b = :pt0[1], :pt0)
+     * </pre>
+     *
+     * Reading the whole right hand side before assigning anything is what makes
+     * {@code [a, b] = [b, a]} a swap.
+     *
+     * @return the lowered expression
+     */
+    private Expression destructuringAssignment() {
+        final long patternToken = token;
+        final List<Binding> pattern = destructuringPattern(true);
+
+        expect(ASSIGN);
+        final Expression rhs = assignmentExpression(false);
+
+        final String source = newTemporary();
+        final List<Expression> steps = new ArrayList<>();
+        steps.add(new BinaryNode(Token.recast(patternToken, TokenType.ASSIGN), identifierFor(patternToken, source), rhs));
+        assignBindings(source, pattern, steps);
+        steps.add(identifierFor(patternToken, source));
+
+        Expression result = steps.get(0);
+
+        for (int i = 1; i < steps.size(); i++) {
+            result = new BinaryNode(Token.recast(patternToken, TokenType.COMMARIGHT), result, steps.get(i));
+        }
+
+        return result;
+    }
+
+    /**
+     * Collect the assignments a parsed pattern stands for, reading each target's value
+     * out of the given source. A nested pattern gets a temporary of its own.
+     *
+     * A default becomes a conditional rather than the statement a declaration uses,
+     * since this all has to stay one expression. The element is read twice, which is
+     * free: the source is a temporary and the key a literal.
+     */
+    private void assignBindings(final String source, final List<Binding> bindings, final List<Expression> steps) {
+        for (final Binding binding : bindings) {
+            Expression value = readFrom(binding.token, source, binding.key);
+
+            if (binding.defaultValue != null) {
+                final Expression test = new BinaryNode(Token.recast(binding.token, TokenType.EQ_STRICT), value,
+                        LiteralNode.newInstance(binding.token, finish, ScriptRuntime.UNDEFINED));
+                value = new TernaryNode(Token.recast(binding.token, TokenType.TERNARY), test,
+                        new JoinPredecessorExpression(binding.defaultValue),
+                        new JoinPredecessorExpression(readFrom(binding.token, source, binding.key)));
+            }
+
+            if (binding.target != null) {
+                steps.add(new BinaryNode(Token.recast(binding.token, TokenType.ASSIGN), binding.target, value));
+
+                continue;
+            }
+
+            final String nested = newTemporary();
+            steps.add(new BinaryNode(Token.recast(binding.token, TokenType.ASSIGN), identifierFor(binding.token, nested),
+                    value));
+            assignBindings(nested, binding.nested, steps);
+        }
+    }
+
+    /**
      * Parse one destructuring declarator and emit the declarations it stands for.
      *
      * The pattern is read into a small tree first, because the right hand side has to
@@ -3986,10 +4090,19 @@ public class Parser extends AbstractParser implements Loggable {
     }
 
     private List<Binding> destructuringPattern() {
-        return type == LBRACKET ? arrayPattern() : objectPattern();
+        return destructuringPattern(false);
     }
 
-    private List<Binding> arrayPattern() {
+    /**
+     * @param assignment true when the pattern is the left hand side of an assignment,
+     *                   where each leaf is an assignment target rather than a name to
+     *                   declare
+     */
+    private List<Binding> destructuringPattern(final boolean assignment) {
+        return type == LBRACKET ? arrayPattern(assignment) : objectPattern(assignment);
+    }
+
+    private List<Binding> arrayPattern(final boolean assignment) {
         expect(LBRACKET);
 
         final List<Binding> bindings = new ArrayList<>();
@@ -4003,7 +4116,7 @@ public class Parser extends AbstractParser implements Loggable {
                 continue;
             }
 
-            bindings.add(patternElement(LiteralNode.newInstance(token, finish, Integer.valueOf(index))));
+            bindings.add(patternElement(LiteralNode.newInstance(token, finish, Integer.valueOf(index)), assignment));
             index++;
 
             if (type != COMMARIGHT) {
@@ -4017,7 +4130,7 @@ public class Parser extends AbstractParser implements Loggable {
         return bindings;
     }
 
-    private List<Binding> objectPattern() {
+    private List<Binding> objectPattern(final boolean assignment) {
         expect(LBRACE);
 
         final List<Binding> bindings = new ArrayList<>();
@@ -4045,7 +4158,7 @@ public class Parser extends AbstractParser implements Loggable {
                 bindings.add(new Binding(keyToken, key, shorthand, null, defaultValue()));
             } else {
                 expect(COLON);
-                bindings.add(patternElement(key));
+                bindings.add(patternElement(key, assignment));
             }
 
             if (type != COMMARIGHT) {
@@ -4059,12 +4172,16 @@ public class Parser extends AbstractParser implements Loggable {
         return bindings;
     }
 
-    /** One element of a pattern: a nested pattern, or a name to declare. */
-    private Binding patternElement(final Expression key) {
+    /** One element of a pattern: a nested pattern, or somewhere to put the value. */
+    private Binding patternElement(final Expression key, final boolean assignment) {
         final long elementToken = token;
 
         if (type == LBRACKET || type == LBRACE) {
-            return new Binding(elementToken, key, null, destructuringPattern(), defaultValue());
+            return new Binding(elementToken, key, null, destructuringPattern(assignment), defaultValue());
+        }
+
+        if (assignment) {
+            return new Binding(elementToken, key, leftHandSideExpression(), null, defaultValue());
         }
 
         final IdentNode name = getIdent();
@@ -4091,13 +4208,14 @@ public class Parser extends AbstractParser implements Loggable {
         for (final Binding binding : bindings) {
             final Expression value = readFrom(binding.token, source, binding.key);
 
-            if (binding.name != null) {
-                final VarNode var = new VarNode(varLine, binding.token, finish, binding.name.setIsDeclaredHere(), value, varFlags);
+            if (binding.target != null) {
+                final IdentNode name = (IdentNode) binding.target;
+                final VarNode var = new VarNode(varLine, binding.token, finish, name.setIsDeclaredHere(), value, varFlags);
                 vars.add(var);
                 out.add(var);
 
                 if (binding.defaultValue != null) {
-                    out.add(newUndefinedGuard(binding.name, binding.defaultValue, varLine));
+                    out.add(newUndefinedGuard(name, binding.defaultValue, varLine));
                 }
 
                 continue;
@@ -4289,19 +4407,23 @@ public class Parser extends AbstractParser implements Loggable {
         }
     }
 
-    /** One binding of a destructuring pattern, parsed before the source is known. */
+    /**
+     * One binding of a destructuring pattern, parsed before the source is known. The
+     * target is an IdentNode to declare in a declaration, and any assignment target in
+     * a destructuring assignment.
+     */
     private static final class Binding {
         private final long token;
         private final Expression key;
-        private final IdentNode name;
+        private final Expression target;
         private final List<Binding> nested;
         private final Expression defaultValue;
 
-        Binding(final long token, final Expression key, final IdentNode name, final List<Binding> nested,
+        Binding(final long token, final Expression key, final Expression target, final List<Binding> nested,
                 final Expression defaultValue) {
             this.token = token;
             this.key = key;
-            this.name = name;
+            this.target = target;
             this.nested = nested;
             this.defaultValue = defaultValue;
         }
