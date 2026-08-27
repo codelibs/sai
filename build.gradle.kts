@@ -34,41 +34,29 @@ val bshVersion: String by project
 val snakeyamlVersion: String by project
 
 // Source Sets Configuration
+//
+// `main` and `test` use the standard Gradle layout (src/main/java, src/main/resources,
+// src/test/java, src/test/resources) and need no explicit configuration.
 sourceSets {
-    main {
-        java {
-            srcDirs("src")
-        }
-        resources {
-            srcDirs("src")
-            include("**/*.properties")
-            include("**/*.js")
-            include("META-INF/**")
-            exclude("**/*.java")
-        }
-    }
-
-    // Saigen tool source set
+    // Saigen is a bytecode post-processor that reads the @ScriptClass annotations off the
+    // compiled main classes, so it compiles against them. That mutual dependency is why it
+    // stays a source set here rather than a separate module or an included build.
     create("saigen") {
         java {
             srcDirs("buildtools/saigen/src")
         }
-        // Saigen depends on main compiled classes
         compileClasspath += sourceSets.main.get().output + configurations.compileClasspath.get()
         runtimeClasspath += output + sourceSets.main.get().output + configurations.runtimeClasspath.get()
     }
 
     test {
-        java {
-            srcDirs("test/src")
-        }
         resources {
-            srcDirs("test/src", "test/script")
+            // The JavaScript test corpus lives outside the standard layout.
+            srcDir("test/script")
             include("**/*.properties")
             include("**/*.js")
             include("**/*.EXPECTED")
             include("META-INF/**")
-            exclude("**/*.java")
         }
     }
 }
