@@ -1258,6 +1258,13 @@ public class Parser extends AbstractParser implements Loggable {
 
             expect(LPAREN);
 
+            if (isES6() && isForOf()) {
+                forNode = forOf(forNode, startLine);
+                appendStatement(forNode);
+
+                return;
+            }
+
             List<VarNode> vars = null;
 
             switch (type) {
@@ -1356,13 +1363,118 @@ public class Parser extends AbstractParser implements Loggable {
             appendStatement(forNode);
         } finally {
             lc.pop(forNode);
+
+            // Restored here rather than after the try, so that the for-of path, which
+            // is complete once its body is parsed and returns early, still closes it.
+            if (outer != null) {
+                outer.setFinish(forNode.getFinish());
+                outer = restoreBlock(outer);
+                appendStatement(new BlockStatement(startLine, outer));
+            }
+        }
+    }
+
+    /**
+     * Look ahead for the {@code of} of a for-of loop. This has to be known before the
+     * loop variable is parsed, because a let binding is declared inside the body so
+     * that every iteration gets its own, rather than around the loop.
+     *
+     * @return true if a for-of head starts at the current token
+     */
+    private boolean isForOf() {
+        int i = k;
+
+        if (T(i) == TokenType.VAR || T(i) == LET || T(i) == CONST) {
+            i++;
         }
 
-        if (outer != null) {
-            outer.setFinish(forNode.getFinish());
-            outer = restoreBlock(outer);
-            appendStatement(new BlockStatement(startLine, outer));
+        return T(i) == IDENT && T(i + 1) == IDENT && "of".equals(getValue(getToken(i + 1)));
+    }
+
+    /**
+     * Parse a for-of head and body, lowering the loop to a counted loop that reads the
+     * source by index:
+     *
+     * <pre>
+     * for (var v of src) body;
+     * </pre>
+     * <pre>
+     * :pt0 = src; :pt1 = 0;
+     * for (; :pt1 &lt; :pt0.length; :pt1 = :pt1 + 1) { var v = :pt0[:pt1]; body; }
+     * </pre>
+     *
+     * Reading by index rather than through an iterator is what makes a string and any
+     * array-like object work, and an object that is only iterable not.
+     *
+     * The loop variable is declared inside the body rather than around the loop, so a
+     * let binding is fresh on every iteration and a closure made in the body captures
+     * that iteration's value.
+     *
+     * @param forNode the loop being built
+     * @param forLine line the loop starts on
+     * @return the completed loop
+     */
+    private ForNode forOf(final ForNode forNodeArg, final int forLine) {
+        ForNode forNode = forNodeArg;
+
+        TokenType declarationType = null;
+        long declarationToken = 0L;
+
+        if (type == TokenType.VAR || type == LET || type == CONST) {
+            declarationType = type;
+            declarationToken = token;
+            next();
         }
+
+        final IdentNode name = getIdent();
+        verifyStrictIdent(name, "for-of iterator");
+
+        // "of" is a plain identifier, not a keyword.
+        final long ofToken = token;
+        next();
+
+        final Expression source = expression();
+
+        final String sourceName = newTemporary();
+        final String indexName = newTemporary();
+
+        // Evaluate the source once, and start the index, before the loop.
+        appendStatement(assignTemporary(forLine, ofToken, sourceName, source));
+        appendStatement(assignTemporary(forLine, ofToken, indexName,
+                LiteralNode.newInstance(ofToken, finish, Integer.valueOf(0))));
+
+        forNode = forNode.setTest(lc, new JoinPredecessorExpression(new BinaryNode(Token.recast(ofToken, TokenType.LT),
+                identifierFor(ofToken, indexName), new AccessNode(Token.recast(ofToken, TokenType.PERIOD), finish,
+                        identifierFor(ofToken, sourceName), "length"))));
+
+        forNode = forNode.setModify(lc, new JoinPredecessorExpression(new BinaryNode(
+                Token.recast(ofToken, TokenType.ASSIGN), identifierFor(ofToken, indexName),
+                new BinaryNode(Token.recast(ofToken, TokenType.ADD), identifierFor(ofToken, indexName),
+                        LiteralNode.newInstance(ofToken, finish, Integer.valueOf(1))))));
+
+        expect(RPAREN);
+
+        final Expression element = readFrom(ofToken, sourceName, identifierFor(ofToken, indexName));
+
+        Block body = newBlock();
+        try {
+            if (declarationType == null) {
+                appendStatement(new ExpressionStatement(forLine, ofToken, finish,
+                        new BinaryNode(Token.recast(ofToken, TokenType.ASSIGN), name, element)));
+            } else {
+                final int varFlags = declarationType == LET ? VarNode.IS_LET : declarationType == CONST ? VarNode.IS_CONST : 0;
+                appendStatement(new VarNode(forLine, declarationToken, finish, name.setIsDeclaredHere(), element, varFlags));
+            }
+
+            appendStatement(new BlockStatement(forLine, getStatement()));
+        } finally {
+            body = restoreBlock(body);
+        }
+
+        forNode = forNode.setBody(lc, body);
+        forNode.setFinish(body.getFinish());
+
+        return forNode;
     }
 
     /**

@@ -1,0 +1,6 @@
+test/script/error/for_of_es5.js:26:11 Expected ; but found of
+for (var v of [1, 2, 3]) {
+           ^
+test/script/error/for_of_es5.js:28:0 Expected eof but found }
+}
+^
