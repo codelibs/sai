@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2026, CodeLibs Project and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -133,8 +134,6 @@ public abstract class NodeOperatorVisitor<T extends LexicalContext> extends Node
             return enterASSIGN_SHR(binaryNode);
         case ASSIGN_SUB:
             return enterASSIGN_SUB(binaryNode);
-        case BIND:
-            return enterBIND(binaryNode);
         case BIT_AND:
             return enterBIT_AND(binaryNode);
         case BIT_OR:
@@ -217,8 +216,6 @@ public abstract class NodeOperatorVisitor<T extends LexicalContext> extends Node
             return leaveASSIGN_SHR(binaryNode);
         case ASSIGN_SUB:
             return leaveASSIGN_SUB(binaryNode);
-        case BIND:
-            return leaveBIND(binaryNode);
         case BIT_AND:
             return leaveBIT_AND(binaryNode);
         case BIT_OR:
@@ -731,26 +728,6 @@ public abstract class NodeOperatorVisitor<T extends LexicalContext> extends Node
      * @return processed node, which will replace the original one, or the original node
      */
     public Node leaveASSIGN_SUB(final BinaryNode binaryNode) {
-        return leaveDefault(binaryNode);
-    }
-
-    /**
-     * Binary enter - callback for entering a bind operator
-     *
-     * @param  binaryNode the node
-     * @return true if traversal should continue and node children be traversed, false otherwise
-     */
-    public boolean enterBIND(final BinaryNode binaryNode) {
-        return enterDefault(binaryNode);
-    }
-
-    /**
-     * Binary leave - callback for leaving a bind operator
-     *
-     * @param  binaryNode the node
-     * @return processed node, which will replace the original one, or the original node
-     */
-    public Node leaveBIND(final BinaryNode binaryNode) {
         return leaveDefault(binaryNode);
     }
 

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2026, CodeLibs Project and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -431,11 +432,6 @@ final class WeighNodes extends NodeOperatorVisitor<LexicalContext> {
 
     @Override
     public Node leaveASSIGN_SUB(final BinaryNode binaryNode) {
-        return binaryNodeWeight(binaryNode);
-    }
-
-    @Override
-    public Node leaveBIND(final BinaryNode binaryNode) {
         return binaryNodeWeight(binaryNode);
     }
 
