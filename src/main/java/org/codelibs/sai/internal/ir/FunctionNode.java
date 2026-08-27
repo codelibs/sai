@@ -73,7 +73,9 @@ public final class FunctionNode extends LexicalContextExpression implements Flag
         /** a setter, @see {@link UserAccessorProperty} */
         SETTER,
         /** an ES6 arrow function - takes this from the enclosing function */
-        ARROW
+        ARROW,
+        /** an ES6 method definition, "m() {}" in an object literal */
+        METHOD
     }
 
     /** Source of entity. */

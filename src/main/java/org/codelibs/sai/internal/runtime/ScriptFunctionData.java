@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2026, CodeLibs Project and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -93,6 +94,8 @@ public abstract class ScriptFunctionData implements Serializable {
     public static final int IS_VARIABLE_ARITY = 1 << 5;
     /** Is this a object literal property getter or setter? */
     public static final int IS_PROPERTY_ACCESSOR = 1 << 6;
+    /** Is this an ES6 method definition? */
+    public static final int IS_METHOD = 1 << 7;
 
     /** Flag for strict or built-in functions */
     public static final int IS_STRICT_OR_BUILTIN = IS_STRICT | IS_BUILTIN;
@@ -124,6 +127,10 @@ public abstract class ScriptFunctionData implements Serializable {
 
     final boolean isPropertyAccessor() {
         return (flags & IS_PROPERTY_ACCESSOR) != 0;
+    }
+
+    final boolean isMethod() {
+        return (flags & IS_METHOD) != 0;
     }
 
     /**

@@ -281,7 +281,23 @@ public class Parser extends AbstractParser implements Loggable {
      * @return function node resulting from successful parse
      */
     public FunctionNode parse() {
-        return parse(PROGRAM.symbolName(), 0, source.getLength(), false);
+        return parse(PROGRAM.symbolName(), 0, source.getLength(), ProgramKind.NORMAL);
+    }
+
+    /**
+     * What a parsed range is expected to hold.
+     *
+     * A function is re-parsed from the source range it was written in, and neither a
+     * property accessor nor a method definition is a program in its own right, so the
+     * parser has to be told which one to expect.
+     */
+    public enum ProgramKind {
+        /** An ordinary script. */
+        NORMAL,
+        /** A single property getter or setter, {@code get x() {}}. */
+        PROPERTY_ACCESSOR,
+        /** A single method definition, {@code m() {}}. */
+        METHOD
     }
 
     /**
@@ -294,13 +310,12 @@ public class Parser extends AbstractParser implements Loggable {
      * @param scriptName name for the script, given to the parsed FunctionNode
      * @param startPos start position in source
      * @param len length of parse
-     * @param allowPropertyFunction if true, "get" and "set" are allowed as first tokens of the program, followed by
-     * a property getter or setter function. This is used when reparsing a function that can potentially be defined as a
-     * property getter or setter in an object literal.
+     * @param programKind what the range is expected to hold. A property accessor or a method definition is not a
+     * program in its own right, so re-parsing one has to say which it is.
      *
      * @return function node resulting from successful parse
      */
-    public FunctionNode parse(final String scriptName, final int startPos, final int len, final boolean allowPropertyFunction) {
+    public FunctionNode parse(final String scriptName, final int startPos, final int len, final ProgramKind programKind) {
         final boolean isTimingEnabled = env.isTimingEnabled();
         final long t0 = isTimingEnabled ? System.nanoTime() : 0L;
         log.info(this, " begin for '", scriptName, "'");
@@ -316,7 +331,7 @@ public class Parser extends AbstractParser implements Loggable {
             k = -1;
             next();
             // Begin parse.
-            return program(scriptName, allowPropertyFunction);
+            return program(scriptName, programKind);
         } catch (final Exception e) {
             handleParseException(e);
 
@@ -384,7 +399,7 @@ public class Parser extends AbstractParser implements Loggable {
                             new ArrayList<IdentNode>(), FunctionNode.Kind.NORMAL, functionLine);
 
             functionDeclarations = new ArrayList<>();
-            sourceElements(false);
+            sourceElements(ProgramKind.NORMAL);
             addFunctionDeclarations(function);
             functionDeclarations = null;
 
@@ -578,7 +593,7 @@ public class Parser extends AbstractParser implements Loggable {
         // Set up new block. Captures first token.
         Block newBlock = newBlock();
         try {
-            statement(false, false, true);
+            statement(false, ProgramKind.NORMAL, true);
         } finally {
             newBlock = restoreBlock(newBlock);
         }
@@ -719,7 +734,7 @@ public class Parser extends AbstractParser implements Loggable {
      *
      * Parse the top level script.
      */
-    private FunctionNode program(final String scriptName, final boolean allowPropertyFunction) {
+    private FunctionNode program(final String scriptName, final ProgramKind programKind) {
         // Make a pseudo-token for the script holding its start and length.
         final long functionToken = Token.toDesc(FUNCTION, Token.descPosition(Token.withDelimiter(token)), source.getLength());
         final int functionLine = line;
@@ -731,7 +746,7 @@ public class Parser extends AbstractParser implements Loggable {
 
         functionDeclarations = new ArrayList<>();
         temporaries = new ArrayList<>();
-        sourceElements(allowPropertyFunction);
+        sourceElements(programKind);
         addFunctionDeclarations(script);
         declareArrowThis(script);
         declareTemporaries(script);
@@ -780,10 +795,10 @@ public class Parser extends AbstractParser implements Loggable {
      *
      * Parse the elements of the script or function.
      */
-    private void sourceElements(final boolean shouldAllowPropertyFunction) {
+    private void sourceElements(final ProgramKind shouldAllowPropertyFunction) {
         List<Node> directiveStmts = null;
         boolean checkDirective = true;
-        boolean allowPropertyFunction = shouldAllowPropertyFunction;
+        ProgramKind programKind = shouldAllowPropertyFunction;
         final boolean oldStrictMode = isStrictMode;
 
         try {
@@ -796,8 +811,8 @@ public class Parser extends AbstractParser implements Loggable {
 
                 try {
                     // Get the next element.
-                    statement(true, allowPropertyFunction, false);
-                    allowPropertyFunction = false;
+                    statement(true, programKind, false);
+                    programKind = ProgramKind.NORMAL;
 
                     // check for directive prologues
                     if (checkDirective) {
@@ -886,7 +901,7 @@ public class Parser extends AbstractParser implements Loggable {
      * Parse any of the basic statement types.
      */
     private void statement() {
-        statement(false, false, false);
+        statement(false, ProgramKind.NORMAL, false);
     }
 
     /**
@@ -894,7 +909,7 @@ public class Parser extends AbstractParser implements Loggable {
      * @param allowPropertyFunction allow property "get" and "set" functions?
      * @param singleStatement are we in a single statement context?
      */
-    private void statement(final boolean topLevel, final boolean allowPropertyFunction, final boolean singleStatement) {
+    private void statement(final boolean topLevel, final ProgramKind programKind, final boolean singleStatement) {
         if (type == FUNCTION) {
             // As per spec (ECMA section 12), function declarations as arbitrary statement
             // is not "portable". Implementation can issue a warning or disallow the same.
@@ -974,7 +989,7 @@ public class Parser extends AbstractParser implements Loggable {
                     labelStatement();
                     return;
                 }
-                if (allowPropertyFunction) {
+                if (programKind == ProgramKind.PROPERTY_ACCESSOR) {
                     final String ident = (String) getValue();
                     final long propertyToken = token;
                     final int propertyLine = line;
@@ -987,6 +1002,16 @@ public class Parser extends AbstractParser implements Loggable {
                         addPropertyFunctionStatement(propertySetterFunction(propertyToken, propertyLine));
                         return;
                     }
+                } else if (programKind == ProgramKind.METHOD) {
+                    // A method definition on its own, which is how one is re-parsed.
+                    final long methodToken = token;
+                    final int methodLine = line;
+                    final IdentNode methodName = getIdent();
+
+                    addPropertyFunctionStatement(new PropertyFunction(methodName,
+                            methodDefinition(methodToken, methodLine, methodName)));
+
+                    return;
                 }
             }
 
@@ -2507,6 +2532,15 @@ public class Parser extends AbstractParser implements Loggable {
             // Get IDENT.
             final String ident = (String) expectValue(IDENT);
 
+            if (isES6() && type == LPAREN) {
+                // ES6 method definition: { m() {} } is { m: function m() {} }, except
+                // that the function knows it is a method so that it can be re-parsed.
+                final IdentNode methodName = createIdentNode(propertyToken, finish, ident);
+
+                return new PropertyNode(propertyToken, finish, createIdentNode(propertyToken, finish, ident)
+                        .setIsPropertyName(), methodDefinition(propertyToken, functionLine, methodName), null, null);
+            }
+
             if (isES6() && (type == COMMARIGHT || type == RBRACE)) {
                 // ES6 shorthand: { x } is { x: x }. This is checked before the get and
                 // set handling below, so that { get, set } is a pair of shorthands
@@ -2547,6 +2581,29 @@ public class Parser extends AbstractParser implements Loggable {
         } finally {
             defaultNames.pop();
         }
+    }
+
+    /**
+     * MethodDefinition :
+     *      PropertyName ( FormalParameterList ) { FunctionBody }
+     *
+     * Parse the parameter list and body of an ES6 method definition, with the name
+     * already read. The result is an ordinary function of kind METHOD; the kind is
+     * what tells the re-parser that this range is a method rather than a program.
+     *
+     * @param methodToken token the method starts at, so that its source range covers
+     *                    the name as well
+     * @param methodLine line the method starts on
+     * @param name name of the method
+     * @return the function
+     */
+    private FunctionNode methodDefinition(final long methodToken, final int methodLine, final IdentNode name) {
+        expect(LPAREN);
+        final Parameters parameters = new Parameters();
+        formalParameterList(RPAREN, parameters);
+        expect(RPAREN);
+
+        return functionBody(methodToken, name, parameters, FunctionNode.Kind.METHOD, methodLine);
     }
 
     private PropertyFunction propertyGetterFunction(final long getSetToken, final int functionLine) {
@@ -3310,7 +3367,7 @@ public class Parser extends AbstractParser implements Loggable {
                     final List<Statement> prevFunctionDecls = functionDeclarations;
                     functionDeclarations = new ArrayList<>();
                     try {
-                        sourceElements(false);
+                        sourceElements(ProgramKind.NORMAL);
                         addFunctionDeclarations(functionNode);
                     } finally {
                         functionDeclarations = prevFunctionDecls;
