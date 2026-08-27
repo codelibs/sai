@@ -17,24 +17,16 @@ group = project.property("group") as String
 version = project.property("version") as String
 
 // Java Configuration
+//
+// A toolchain rather than source/targetCompatibility, so the build compiles against Java 21
+// whatever JDK Gradle itself happens to be running on.
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
     withSourcesJar()
     withJavadocJar()
 }
-
-// Configure sources JAR to handle duplicates
-tasks.named<Jar>("sourcesJar") {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
-
-// Dependency Versions
-val asmVersion: String by project
-val testngVersion: String by project
-val jcommanderVersion: String by project
-val bshVersion: String by project
-val snakeyamlVersion: String by project
 
 // Source Sets Configuration
 //
@@ -70,18 +62,12 @@ repositories {
 }
 
 dependencies {
-    // ASM bytecode library
-    implementation("org.ow2.asm:asm:${asmVersion}")
-    implementation("org.ow2.asm:asm-commons:${asmVersion}")
-    implementation("org.ow2.asm:asm-util:${asmVersion}")
-    implementation("org.ow2.asm:asm-tree:${asmVersion}")
-    implementation("org.ow2.asm:asm-analysis:${asmVersion}")
+    implementation(libs.bundles.asm)
 
-    // Test dependencies
-    testImplementation("org.testng:testng:${testngVersion}")
-    testImplementation("com.beust:jcommander:${jcommanderVersion}")
-    testImplementation("org.beanshell:bsh:${bshVersion}")
-    testImplementation("org.yaml:snakeyaml:${snakeyamlVersion}")
+    testImplementation(libs.testng)
+    testImplementation(libs.jcommander)
+    testImplementation(libs.bsh)
+    testImplementation(libs.snakeyaml)
 }
 
 // Custom Tasks
@@ -186,12 +172,13 @@ tasks.jar {
     manifest {
         attributes(
             "Main-Class" to "org.codelibs.sai.tools.Shell",
-            "Implementation-Title" to "Oracle Sai",
+            "Implementation-Title" to "Sai",
             "Implementation-Version" to version,
-            "Implementation-Vendor" to "Oracle Corporation",
-            "Archiver-Version" to "n/a",
+            "Implementation-Vendor" to "CodeLibs Project",
+            // Fixes the module name for consumers on the module path, ahead of any real
+            // module-info. Changing it later would break them, so it is set now.
+            "Automatic-Module-Name" to "org.codelibs.sai",
             "Build-Jdk" to System.getProperty("java.runtime.version"),
-            "Built-By" to "n/a",
             "Created-By" to "Gradle ${gradle.gradleVersion}"
         )
     }
@@ -351,6 +338,7 @@ tasks.javadoc {
             encoding = "UTF-8"
             docEncoding = "UTF-8"
             charSet = "UTF-8"
+            overview = "src/main/javadoc/overview.html"
         }
     }
 
@@ -384,8 +372,12 @@ val downloadTest262 = tasks.register<Exec>("downloadTest262") {
 
     val testDir = file("test/script/external/test262")
 
-    commandLine("git", "clone", "--branch", "es5-tests",
-                "https://github.com/tc39/test262", testDir.absolutePath)
+    // es5-tests is a frozen legacy branch, so a shallow clone is enough and saves most of
+    // the download.
+    commandLine(
+        "git", "clone", "--depth", "1", "--branch", "es5-tests",
+        "https://github.com/tc39/test262", testDir.absolutePath,
+    )
 
     onlyIf { !testDir.exists() }
 }

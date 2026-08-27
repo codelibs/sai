@@ -1,0 +1,28 @@
+# Dependency coordinates for the Sai build.
+#
+# Bump a version here and every use of it follows. `./gradlew dependencyUpdates` is not
+# configured; check https://central.sonatype.com for newer releases.
+
+[versions]
+# ASM is the bytecode backend for both the code generator and saigen.
+asm = "9.7"
+# The test stack is pinned to what the Nashorn-era harness was written against.
+testng = "6.8"
+jcommander = "1.27"
+bsh = "2.0b4"
+snakeyaml = "1.6"
+
+[libraries]
+asm-core = { module = "org.ow2.asm:asm", version.ref = "asm" }
+asm-analysis = { module = "org.ow2.asm:asm-analysis", version.ref = "asm" }
+asm-commons = { module = "org.ow2.asm:asm-commons", version.ref = "asm" }
+asm-tree = { module = "org.ow2.asm:asm-tree", version.ref = "asm" }
+asm-util = { module = "org.ow2.asm:asm-util", version.ref = "asm" }
+
+bsh = { module = "org.beanshell:bsh", version.ref = "bsh" }
+jcommander = { module = "com.beust:jcommander", version.ref = "jcommander" }
+snakeyaml = { module = "org.yaml:snakeyaml", version.ref = "snakeyaml" }
+testng = { module = "org.testng:testng", version.ref = "testng" }
+
+[bundles]
+asm = ["asm-core", "asm-analysis", "asm-commons", "asm-tree", "asm-util"]
