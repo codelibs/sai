@@ -40,6 +40,7 @@ import static org.codelibs.sai.internal.parser.TokenType.DECPOSTFIX;
 import static org.codelibs.sai.internal.parser.TokenType.DECPREFIX;
 import static org.codelibs.sai.internal.parser.TokenType.ELSE;
 import static org.codelibs.sai.internal.parser.TokenType.EOF;
+import static org.codelibs.sai.internal.parser.TokenType.ELLIPSIS;
 import static org.codelibs.sai.internal.parser.TokenType.EOL;
 import static org.codelibs.sai.internal.parser.TokenType.FINALLY;
 import static org.codelibs.sai.internal.parser.TokenType.FUNCTION;
@@ -2203,8 +2204,9 @@ public class Parser extends AbstractParser implements Loggable {
      * Parse array literal.
      * @return Expression node.
      */
-    private LiteralNode<Expression[]> arrayLiteral() {
+    private Expression arrayLiteral() {
         // Capture LBRACKET token.
+        final int arrayLine = line;
         final long arrayToken = token;
         // LBRACKET tested in caller.
         next();
@@ -2237,7 +2239,7 @@ public class Parser extends AbstractParser implements Loggable {
                     throw error(AbstractParser.message("expected.comma", type.getNameOrType()));
                 }
                 // Add expression element.
-                final Expression expression = assignmentExpression(false);
+                final Expression expression = isES6() && type == ELLIPSIS ? spreadElement() : assignmentExpression(false);
 
                 if (expression != null) {
                     elements.add(expression);
@@ -2248,6 +2250,10 @@ public class Parser extends AbstractParser implements Loggable {
                 elision = false;
                 break;
             }
+        }
+
+        if (hasSpread(elements)) {
+            return spreadToArray(arrayLine, arrayToken, elements);
         }
 
         return LiteralNode.newInstance(arrayToken, finish, elements);
@@ -2619,7 +2625,8 @@ public class Parser extends AbstractParser implements Loggable {
                 detectSpecialFunction((IdentNode) lhs);
             }
 
-            lhs = new CallNode(callLine, callToken, finish, lhs, arguments, false);
+            lhs = hasSpread(arguments) ? spreadCall(callLine, callToken, lhs, arguments)
+                    : new CallNode(callLine, callToken, finish, lhs, arguments, false);
         }
 
         loop: while (true) {
@@ -2633,7 +2640,8 @@ public class Parser extends AbstractParser implements Loggable {
                 final List<Expression> arguments = optimizeList(argumentList());
 
                 // Create call node.
-                lhs = new CallNode(callLine, callToken, finish, lhs, arguments, false);
+                lhs = hasSpread(arguments) ? spreadCall(callLine, callToken, lhs, arguments)
+                        : new CallNode(callLine, callToken, finish, lhs, arguments, false);
 
                 break;
 
@@ -2739,6 +2747,11 @@ public class Parser extends AbstractParser implements Loggable {
         // Allow for missing arguments.
         if (type == LPAREN) {
             arguments = argumentList();
+
+            if (hasSpread(arguments)) {
+                // Spreading into a call goes through apply, which cannot construct.
+                throw error(AbstractParser.message("no.spread.in.new"), constructor.getToken());
+            }
         } else {
             arguments = new ArrayList<>();
         }
@@ -2867,7 +2880,7 @@ public class Parser extends AbstractParser implements Loggable {
             }
 
             // Get argument expression.
-            nodeList.add(assignmentExpression(false));
+            nodeList.add(isES6() && type == ELLIPSIS ? spreadElement() : assignmentExpression(false));
         }
 
         expect(RPAREN);
@@ -4076,6 +4089,138 @@ public class Parser extends AbstractParser implements Loggable {
             final Expression value) {
         return new ExpressionStatement(varLine, token, finish,
                 new BinaryNode(Token.recast(token, TokenType.ASSIGN), identifierFor(token, temporary), value));
+    }
+
+    /**
+     * Parse {@code ... AssignmentExpression}, wrapping it so that the list it belongs
+     * to can tell a spread element from an ordinary one. The marker never reaches code
+     * generation: whoever built the list replaces it.
+     *
+     * @return the marked element
+     */
+    private Expression spreadElement() {
+        final long spreadToken = token;
+        next();
+
+        return new UnaryNode(spreadToken, assignmentExpression(false));
+    }
+
+    private static boolean isSpread(final Expression element) {
+        return element instanceof UnaryNode && element.isTokenType(ELLIPSIS);
+    }
+
+    private static boolean hasSpread(final List<Expression> elements) {
+        for (final Expression element : elements) {
+            if (isSpread(element)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Build the array a list containing a spread stands for. Runs of ordinary elements
+     * become array literals, a spread becomes TO_ARRAY, and the pieces are joined with
+     * concat, which flattens the arrays it is handed:
+     *
+     * <pre>
+     * [a, ...b, c]   becomes   [a].concat(TO_ARRAY(b, 0), [c])
+     * </pre>
+     *
+     * @param line line to attribute the synthetic nodes to
+     * @param token token of the list
+     * @param elements the elements, some of them marked by spreadElement()
+     * @return an expression evaluating to the array
+     */
+    private Expression spreadToArray(final int line, final long token, final List<Expression> elements) {
+        final List<Expression> segments = new ArrayList<>();
+        List<Expression> plain = new ArrayList<>();
+
+        for (final Expression element : elements) {
+            if (!isSpread(element)) {
+                plain.add(element);
+                continue;
+            }
+
+            if (!plain.isEmpty()) {
+                segments.add(arrayOf(token, plain));
+                plain = new ArrayList<>();
+            }
+
+            segments.add(new RuntimeNode(token, finish, RuntimeNode.Request.TO_ARRAY,
+                    ((UnaryNode) element).getExpression(), LiteralNode.newInstance(token, finish, Integer.valueOf(0))));
+        }
+
+        if (!plain.isEmpty()) {
+            segments.add(arrayOf(token, plain));
+        }
+
+        final Expression first = segments.get(0);
+
+        if (segments.size() == 1) {
+            // A lone spread already produced a fresh array, and a lone run of ordinary
+            // elements is just the literal.
+            return first;
+        }
+
+        return new CallNode(line, token, finish, new AccessNode(Token.recast(token, TokenType.PERIOD), finish, first, "concat"),
+                segments.subList(1, segments.size()), false);
+    }
+
+    private Expression arrayOf(final long token, final List<Expression> elements) {
+        return LiteralNode.newInstance(Token.recast(token, LBRACKET), finish,
+                elements.toArray(new Expression[elements.size()]));
+    }
+
+    /**
+     * Build the call an argument list containing a spread stands for. The arguments
+     * become one array and the call goes through apply, which needs the receiver
+     * passing explicitly - and evaluating once, hence the temporary:
+     *
+     * <pre>
+     * o.m(...a)   becomes   (:pt0 = o, :pt0.m.apply(:pt0, TO_ARRAY(a, 0)))
+     * </pre>
+     *
+     * @param line line of the call
+     * @param callToken token of the call
+     * @param function the function being called
+     * @param arguments the arguments, some of them marked by spreadElement()
+     * @return the lowered call
+     */
+    private Expression spreadCall(final int line, final long callToken, final Expression function,
+            final List<Expression> arguments) {
+        final Expression argumentArray = spreadToArray(line, callToken, arguments);
+
+        Expression receiver = LiteralNode.newInstance(callToken, finish);
+        Expression callee = function;
+        Expression prologue = null;
+
+        if (function instanceof BaseNode) {
+            // A method call has to keep its receiver, and the base is an expression that
+            // may only be evaluated once.
+            final BaseNode access = (BaseNode) function;
+            final String temporary = newTemporary();
+
+            prologue = new BinaryNode(Token.recast(callToken, TokenType.ASSIGN), identifierFor(callToken, temporary),
+                    access.getBase());
+            receiver = identifierFor(callToken, temporary);
+            callee = access instanceof AccessNode
+                    ? new AccessNode(access.getToken(), access.getFinish(), identifierFor(callToken, temporary),
+                            ((AccessNode) access).getProperty())
+                    : new IndexNode(access.getToken(), access.getFinish(), identifierFor(callToken, temporary),
+                            ((IndexNode) access).getIndex());
+        }
+
+        final List<Expression> applyArguments = new ArrayList<>();
+        applyArguments.add(receiver);
+        applyArguments.add(argumentArray);
+
+        final Expression call = new CallNode(line, callToken, finish,
+                new AccessNode(Token.recast(callToken, TokenType.PERIOD), finish, callee, "apply"), applyArguments, false);
+
+        return prologue == null ? call
+                : new BinaryNode(Token.recast(callToken, TokenType.COMMARIGHT), prologue, call);
     }
 
     /** {@code source[key]}, with the token types the IR checks for. */

@@ -53,7 +53,7 @@ public enum TokenType {
             BINARY, "%=", 2, false), BIT_AND(BINARY, "&", 8, true), AND(BINARY, "&&", 5, true), ASSIGN_BIT_AND(BINARY, "&=", 2, false), LPAREN(
             BRACKET, "(", 16, true), RPAREN(BRACKET, ")", 0, true), MUL(BINARY, "*", 13, true), ASSIGN_MUL(BINARY, "*=", 2, false), ADD(
             BINARY, "+", 12, true), INCPREFIX(UNARY, "++", 15, true), ASSIGN_ADD(BINARY, "+=", 2, false), COMMARIGHT(BINARY, ",", 1, true), SUB(
-            BINARY, "-", 12, true), DECPREFIX(UNARY, "--", 15, true), ASSIGN_SUB(BINARY, "-=", 2, false), PERIOD(BRACKET, ".", 17, true), DIV(
+            BINARY, "-", 12, true), DECPREFIX(UNARY, "--", 15, true), ASSIGN_SUB(BINARY, "-=", 2, false), PERIOD(BRACKET, ".", 17, true), ELLIPSIS(BINARY, "..."), DIV(
             BINARY, "/", 13, true), ASSIGN_DIV(BINARY, "/=", 2, false), COLON(BINARY, ":"), SEMICOLON(BINARY, ";"), LT(BINARY, "<", 10,
             true), SHL(BINARY, "<<", 11, true), ASSIGN_SHL(BINARY, "<<=", 2, false), LE(BINARY, "<=", 10, true), ASSIGN(BINARY, "=", 2,
             false), EQ(BINARY, "==", 9, true), EQ_STRICT(BINARY, "===", 9, true), ARROW(BINARY, "=>"), GT(BINARY, ">", 10, true), GE(

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2026, CodeLibs Project and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +39,8 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.SwitchPoint;
 import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -54,6 +57,7 @@ import org.codelibs.sai.internal.codegen.CompilerConstants.Call;
 import org.codelibs.sai.internal.dynalink.beans.StaticClass;
 import org.codelibs.sai.internal.ir.debug.JSONWriter;
 import org.codelibs.sai.internal.objects.Global;
+import org.codelibs.sai.internal.objects.NativeFunction;
 import org.codelibs.sai.internal.objects.NativeObject;
 import org.codelibs.sai.internal.parser.Lexer;
 import org.codelibs.sai.internal.runtime.linker.Bootstrap;
@@ -600,6 +604,65 @@ public final class ScriptRuntime {
      */
     public static Object NEW(final Object clazz, final Object... args) {
         return UNDEFINED;
+    }
+
+    /**
+     * Copy the elements of an array-like value into a new array, for ES6 spread.
+     *
+     * ES6 spreads through the iterator protocol, which this engine does not have, so
+     * elements are read by index instead. An array, a string, the arguments object and
+     * any object with a length and indexed properties all work; an object that is only
+     * iterable does not. A Java array, List or Iterable is read directly, since none of
+     * them carries a JavaScript length.
+     *
+     * @param object the value to spread
+     * @param from   index to start at, so that a rest binding can skip the parameters
+     *               ahead of it
+     *
+     * @return a new array holding the elements
+     */
+    public static Object TO_ARRAY(final Object object, final Object from) {
+        if (object == null || object == UNDEFINED) {
+            throw typeError("cant.read.property.of.undefined", "length");
+        }
+
+        final Object[] all;
+
+        if (isString(object)) {
+            final String string = object.toString();
+            all = new Object[string.length()];
+
+            for (int i = 0; i < all.length; i++) {
+                all[i] = String.valueOf(string.charAt(i));
+            }
+        } else if (object.getClass().isArray() && !(object instanceof Object[])) {
+            // A Java array of a primitive type, which needs reflection to read.
+            final int length = Array.getLength(object);
+            all = new Object[length];
+
+            for (int i = 0; i < length; i++) {
+                all[i] = Array.get(object, i);
+            }
+        } else if (object instanceof Iterable<?> && !(object instanceof List<?>)) {
+            final List<Object> values = new ArrayList<>();
+
+            for (final Object value : (Iterable<?>) object) {
+                values.add(value);
+            }
+
+            all = values.toArray();
+        } else {
+            // Arrays, array-like script objects, the arguments object and Lists.
+            all = NativeFunction.toApplyArgs(object);
+        }
+
+        final int start = JSType.toInt32(from);
+
+        if (start <= 0) {
+            return Global.allocate(all);
+        }
+
+        return Global.allocate(start >= all.length ? EMPTY_ARRAY : Arrays.copyOfRange(all, start, all.length));
     }
 
     /**

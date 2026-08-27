@@ -1,0 +1,3 @@
+test/script/error/spread_in_new_es6.js:30:12 Spread is not supported in a new expression
+var c = new C(...[1, 2]);
+            ^
