@@ -89,9 +89,15 @@ See Build Commands above for `test` / `testOptimistic` / `testPessimistic`.
 
 ```bash
 ./gradlew testOptimistic -Psai.test.roots=test/script/basic
-./gradlew testOptimistic -Psai.test.includes='JDK-80*.js'
-./gradlew testOptimistic -Psai.test.list=JDK-8006220.js
+./gradlew testOptimistic -Psai.test.includes=let.js
+./gradlew testOptimistic -Psai.test.list="test/script/basic/es6/let.js test/script/basic/es6/const.js"
 ```
+
+`sai.test.includes` is **not** a glob - `TestFinder` matches it with `String.endsWith`
+against the file name, so `let.js` selects `let.js` and `for-let.js` alike, and a
+pattern containing `*` selects nothing at all. `sai.test.list` takes paths relative to
+the project root, separated by spaces; a bare file name does not resolve and fails the
+run.
 
 ## Gotchas
 

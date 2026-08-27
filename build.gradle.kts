@@ -229,8 +229,11 @@ val securityManagerTests =
  * run does not mean editing this file:
  *
  *   ./gradlew testOptimistic -Psai.test.roots=test/script/basic
- *   ./gradlew testOptimistic -Psai.test.includes=JDK-80*.js
- *   ./gradlew testOptimistic -Psai.test.list=JDK-8006220.js
+ *   ./gradlew testOptimistic -Psai.test.includes=let.js
+ *   ./gradlew testOptimistic -Psai.test.list="test/script/basic/es6/let.js test/script/basic/es6/const.js"
+ *
+ * includes is matched with String.endsWith against the file name, not as a glob, and list
+ * takes paths relative to the project root, separated by spaces.
  */
 fun Test.configureScriptTests(defaultRoots: String) {
     dependsOn(stageTestResources, copyLibs)
