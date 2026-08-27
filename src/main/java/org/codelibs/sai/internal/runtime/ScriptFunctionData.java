@@ -96,6 +96,8 @@ public abstract class ScriptFunctionData implements Serializable {
     public static final int IS_PROPERTY_ACCESSOR = 1 << 6;
     /** Is this an ES6 method definition? */
     public static final int IS_METHOD = 1 << 7;
+    /** Is this the constructor a class did not write out? */
+    public static final int IS_CLASS_CONSTRUCTOR = 1 << 8;
 
     /** Flag for strict or built-in functions */
     public static final int IS_STRICT_OR_BUILTIN = IS_STRICT | IS_BUILTIN;
@@ -131,6 +133,10 @@ public abstract class ScriptFunctionData implements Serializable {
 
     final boolean isMethod() {
         return (flags & IS_METHOD) != 0;
+    }
+
+    final boolean isClassConstructor() {
+        return (flags & IS_CLASS_CONSTRUCTOR) != 0;
     }
 
     /**

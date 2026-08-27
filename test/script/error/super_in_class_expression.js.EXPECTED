@@ -1,0 +1,3 @@
+test/script/error/super_in_class_expression.js:35:15 super is only available in a class declaration, not a class expression
+        return super.m();
+               ^

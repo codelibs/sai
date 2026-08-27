@@ -364,6 +364,9 @@ public final class RecompilableScriptFunctionData extends ScriptFunctionData imp
         if (functionNode.getKind() == FunctionNode.Kind.METHOD) {
             flags |= IS_METHOD;
         }
+        if (functionNode.getKind() == FunctionNode.Kind.CLASS_CONSTRUCTOR) {
+            flags |= IS_CLASS_CONSTRUCTOR;
+        }
         return flags;
     }
 
@@ -416,6 +419,9 @@ public final class RecompilableScriptFunctionData extends ScriptFunctionData imp
         }
         if (isMethod()) {
             return Parser.ProgramKind.METHOD;
+        }
+        if (isClassConstructor()) {
+            return Parser.ProgramKind.CLASS_CONSTRUCTOR;
         }
 
         return Parser.ProgramKind.NORMAL;

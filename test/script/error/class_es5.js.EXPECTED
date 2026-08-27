@@ -1,0 +1,6 @@
+test/script/error/class_es5.js:25:0 Expected an operand but found class
+class Point {
+^
+test/script/error/class_es5.js:26:0 Expected eof but found }
+}
+^
