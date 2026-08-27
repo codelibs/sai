@@ -108,7 +108,6 @@ public class OctaneTest {
         genericTest("Splay");
     }
 
-    @Test
     /*    public void typeScriptTest() {
             genericTest("TypeScript");
         }

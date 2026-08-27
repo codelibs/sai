@@ -73,14 +73,14 @@ dv.setUint32(1, 4294967295, true);
 Assert.assertEquals(dv.getUint32(1, true), 4294967295);
 
 dv.setFloat64(1, Math.PI);
-Assert.assertEquals(dv.getFloat64(1), Math.PI, DOUBLE_MIN);
+Assert["assertEquals(double, double, double)"](dv.getFloat64(1), Math.PI, DOUBLE_MIN);
 dv.setFloat64(1, Math.PI, true);
-Assert.assertEquals(dv.getFloat64(1, true), Math.PI, DOUBLE_MIN);
+Assert["assertEquals(double, double, double)"](dv.getFloat64(1, true), Math.PI, DOUBLE_MIN);
 
 dv.setFloat64(1, DOUBLE_MIN_NORMAL);
-Assert.assertEquals(dv.getFloat64(1), DOUBLE_MIN_NORMAL, DOUBLE_MIN);
+Assert["assertEquals(double, double, double)"](dv.getFloat64(1), DOUBLE_MIN_NORMAL, DOUBLE_MIN);
 dv.setFloat64(1, DOUBLE_MIN_NORMAL, true);
-Assert.assertEquals(dv.getFloat64(1, true), DOUBLE_MIN_NORMAL, DOUBLE_MIN);
+Assert["assertEquals(double, double, double)"](dv.getFloat64(1, true), DOUBLE_MIN_NORMAL, DOUBLE_MIN);
 
 dv.setFloat32(1, 1.414);
 Assert["assertEquals(float, float, float)"](dv.getFloat32(1), 1.414, FLOAT_MIN);

@@ -81,12 +81,12 @@ try {
     (function (){ try { return; } catch(x) { return x ^= Object; } finally { throw Object; } })();
     Assert.fail();
 } catch(e) {
-    Assert.assertEquals(e, Object); // threw Object
+    Assert["assertEquals(Object,Object)"](e, Object); // threw Object
 }
 // Case from comment
 try {
     (function () { try { Object } catch(x) { (x=y); return; } finally { throw Object; } })();
     Assert.fail();
 } catch(e) {
-    Assert.assertEquals(e, Object); // threw Object
+    Assert["assertEquals(Object,Object)"](e, Object); // threw Object
 }

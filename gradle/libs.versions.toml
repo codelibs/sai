@@ -5,12 +5,11 @@
 
 [versions]
 # ASM is the bytecode backend for both the code generator and saigen.
-asm = "9.7"
-# The test stack is pinned to what the Nashorn-era harness was written against.
-testng = "6.8"
-jcommander = "1.27"
-bsh = "2.0b4"
-snakeyaml = "1.6"
+asm = "9.10.1"
+# TestNG 7 needs Java 11+, which the toolchain already guarantees. jcommander, bsh and
+# snakeyaml used to be declared next to it because the Ant build assembled the test classpath
+# by hand; nothing in the tree references them, and TestNG now brings what it needs itself.
+testng = "7.12.0"
 
 [libraries]
 asm-core = { module = "org.ow2.asm:asm", version.ref = "asm" }
@@ -19,9 +18,6 @@ asm-commons = { module = "org.ow2.asm:asm-commons", version.ref = "asm" }
 asm-tree = { module = "org.ow2.asm:asm-tree", version.ref = "asm" }
 asm-util = { module = "org.ow2.asm:asm-util", version.ref = "asm" }
 
-bsh = { module = "org.beanshell:bsh", version.ref = "bsh" }
-jcommander = { module = "com.beust:jcommander", version.ref = "jcommander" }
-snakeyaml = { module = "org.yaml:snakeyaml", version.ref = "snakeyaml" }
 testng = { module = "org.testng:testng", version.ref = "testng" }
 
 [bundles]

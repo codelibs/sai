@@ -65,9 +65,6 @@ dependencies {
     implementation(libs.bundles.asm)
 
     testImplementation(libs.testng)
-    testImplementation(libs.jcommander)
-    testImplementation(libs.bsh)
-    testImplementation(libs.snakeyaml)
 }
 
 // Custom Tasks
