@@ -1089,6 +1089,17 @@ public class Parser extends AbstractParser implements Loggable {
             // Get starting token.
             final int varLine = line;
             final long varToken = token;
+
+            if (isES6() && (type == LBRACKET || type == LBRACE)) {
+                destructuringDeclaration(varLine, varToken, varFlags, isStatement, vars);
+
+                if (type != COMMARIGHT) {
+                    break;
+                }
+                next();
+                continue;
+            }
+
             // Get name of var.
             final IdentNode name = getIdent();
             verifyStrictIdent(name, "variable name");
@@ -3717,19 +3728,29 @@ public class Parser extends AbstractParser implements Loggable {
                 continue;
             }
 
-            final IdentNode parameter = parameters.get(i);
-            final long token = defaultValue.getToken();
-            final int finish = defaultValue.getFinish();
-            final int lineNumber = functionNode.getLineNumber();
-
-            final Expression test = new BinaryNode(Token.recast(token, TokenType.EQ_STRICT), referenceTo(parameter),
-                    LiteralNode.newInstance(token, finish, ScriptRuntime.UNDEFINED));
-            final Expression assignment =
-                    new BinaryNode(Token.recast(token, TokenType.ASSIGN), referenceTo(parameter), defaultValue);
-            final Block pass = new Block(token, finish, new ExpressionStatement(lineNumber, token, finish, assignment));
-
-            prependStatement(new IfNode(lineNumber, token, finish, test, pass, null));
+            prependStatement(newUndefinedGuard(parameters.get(i), defaultValue, functionNode.getLineNumber()));
         }
+    }
+
+    /**
+     * Build {@code if (target === undefined) { target = defaultValue; }}, the shape
+     * both a default parameter and a default in a destructuring pattern lower to.
+     *
+     * @param target the binding to fill in
+     * @param defaultValue the value to fill it with
+     * @param lineNumber line to attribute the synthetic statement to
+     * @return the statement
+     */
+    private static Statement newUndefinedGuard(final IdentNode target, final Expression defaultValue, final int lineNumber) {
+        final long token = defaultValue.getToken();
+        final int finish = defaultValue.getFinish();
+
+        final Expression test = new BinaryNode(Token.recast(token, TokenType.EQ_STRICT), referenceTo(target),
+                LiteralNode.newInstance(token, finish, ScriptRuntime.UNDEFINED));
+        final Expression assignment = new BinaryNode(Token.recast(token, TokenType.ASSIGN), referenceTo(target), defaultValue);
+        final Block pass = new Block(token, finish, new ExpressionStatement(lineNumber, token, finish, assignment));
+
+        return new IfNode(lineNumber, token, finish, test, pass, null);
     }
 
     /**
@@ -3738,6 +3759,203 @@ public class Parser extends AbstractParser implements Loggable {
      */
     private static IdentNode referenceTo(final IdentNode ident) {
         return new IdentNode(ident.getToken(), ident.getFinish(), ident.getName());
+    }
+
+    /**
+     * Parse one destructuring declarator and emit the declarations it stands for.
+     *
+     * The pattern is read into a small tree first, because the right hand side has to
+     * be evaluated before any binding is read out of it, and it comes second in the
+     * source. It is evaluated once, into a temporary:
+     *
+     * <pre>
+     * var { t: [u, v] } = o;
+     * </pre>
+     * <pre>
+     * :pt0 = o; :pt1 = :pt0["t"]; var u = :pt1[0]; var v = :pt1[1];
+     * </pre>
+     *
+     * Array patterns read by index rather than through an iterator, which is what
+     * makes a string work as a source and an iterable object not.
+     *
+     * @param varLine line of the declaration
+     * @param varToken token the pattern starts at
+     * @param varFlags VarNode flags, carrying let or const
+     * @param isStatement false when this is the init of a for loop
+     * @param vars collects the declarations, as the plain path does
+     */
+    private void destructuringDeclaration(final int varLine, final long varToken, final int varFlags, final boolean isStatement,
+            final List<VarNode> vars) {
+        final List<Binding> pattern = destructuringPattern();
+
+        expect(ASSIGN);
+        final Expression init = assignmentExpression(!isStatement);
+
+        final String source = newTemporary();
+        appendStatement(assignTemporary(varLine, varToken, source, init));
+        declareBindings(source, pattern, varLine, varFlags, vars);
+    }
+
+    private List<Binding> destructuringPattern() {
+        return type == LBRACKET ? arrayPattern() : objectPattern();
+    }
+
+    private List<Binding> arrayPattern() {
+        expect(LBRACKET);
+
+        final List<Binding> bindings = new ArrayList<>();
+        int index = 0;
+
+        while (type != RBRACKET) {
+            if (type == COMMARIGHT) {
+                // An elision leaves the element at this position unbound.
+                next();
+                index++;
+                continue;
+            }
+
+            bindings.add(patternElement(LiteralNode.newInstance(token, finish, Integer.valueOf(index))));
+            index++;
+
+            if (type != COMMARIGHT) {
+                break;
+            }
+            next();
+        }
+
+        expect(RBRACKET);
+
+        return bindings;
+    }
+
+    private List<Binding> objectPattern() {
+        expect(LBRACE);
+
+        final List<Binding> bindings = new ArrayList<>();
+
+        while (type != RBRACE) {
+            final long keyToken = token;
+            final String keyName;
+            IdentNode shorthand = null;
+
+            if (type == IDENT || isNonStrictModeIdent()) {
+                final IdentNode ident = getIdent();
+                keyName = ident.getName();
+
+                if (type != COLON) {
+                    shorthand = ident;
+                }
+            } else {
+                keyName = propertyName().getPropertyName();
+            }
+
+            final Expression key = LiteralNode.newInstance(keyToken, finish, keyName);
+
+            if (shorthand != null) {
+                verifyStrictIdent(shorthand, "variable name");
+                bindings.add(new Binding(keyToken, key, shorthand, null, defaultValue()));
+            } else {
+                expect(COLON);
+                bindings.add(patternElement(key));
+            }
+
+            if (type != COMMARIGHT) {
+                break;
+            }
+            next();
+        }
+
+        expect(RBRACE);
+
+        return bindings;
+    }
+
+    /** One element of a pattern: a nested pattern, or a name to declare. */
+    private Binding patternElement(final Expression key) {
+        final long elementToken = token;
+
+        if (type == LBRACKET || type == LBRACE) {
+            return new Binding(elementToken, key, null, destructuringPattern(), defaultValue());
+        }
+
+        final IdentNode name = getIdent();
+        verifyStrictIdent(name, "variable name");
+
+        return new Binding(elementToken, key, name, null, defaultValue());
+    }
+
+    private Expression defaultValue() {
+        if (type != ASSIGN) {
+            return null;
+        }
+        next();
+
+        return assignmentExpression(false);
+    }
+
+    /**
+     * Emit the declarations a parsed pattern stands for, reading each binding out of
+     * the given source. A nested pattern gets a temporary of its own.
+     */
+    private void declareBindings(final String source, final List<Binding> bindings, final int varLine, final int varFlags,
+            final List<VarNode> vars) {
+        for (final Binding binding : bindings) {
+            final Expression value = readFrom(binding.token, source, binding.key);
+
+            if (binding.name != null) {
+                final VarNode var = new VarNode(varLine, binding.token, finish, binding.name.setIsDeclaredHere(), value, varFlags);
+                vars.add(var);
+                appendStatement(var);
+
+                if (binding.defaultValue != null) {
+                    appendStatement(newUndefinedGuard(binding.name, binding.defaultValue, varLine));
+                }
+
+                continue;
+            }
+
+            final String nested = newTemporary();
+            appendStatement(assignTemporary(varLine, binding.token, nested, value));
+
+            if (binding.defaultValue != null) {
+                appendStatement(newUndefinedGuard(identifierFor(binding.token, nested), binding.defaultValue, varLine));
+            }
+
+            declareBindings(nested, binding.nested, varLine, varFlags, vars);
+        }
+    }
+
+    private ExpressionStatement assignTemporary(final int varLine, final long token, final String temporary,
+            final Expression value) {
+        return new ExpressionStatement(varLine, token, finish,
+                new BinaryNode(Token.recast(token, TokenType.ASSIGN), identifierFor(token, temporary), value));
+    }
+
+    /** {@code source[key]}, with the token types the IR checks for. */
+    private Expression readFrom(final long token, final String source, final Expression key) {
+        return new IndexNode(Token.recast(token, LBRACKET), finish, identifierFor(token, source), key);
+    }
+
+    private IdentNode identifierFor(final long token, final String name) {
+        return createIdentNode(Token.recast(token, IDENT), finish, name);
+    }
+
+    /** One binding of a destructuring pattern, parsed before the source is known. */
+    private static final class Binding {
+        private final long token;
+        private final Expression key;
+        private final IdentNode name;
+        private final List<Binding> nested;
+        private final Expression defaultValue;
+
+        Binding(final long token, final Expression key, final IdentNode name, final List<Binding> nested,
+                final Expression defaultValue) {
+            this.token = token;
+            this.key = key;
+            this.name = name;
+            this.nested = nested;
+            this.defaultValue = defaultValue;
+        }
     }
 
     /**
