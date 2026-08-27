@@ -4459,7 +4459,7 @@ public class Parser extends AbstractParser implements Loggable {
      */
     private void assignBindings(final String source, final List<Binding> bindings, final List<Expression> steps) {
         for (final Binding binding : bindings) {
-            Expression value = readFrom(binding.token, source, binding.key);
+            Expression value = valueOfBinding(source, binding);
 
             if (binding.defaultValue != null) {
                 final Expression test = new BinaryNode(Token.recast(binding.token, TokenType.EQ_STRICT), value,
@@ -4550,6 +4550,20 @@ public class Parser extends AbstractParser implements Loggable {
                 continue;
             }
 
+            if (isES6() && type == ELLIPSIS) {
+                // A rest element takes everything from here on, so it ends the pattern.
+                final long restToken = token;
+                next();
+                bindings.add(new Binding(restToken, LiteralNode.newInstance(restToken, finish, Integer.valueOf(index)),
+                        patternTarget(assignment), null, null, true));
+
+                if (type == COMMARIGHT) {
+                    throw error(AbstractParser.message("rest.not.last.in.pattern"), token);
+                }
+
+                break;
+            }
+
             bindings.add(patternElement(LiteralNode.newInstance(token, finish, Integer.valueOf(index)), assignment));
             index++;
 
@@ -4614,14 +4628,19 @@ public class Parser extends AbstractParser implements Loggable {
             return new Binding(elementToken, key, null, destructuringPattern(assignment), defaultValue());
         }
 
+        return new Binding(elementToken, key, patternTarget(assignment), null, defaultValue());
+    }
+
+    /** Where one value of a pattern ends up: a name to declare, or any assignment target. */
+    private Expression patternTarget(final boolean assignment) {
         if (assignment) {
-            return new Binding(elementToken, key, leftHandSideExpression(), null, defaultValue());
+            return leftHandSideExpression();
         }
 
         final IdentNode name = getIdent();
         verifyStrictIdent(name, "variable name");
 
-        return new Binding(elementToken, key, name, null, defaultValue());
+        return name;
     }
 
     private Expression defaultValue() {
@@ -4640,7 +4659,7 @@ public class Parser extends AbstractParser implements Loggable {
     private void declareBindings(final String source, final List<Binding> bindings, final int varLine, final int varFlags,
             final List<VarNode> vars, final List<Statement> out) {
         for (final Binding binding : bindings) {
-            final Expression value = readFrom(binding.token, source, binding.key);
+            final Expression value = valueOfBinding(source, binding);
 
             if (binding.target != null) {
                 final IdentNode name = (IdentNode) binding.target;
@@ -4804,6 +4823,19 @@ public class Parser extends AbstractParser implements Loggable {
                 : new BinaryNode(Token.recast(callToken, TokenType.COMMARIGHT), prologue, call);
     }
 
+    /**
+     * What one binding reads out of the source: an element by key, or, for a rest
+     * element, everything from its index onwards as an array.
+     */
+    private Expression valueOfBinding(final String source, final Binding binding) {
+        if (binding.rest) {
+            return new RuntimeNode(binding.token, finish, RuntimeNode.Request.TO_ARRAY,
+                    identifierFor(binding.token, source), binding.key);
+        }
+
+        return readFrom(binding.token, source, binding.key);
+    }
+
     /** {@code source[key]}, with the token types the IR checks for. */
     private Expression readFrom(final long token, final String source, final Expression key) {
         return new IndexNode(Token.recast(token, LBRACKET), finish, identifierFor(token, source), key);
@@ -4852,14 +4884,22 @@ public class Parser extends AbstractParser implements Loggable {
         private final Expression target;
         private final List<Binding> nested;
         private final Expression defaultValue;
+        /** True for a rest element, where the key is the index to start collecting at. */
+        private final boolean rest;
 
         Binding(final long token, final Expression key, final Expression target, final List<Binding> nested,
                 final Expression defaultValue) {
+            this(token, key, target, nested, defaultValue, false);
+        }
+
+        Binding(final long token, final Expression key, final Expression target, final List<Binding> nested,
+                final Expression defaultValue, final boolean rest) {
             this.token = token;
             this.key = key;
             this.target = target;
             this.nested = nested;
             this.defaultValue = defaultValue;
+            this.rest = rest;
         }
     }
 

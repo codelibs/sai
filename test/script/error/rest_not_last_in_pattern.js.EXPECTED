@@ -1,0 +1,3 @@
+test/script/error/rest_not_last_in_pattern.js:27:15 A rest element must be the last element of a pattern
+var [a, ...rest, b] = [1, 2, 3];
+               ^
