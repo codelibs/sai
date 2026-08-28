@@ -1,0 +1,3 @@
+test/script/error/unicode_escape_es5.js:26:9 Invalid hex digit
+print("\u{41}");
+         ^
