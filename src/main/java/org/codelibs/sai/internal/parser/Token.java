@@ -71,9 +71,20 @@ public class Token {
         switch (tokenType) {
         case STRING:
         case ESCSTRING:
-        case EXECSTRING: {
+        case EXECSTRING:
+        case TEMPLATE:
+        case TEMPLATE_TAIL: {
+            // One character of delimiter on each side: a quote, or a backquote, or the
+            // closing brace of the last substitution.
             final int start = Token.descPosition(token) - 1;
             final int len = Token.descLength(token) + 2;
+            return toDesc(tokenType, start, len);
+        }
+        case TEMPLATE_HEAD:
+        case TEMPLATE_MIDDLE: {
+            // These end at a substitution, so the trailing delimiter is "${".
+            final int start = Token.descPosition(token) - 1;
+            final int len = Token.descLength(token) + 3;
             return toDesc(tokenType, start, len);
         }
         default: {

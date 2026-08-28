@@ -52,6 +52,10 @@ import static org.codelibs.sai.internal.parser.TokenType.RBRACE;
 import static org.codelibs.sai.internal.parser.TokenType.RBRACKET;
 import static org.codelibs.sai.internal.parser.TokenType.RPAREN;
 import static org.codelibs.sai.internal.parser.TokenType.SEMICOLON;
+import static org.codelibs.sai.internal.parser.TokenType.TEMPLATE;
+import static org.codelibs.sai.internal.parser.TokenType.TEMPLATE_HEAD;
+import static org.codelibs.sai.internal.parser.TokenType.TEMPLATE_MIDDLE;
+import static org.codelibs.sai.internal.parser.TokenType.TEMPLATE_TAIL;
 import static org.codelibs.sai.internal.parser.TokenType.TERNARY;
 import static org.codelibs.sai.internal.parser.TokenType.WHILE;
 
@@ -1935,6 +1939,9 @@ public class Parser extends AbstractParser implements Loggable {
             }
             detectSpecialProperty(ident);
             return ident;
+        case TEMPLATE:
+        case TEMPLATE_HEAD:
+            return templateLiteral();
         case OCTAL_LEGACY:
             if (isStrictMode) {
                 throw error(AbstractParser.message("strict.no.octal"), token);
@@ -2398,12 +2405,56 @@ public class Parser extends AbstractParser implements Loggable {
 
                 break;
 
+            case TEMPLATE:
+            case TEMPLATE_HEAD:
+                // A template directly after an expression is a tagged template,
+                // which needs the literal parts as data rather than concatenated.
+                throw error(AbstractParser.message("no.tagged.template"), token);
+
             default:
                 break loop;
             }
         }
 
         return lhs;
+    }
+
+    /**
+     * TemplateLiteral :
+     *      NoSubstitutionTemplate
+     *      TemplateHead Expression TemplateSpans
+     *
+     * Parse a template literal, lowering it to a string concatenation. The
+     * concatenation starts from the head, which is a string literal even when it is
+     * empty, so that every substitution is concatenated rather than added:
+     * {@code `${1}${2}`} is "12", not 3.
+     *
+     * @return Expression node.
+     */
+    private Expression templateLiteral() {
+        assert type == TEMPLATE || type == TEMPLATE_HEAD;
+
+        if (type == TEMPLATE) {
+            return getLiteral();
+        }
+
+        final long templateToken = token;
+        Expression concat = getLiteral();
+
+        while (true) {
+            concat = new BinaryNode(Token.recast(templateToken, TokenType.ADD), concat, expression());
+
+            if (type != TEMPLATE_MIDDLE && type != TEMPLATE_TAIL) {
+                throw error(AbstractParser.message("expected.literal", "template"), token);
+            }
+
+            final boolean last = type == TEMPLATE_TAIL;
+            concat = new BinaryNode(Token.recast(templateToken, TokenType.ADD), concat, getLiteral());
+
+            if (last) {
+                return concat;
+            }
+        }
     }
 
     /**
