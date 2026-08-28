@@ -186,7 +186,7 @@ public class CompilerTest {
         }
 
         final Global oldGlobal = Context.getGlobal();
-        final boolean globalChanged = (oldGlobal != global);
+        final boolean globalChanged = (oldGlobal != compileGlobal);
 
         try {
             final char[] buffer = readFully(file);
@@ -206,7 +206,7 @@ public class CompilerTest {
             }
 
             if (globalChanged) {
-                Context.setGlobal(global);
+                Context.setGlobal(compileGlobal);
             }
             final Source source = sourceFor(file.getAbsolutePath(), buffer);
             final ScriptFunction script = compileContext.compileScript(source, compileGlobal);
