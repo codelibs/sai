@@ -2279,6 +2279,17 @@ public class Parser extends AbstractParser implements Loggable {
             // Get IDENT.
             final String ident = (String) expectValue(IDENT);
 
+            if (isES6() && (type == COMMARIGHT || type == RBRACE)) {
+                // ES6 shorthand: { x } is { x: x }. This is checked before the get and
+                // set handling below, so that { get, set } is a pair of shorthands
+                // rather than a malformed accessor.
+                final IdentNode value = createIdentNode(propertyToken, finish, ident);
+                detectSpecialProperty(value);
+
+                return new PropertyNode(propertyToken, finish, createIdentNode(propertyToken, finish, ident)
+                        .setIsPropertyName(), value, null, null);
+            }
+
             if (type != COLON) {
                 final long getSetToken = propertyToken;
 
