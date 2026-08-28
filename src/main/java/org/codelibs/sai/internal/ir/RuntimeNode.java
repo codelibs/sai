@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2026, CodeLibs Project and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,7 +86,9 @@ public class RuntimeNode extends Expression {
         /** is undefined */
         IS_UNDEFINED(TokenType.EQ_STRICT, Type.BOOLEAN, 2),
         /** is not undefined */
-        IS_NOT_UNDEFINED(TokenType.NE_STRICT, Type.BOOLEAN, 2);
+        IS_NOT_UNDEFINED(TokenType.NE_STRICT, Type.BOOLEAN, 2),
+        /** Copy the elements of an array-like value into an array, for ES6 spread */
+        TO_ARRAY;
 
         /** token type */
         private final TokenType tokenType;
