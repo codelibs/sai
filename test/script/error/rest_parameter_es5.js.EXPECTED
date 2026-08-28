@@ -1,0 +1,9 @@
+test/script/error/rest_parameter_es5.js:26:14 Expected ident but found ...
+function f(a, ...rest) {
+              ^
+test/script/error/rest_parameter_es5.js:27:4 Invalid return statement
+    return a + rest.length;
+    ^
+test/script/error/rest_parameter_es5.js:28:0 Expected eof but found }
+}
+^
