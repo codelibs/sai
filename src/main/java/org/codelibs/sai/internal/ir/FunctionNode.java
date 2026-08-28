@@ -75,7 +75,9 @@ public final class FunctionNode extends LexicalContextExpression implements Flag
         /** an ES6 arrow function - takes this from the enclosing function */
         ARROW,
         /** an ES6 method definition, "m() {}" in an object literal */
-        METHOD
+        METHOD,
+        /** the constructor a class did not write out, synthesized from the class itself */
+        CLASS_CONSTRUCTOR
     }
 
     /** Source of entity. */

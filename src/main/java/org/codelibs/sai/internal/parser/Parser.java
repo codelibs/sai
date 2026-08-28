@@ -32,6 +32,7 @@ import static org.codelibs.sai.internal.codegen.CompilerConstants.PROGRAM;
 import static org.codelibs.sai.internal.parser.TokenType.ARROW;
 import static org.codelibs.sai.internal.parser.TokenType.ASSIGN;
 import static org.codelibs.sai.internal.parser.TokenType.CASE;
+import static org.codelibs.sai.internal.parser.TokenType.CLASS;
 import static org.codelibs.sai.internal.parser.TokenType.CATCH;
 import static org.codelibs.sai.internal.parser.TokenType.COLON;
 import static org.codelibs.sai.internal.parser.TokenType.COMMARIGHT;
@@ -40,6 +41,7 @@ import static org.codelibs.sai.internal.parser.TokenType.DECPOSTFIX;
 import static org.codelibs.sai.internal.parser.TokenType.DECPREFIX;
 import static org.codelibs.sai.internal.parser.TokenType.ELSE;
 import static org.codelibs.sai.internal.parser.TokenType.EOF;
+import static org.codelibs.sai.internal.parser.TokenType.EXTENDS;
 import static org.codelibs.sai.internal.parser.TokenType.ELLIPSIS;
 import static org.codelibs.sai.internal.parser.TokenType.EOL;
 import static org.codelibs.sai.internal.parser.TokenType.FINALLY;
@@ -55,6 +57,7 @@ import static org.codelibs.sai.internal.parser.TokenType.RBRACE;
 import static org.codelibs.sai.internal.parser.TokenType.RBRACKET;
 import static org.codelibs.sai.internal.parser.TokenType.RPAREN;
 import static org.codelibs.sai.internal.parser.TokenType.SEMICOLON;
+import static org.codelibs.sai.internal.parser.TokenType.SUPER;
 import static org.codelibs.sai.internal.parser.TokenType.TEMPLATE;
 import static org.codelibs.sai.internal.parser.TokenType.TEMPLATE_HEAD;
 import static org.codelibs.sai.internal.parser.TokenType.TEMPLATE_MIDDLE;
@@ -164,6 +167,23 @@ public class Parser extends AbstractParser implements Loggable {
      * temporary it is a real parameter, so it is not declared in the body.
      */
     private static final String PATTERN_PARAMETER_PREFIX = ":pp";
+
+    /**
+     * Name of the binding holding the superclass of the class being parsed.
+     *
+     * It is a fixed name rather than a numbered temporary because a method that uses
+     * super is re-parsed from its own source, where the class is not in sight: the name
+     * it emits then has to be the one the class assigned, and a counter would not
+     * survive. A class declaration puts the binding in a block of its own so that two
+     * classes in the same scope cannot share it.
+     */
+    private static final String SUPERCLASS = ":superclass";
+
+    /** Set while parsing a class with a superclass. */
+    private boolean inSubclass;
+
+    /** Set while super may actually be used, which a class expression cannot allow. */
+    private boolean superUsable;
 
     /** Names of the temporaries the function currently being parsed has to declare. */
     private List<String> temporaries;
@@ -297,7 +317,13 @@ public class Parser extends AbstractParser implements Loggable {
         /** A single property getter or setter, {@code get x() {}}. */
         PROPERTY_ACCESSOR,
         /** A single method definition, {@code m() {}}. */
-        METHOD
+        METHOD,
+        /**
+         * A whole class, of which only the constructor it did not write out is wanted.
+         * That constructor has no source of its own, so the class it belongs to is its
+         * range and the rest of the class is parsed and thrown away.
+         */
+        CLASS_CONSTRUCTOR
     }
 
     /**
@@ -330,6 +356,13 @@ public class Parser extends AbstractParser implements Loggable {
             // Set up first token (skips opening EOL.)
             k = -1;
             next();
+
+            // A method or a class constructor being re-parsed sits inside a class it
+            // cannot see from its own source. The original parse already checked that
+            // super was allowed here, and the binding it emits resolves through the
+            // scope the function closes over, so allow it again.
+            superUsable = programKind != ProgramKind.NORMAL;
+
             // Begin parse.
             return program(scriptName, programKind);
         } catch (final Exception e) {
@@ -502,6 +535,17 @@ public class Parser extends AbstractParser implements Loggable {
      */
     private FunctionNode newFunctionNode(final long startToken, final IdentNode ident, final List<IdentNode> parameters,
             final FunctionNode.Kind kind, final int functionLine) {
+        return newFunctionNode(token, startToken, ident, parameters, kind, functionLine);
+    }
+
+    /**
+     * @param functionToken token the function is identified by. A function is
+     *                      identified by where it starts in the source, so a synthetic
+     *                      one has to be given a position inside the range it will be
+     *                      re-parsed from rather than wherever the parser happens to be.
+     */
+    private FunctionNode newFunctionNode(final long functionToken, final long startToken, final IdentNode ident,
+            final List<IdentNode> parameters, final FunctionNode.Kind kind, final int functionLine) {
         // Build function name.
         final StringBuilder sb = new StringBuilder();
 
@@ -527,8 +571,8 @@ public class Parser extends AbstractParser implements Loggable {
 
         // Start new block.
         final FunctionNode functionNode =
-                new FunctionNode(source, functionLine, token, Token.descPosition(token), startToken, namespace, ident, name, parameters,
-                        kind, flags);
+                new FunctionNode(source, functionLine, functionToken, Token.descPosition(functionToken), startToken, namespace, ident,
+                        name, parameters, kind, flags);
 
         lc.push(functionNode);
         // Create new block, and just put it on the context stack, restoreFunctionNode() will associate it with the
@@ -966,6 +1010,23 @@ public class Parser extends AbstractParser implements Loggable {
         case DEBUGGER:
             debuggerStatement();
             break;
+        case CLASS:
+            if (!isES6()) {
+                // Nothing has been consumed, so falling out of the switch here would
+                // leave the statement loop spinning on the same token.
+                throw error(AbstractParser.message("expected.operand", type.getNameOrType()), token);
+            }
+            if (programKind == ProgramKind.CLASS_CONSTRUCTOR) {
+                // Only the constructor the class did not write out is wanted; the rest
+                // of the class is parsed and thrown away.
+                final FunctionNode constructor = (FunctionNode) classTail(ProgramKind.CLASS_CONSTRUCTOR, true);
+                addPropertyFunctionStatement(new PropertyFunction(constructor.getIdent(), constructor));
+
+                return;
+            }
+            classDeclaration();
+
+            return;
         case RPAREN:
         case RBRACKET:
         case EOF:
@@ -1018,6 +1079,45 @@ public class Parser extends AbstractParser implements Loggable {
             expressionStatement();
             break;
         }
+    }
+
+    /**
+     * A class declaration binds the class expression to its name. ES6 makes the binding
+     * block scoped, so it is a let where block scoping is available.
+     */
+    private void classDeclaration() {
+        final int classLine = line;
+        final long classToken = token;
+        final IdentNode name = className();
+        final int varFlags = useBlockScope() ? VarNode.IS_LET : 0;
+
+        // The class binding is declared first and assigned inside a block of its own, so
+        // that the superclass binding the block also holds belongs to this class alone.
+        appendStatement(new VarNode(classLine, classToken, finish, name.setIsDeclaredHere(), null, varFlags));
+
+        Block classBlock = newBlock();
+        try {
+            appendStatement(new VarNode(classLine, classToken, finish,
+                    createIdentNode(Token.recast(classToken, IDENT), finish, SUPERCLASS).setIsDeclaredHere(), null, varFlags));
+            appendStatement(new ExpressionStatement(classLine, classToken, finish,
+                    new BinaryNode(Token.recast(classToken, TokenType.ASSIGN), referenceTo(name),
+                            classTail(ProgramKind.NORMAL, true))));
+        } finally {
+            classBlock = restoreBlock(classBlock);
+        }
+
+        appendStatement(new BlockStatement(classLine, classBlock));
+    }
+
+    /** Read the name of the class starting at the current token, without consuming it. */
+    private IdentNode className() {
+        final int nameIndex = k + 1;
+
+        if (T(nameIndex) != IDENT) {
+            throw error(AbstractParser.message("expected.ident", type.getNameOrType()), getToken(nameIndex));
+        }
+
+        return createIdentNode(getToken(nameIndex), finish, (String) getValue(getToken(nameIndex)));
     }
 
     private void addPropertyFunctionStatement(final PropertyFunction propertyFunction) {
@@ -2134,6 +2234,11 @@ public class Parser extends AbstractParser implements Loggable {
         case TEMPLATE:
         case TEMPLATE_HEAD:
             return templateLiteral();
+        case CLASS:
+            if (isES6()) {
+                return classTail(ProgramKind.NORMAL, false);
+            }
+            break;
         case OCTAL_LEGACY:
             if (isStrictMode) {
                 throw error(AbstractParser.message("strict.no.octal"), token);
@@ -2584,6 +2689,270 @@ public class Parser extends AbstractParser implements Loggable {
     }
 
     /**
+     * SuperCall / SuperProperty.
+     *
+     * A class has no super binding of its own here, so super reads the temporary
+     * holding the superclass and the receiver is passed explicitly:
+     *
+     * <pre>
+     * super(x)     becomes   :pt0.call(this, x)
+     * super.m(x)   becomes   :pt0.prototype.m.call(this, x)
+     * super.m      becomes   :pt0.prototype.m
+     * </pre>
+     *
+     * The last one loses the receiver, as it does wherever a method is read rather
+     * than called.
+     *
+     * @return the lowered expression
+     */
+    private Expression superExpression() {
+        final long superToken = token;
+        final int superLine = line;
+
+        if (!superUsable) {
+            throw error(AbstractParser.message(inSubclass ? "super.in.class.expression" : "super.outside.class"), superToken);
+        }
+
+        next();
+
+        lc.setFlag(lc.getCurrentFunction(), FunctionNode.USES_THIS);
+
+        if (type == LPAREN) {
+            return superCall(superLine, superToken, identifierFor(superToken, SUPERCLASS));
+        }
+
+        expect(TokenType.PERIOD);
+
+        final IdentNode property = getIdentifierName();
+        final Expression member = new AccessNode(Token.recast(superToken, TokenType.PERIOD), finish,
+                new AccessNode(Token.recast(superToken, TokenType.PERIOD), finish,
+                        identifierFor(superToken, SUPERCLASS), "prototype"), property.getName());
+
+        return type == LPAREN ? superCall(superLine, superToken, member) : member;
+    }
+
+    /** {@code callee.call(this, args...)}, with the argument list still to be read. */
+    private Expression superCall(final int superLine, final long superToken, final Expression callee) {
+        final List<Expression> arguments = new ArrayList<>();
+        arguments.add(new IdentNode(Token.recast(superToken, TokenType.THIS), finish, TokenType.THIS.getName()));
+        arguments.addAll(argumentList());
+
+        return new CallNode(superLine, superToken, finish, new AccessNode(Token.recast(superToken, TokenType.PERIOD), finish,
+                callee, "call"), arguments, false);
+    }
+
+    /**
+     * ClassDeclaration / ClassExpression :
+     *      class BindingIdentifier? ClassTail
+     *
+     * A class lowers to an ES5 constructor with its prototype chains wired by hand:
+     *
+     * <pre>
+     * class Foo extends Bar { constructor(x) {..} m() {..} static s() {..} }
+     * </pre>
+     * <pre>
+     * (:pt0 = Bar,
+     *  :pt1 = function Foo(x) {..},
+     *  :pt1.prototype.__proto__ = :pt0.prototype,
+     *  :pt1.__proto__ = :pt0,
+     *  :pt1.prototype.m = function m() {..},
+     *  :pt1.s = function s() {..},
+     *  :pt1)
+     * </pre>
+     *
+     * An immediately invoked function would be the obvious shape, but every
+     * FunctionNode has to stay re-parseable from its own source range and a synthetic
+     * one is not - hence the comma expression over temporaries, which introduces no
+     * function at all. It also serves both forms: a declaration is this expression
+     * assigned to a var.
+     *
+     * @param wanted what the caller wants back, so that re-parsing the constructor a
+     *               class did not write out can ask for just that
+     * @return the class expression, or the synthesized constructor
+     */
+    private Expression classTail(final ProgramKind wanted, final boolean declaration) {
+        final long classToken = token;
+        final int classLine = line;
+        // CLASS tested in caller.
+        next();
+
+        IdentNode className = null;
+
+        if (type == IDENT || isNonStrictModeIdent()) {
+            className = getIdent();
+            verifyStrictIdent(className, "class name");
+        }
+
+        final boolean prevInSubclass = inSubclass;
+        final boolean prevSuperUsable = superUsable;
+        try {
+            Expression superClass = null;
+
+            if (type == EXTENDS) {
+                next();
+                superClass = leftHandSideExpression();
+            }
+
+            inSubclass = superClass != null;
+            // A declaration gives the binding a block of its own; an expression has
+            // nowhere to put one, so super inside it would read whichever class in the
+            // scope assigned it last.
+            superUsable = inSubclass && declaration;
+
+            final String classTemporary = newTemporary();
+            final IdentNode constructorName = className != null ? className
+                    : createIdentNode(Token.recast(classToken, IDENT), finish,
+                            getDefaultValidFunctionName(classLine, false));
+
+            // A function is identified by where it starts, and the program itself starts
+            // at zero, so a synthesized constructor cannot be identified by the class
+            // keyword: a class at the very start of a file would collide with it. The
+            // brace that opens the class body is inside the class, is never zero and is
+            // reached identically when the class is re-parsed.
+            final long classBodyToken = token;
+            expect(LBRACE);
+
+            FunctionNode constructor = null;
+            final List<Expression> members = new ArrayList<>();
+
+            while (type != RBRACE) {
+                if (type == SEMICOLON) {
+                    // A stray semicolon between members is allowed.
+                    next();
+                    continue;
+                }
+
+                boolean isStatic = false;
+
+                if (type == TokenType.STATIC && T(k + 1) != LPAREN) {
+                    // "static" is a reserved word, so it is its own token type. A
+                    // parameter list right after it makes it an ordinary method name.
+                    isStatic = true;
+                    next();
+                }
+
+                final long memberToken = token;
+                final int memberLine = line;
+                final IdentNode memberName = getIdentifierName();
+
+                if (!isStatic && "constructor".equals(memberName.getName())) {
+                    if (constructor != null) {
+                        throw error(AbstractParser.message("duplicate.constructor"), memberToken);
+                    }
+                    constructor = methodDefinition(memberToken, memberLine, constructorName);
+
+                    continue;
+                }
+
+                final FunctionNode method = methodDefinition(memberToken, memberLine, memberName);
+                final Expression target = isStatic ? identifierFor(memberToken, classTemporary)
+                        : new AccessNode(Token.recast(memberToken, TokenType.PERIOD), finish,
+                                identifierFor(memberToken, classTemporary), "prototype");
+
+                members.add(new BinaryNode(Token.recast(memberToken, TokenType.ASSIGN),
+                        new AccessNode(Token.recast(memberToken, TokenType.PERIOD), finish, target, memberName.getName()),
+                        method));
+            }
+
+            expect(RBRACE);
+
+            if (constructor == null) {
+                constructor = implicitConstructor(classToken, classBodyToken, classLine, constructorName);
+            }
+
+            if (wanted == ProgramKind.CLASS_CONSTRUCTOR) {
+                return constructor;
+            }
+
+            final List<Expression> steps = new ArrayList<>();
+
+            if (superClass != null) {
+                steps.add(new BinaryNode(Token.recast(classToken, TokenType.ASSIGN),
+                        identifierFor(classToken, SUPERCLASS), superClass));
+            }
+
+            steps.add(new BinaryNode(Token.recast(classToken, TokenType.ASSIGN),
+                    identifierFor(classToken, classTemporary), constructor));
+
+            if (superClass != null) {
+                // Instances see the superclass prototype, and the class itself sees the
+                // superclass, which is how a static member is inherited.
+                steps.add(protoAssignment(classToken, new AccessNode(Token.recast(classToken, TokenType.PERIOD), finish,
+                        identifierFor(classToken, classTemporary), "prototype"),
+                        new AccessNode(Token.recast(classToken, TokenType.PERIOD), finish,
+                                identifierFor(classToken, SUPERCLASS), "prototype")));
+                steps.add(protoAssignment(classToken, identifierFor(classToken, classTemporary),
+                        identifierFor(classToken, SUPERCLASS)));
+            }
+
+            steps.addAll(members);
+            steps.add(identifierFor(classToken, classTemporary));
+
+            Expression result = steps.get(0);
+
+            for (int i = 1; i < steps.size(); i++) {
+                result = new BinaryNode(Token.recast(classToken, TokenType.COMMARIGHT), result, steps.get(i));
+            }
+
+            return result;
+        } finally {
+            inSubclass = prevInSubclass;
+            superUsable = prevSuperUsable;
+        }
+    }
+
+    private Expression protoAssignment(final long classToken, final Expression target, final Expression value) {
+        return new BinaryNode(Token.recast(classToken, TokenType.ASSIGN),
+                new AccessNode(Token.recast(classToken, TokenType.PERIOD), finish, target, "__proto__"), value);
+    }
+
+    /**
+     * Build the constructor a class did not write out. There is no source for it, so it
+     * is identified by the class token and re-parsed from the class as a whole.
+     *
+     * A base class gets an empty constructor; a derived one forwards everything it was
+     * given to its superclass.
+     */
+    private FunctionNode implicitConstructor(final long classToken, final long classBodyToken, final int classLine,
+            final IdentNode className) {
+        final List<String> prevTemporaries = temporaries;
+        temporaries = new ArrayList<>();
+
+        FunctionNode constructor = null;
+        try {
+            constructor = newFunctionNode(classBodyToken, classToken, className, new ArrayList<IdentNode>(),
+                    FunctionNode.Kind.CLASS_CONSTRUCTOR, classLine);
+
+            // A function the re-parse is not aiming at is skipped, and the compiler
+            // requires a skipped function to have an empty body. functionBody() decides
+            // that the same way for the functions it parses.
+            final boolean parseBody = reparsedFunction == null
+                    || constructor.getId() <= reparsedFunction.getFunctionNodeId();
+
+            if (parseBody && inSubclass) {
+                lc.setFlag(constructor, FunctionNode.USES_ARGUMENTS | FunctionNode.USES_THIS);
+
+                final List<Expression> arguments = new ArrayList<>();
+                arguments.add(new IdentNode(Token.recast(classToken, TokenType.THIS), finish, TokenType.THIS.getName()));
+                arguments.add(identifierFor(classToken, ARGUMENTS_NAME));
+
+                appendStatement(new ExpressionStatement(classLine, classToken, finish, new CallNode(classLine, classToken,
+                        finish, new AccessNode(Token.recast(classToken, TokenType.PERIOD), finish,
+                                identifierFor(classToken, SUPERCLASS), "apply"), arguments, false)));
+            }
+
+            constructor.setFinish(finish);
+        } finally {
+            temporaries = prevTemporaries;
+            // The range has to stop at the brace that closes the class, which is the
+            // token just consumed, not wherever the parser goes next.
+            constructor = restoreFunctionNode(constructor, previousToken);
+        }
+
+        return constructor;
+    }
+
+    /**
      * MethodDefinition :
      *      PropertyName ( FormalParameterList ) { FunctionBody }
      *
@@ -2858,6 +3227,14 @@ public class Parser extends AbstractParser implements Loggable {
         case FUNCTION:
             // Get function expression.
             lhs = functionExpression(false, false);
+            break;
+
+        case SUPER:
+            if (isES6()) {
+                lhs = superExpression();
+                break;
+            }
+            lhs = primaryExpression();
             break;
 
         default:
