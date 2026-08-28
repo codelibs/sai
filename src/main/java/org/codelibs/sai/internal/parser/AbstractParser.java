@@ -169,6 +169,7 @@ public abstract class AbstractParser {
     protected final boolean lookahead(final BooleanSupplier probe) {
         final Lexer.State state = lexer.saveState();
         final boolean pause = lexer.isPauseOnNextLeftBrace();
+        final int[] templateState = lexer.getTemplateState();
         final int last = stream.last();
 
         try {
@@ -179,6 +180,7 @@ public abstract class AbstractParser {
             }
             lexer.restoreState(state);
             lexer.setPauseOnNextLeftBrace(pause);
+            lexer.restoreTemplateState(templateState);
         }
     }
 

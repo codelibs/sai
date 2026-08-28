@@ -54,6 +54,7 @@ import static org.codelibs.sai.internal.parser.TokenType.TEMPLATE_TAIL;
 import static org.codelibs.sai.internal.parser.TokenType.XML;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 import org.codelibs.sai.internal.runtime.ECMAErrors;
 import org.codelibs.sai.internal.runtime.ErrorManager;
@@ -100,6 +101,12 @@ public class Lexer extends Scanner {
 
     private final boolean pauseOnFunctionBody;
     private boolean pauseOnNextLeftBrace;
+
+    /** Number of template substitutions currently open. */
+    private int templateDepth;
+
+    /** Brace depth reached inside each open template substitution. */
+    private int[] templateBraces = new int[4];
 
     private static final String SPACETAB = " \t"; // ASCII space and tab
     private static final String LFCR = "\n\r"; // line feed and carriage return (ctrl-m)
@@ -1249,124 +1256,52 @@ public class Lexer extends Scanner {
         // Skip over the opening quote.
         skip(1);
 
-        boolean first = true;
+        scanTemplatePart(true);
+    }
 
+    /**
+     * Scan one literal part of a template and emit it.
+     *
+     * A part runs to the next substitution or to the closing quote. When it ends at a
+     * substitution the lexer simply carries on: the tokens of the expression are lexed
+     * by the ordinary loop, which is what lets a regular expression literal, a comment
+     * or a nested function body inside a substitution behave as it does anywhere else.
+     * The brace that closes the substitution brings the lexer back here.
+     *
+     * @param first whether this is the part that opens the template.
+     */
+    private void scanTemplatePart(final boolean first) {
+        // Record the beginning of this literal part.
+        final State partState = saveState();
+
+        // Scan to the end of the part.
         while (true) {
-            // Record the beginning of this literal part.
-            final State partState = saveState();
+            if (atEOF()) {
+                error(Lexer.message("missing.close.quote"), TEMPLATE, position, limit);
+                return;
+            }
 
-            // Scan to the end of the part.
-            while (true) {
+            if (ch0 == '`' || ch0 == '$' && ch1 == '{') {
+                break;
+            }
+
+            if (ch0 == '\\') {
+                // Skip over the escape so that an escaped quote or dollar does
+                // not end the part.
+                skip(1);
+
                 if (atEOF()) {
                     error(Lexer.message("missing.close.quote"), TEMPLATE, position, limit);
                     return;
                 }
 
-                if (ch0 == '`' || ch0 == '$' && ch1 == '{') {
-                    break;
-                }
-
-                if (ch0 == '\\') {
-                    // Skip over the escape so that an escaped quote or dollar does
-                    // not end the part.
-                    skip(1);
-
-                    if (atEOF()) {
-                        error(Lexer.message("missing.close.quote"), TEMPLATE, position, limit);
-                        return;
-                    }
-                } else if (isEOL(ch0)) {
-                    // A template literal spans lines.
+                if (isEOL(ch0)) {
+                    // An escaped line terminator still spans a line.
                     skipEOL(false);
                     continue;
                 }
-
-                skip(1);
-            }
-
-            // Record the end of the part and emit it.
-            partState.setLimit(position);
-            final boolean last = ch0 == '`';
-            add(first ? last ? TEMPLATE : TEMPLATE_HEAD : last ? TEMPLATE_TAIL : TEMPLATE_MIDDLE, partState.position,
-                    partState.limit);
-
-            if (last) {
-                // Skip over the closing quote.
-                skip(1);
-                return;
-            }
-
-            // Skip over ${.
-            skip(2);
-
-            // Record the beginning of the substitution expression.
-            final State expressionState = saveState();
-
-            // Start with one open brace.
-            int braceCount = 1;
-
-            // Scan for the matching brace.
-            while (!atEOF()) {
-                if (ch0 == '}') {
-                    if (--braceCount == 0) {
-                        break;
-                    }
-                } else if (ch0 == '{') {
-                    braceCount++;
-                } else if (ch0 == '"' || ch0 == '\'' || ch0 == '`') {
-                    // Skip over a string so that a brace inside it is not counted.
-                    // A malformed string is left to the lexer that scans the
-                    // expression, which reports it in place.
-                    skipStringInSubstitution();
-                    continue;
-                } else if (isEOL(ch0)) {
-                    skipEOL(false);
-                    continue;
-                }
-
-                skip(1);
-            }
-
-            // If braces don't match then report an error.
-            if (braceCount != 0) {
-                error(Lexer.message("edit.string.missing.brace"), LBRACE, expressionState.position - 1, 1);
-                return;
-            }
-
-            // Mark the end of the expression and skip over the closing brace.
-            expressionState.setLimit(position);
-            skip(1);
-
-            // Lex the expression into this same stream. The nested lexer inherits
-            // the ES6 flag, so templates nest.
-            final Lexer expressionLexer = new Lexer(this, expressionState);
-            expressionLexer.lexify();
-
-            first = false;
-        }
-    }
-
-    /**
-     * Skip over a string literal while looking for the brace that closes a template
-     * substitution. Only the extent matters here, so escapes are skipped wholesale
-     * rather than interpreted.
-     */
-    private void skipStringInSubstitution() {
-        final char quote = ch0;
-
-        // Skip over the opening quote.
-        skip(1);
-
-        while (!atEOF() && ch0 != quote) {
-            if (ch0 == '\\') {
-                skip(1);
-
-                if (atEOF()) {
-                    return;
-                }
-            }
-
-            if (isEOL(ch0)) {
+            } else if (isEOL(ch0)) {
+                // A template literal spans lines.
                 skipEOL(false);
                 continue;
             }
@@ -1374,11 +1309,108 @@ public class Lexer extends Scanner {
             skip(1);
         }
 
-        if (!atEOF()) {
+        // Record the end of the part and emit it.
+        partState.setLimit(position);
+        final boolean last = ch0 == '`';
+        add(first ? last ? TEMPLATE : TEMPLATE_HEAD : last ? TEMPLATE_TAIL : TEMPLATE_MIDDLE, partState.position,
+                partState.limit);
+
+        if (last) {
             // Skip over the closing quote.
             skip(1);
+
+            if (!first) {
+                popTemplate();
+            }
+
+            return;
+        }
+
+        // Skip over ${ and let the ordinary loop lex the expression.
+        skip(2);
+
+        if (first) {
+            pushTemplate();
         }
     }
+
+    /**
+     * The template substitutions currently open, as the brace depth reached inside each.
+     *
+     * This is lexer state like any other, so a speculative lookahead that rewinds the
+     * lexer has to rewind it too. Leaving it behind puts the position back inside a
+     * substitution while the depth says otherwise, and the brace that ends the
+     * substitution is then read as an ordinary one.
+     *
+     * @return the open substitutions, outermost first.
+     */
+    int[] getTemplateState() {
+        return Arrays.copyOf(templateBraces, templateDepth);
+    }
+
+    /**
+     * Restore the state captured by {@link #getTemplateState()}.
+     *
+     * @param state the open substitutions.
+     */
+    void restoreTemplateState(final int[] state) {
+        if (state.length > templateBraces.length) {
+            templateBraces = Arrays.copyOf(state, state.length);
+        } else {
+            System.arraycopy(state, 0, templateBraces, 0, state.length);
+        }
+
+        templateDepth = state.length;
+    }
+
+    /**
+     * Enter a template substitution. The brace depth reached inside it decides which
+     * closing brace ends the substitution rather than a block within it.
+     */
+    private void pushTemplate() {
+        if (templateDepth == templateBraces.length) {
+            templateBraces = Arrays.copyOf(templateBraces, templateBraces.length * 2);
+        }
+
+        templateBraces[templateDepth++] = 0;
+    }
+
+    /**
+     * Leave a template substitution.
+     */
+    private void popTemplate() {
+        assert templateDepth > 0;
+        templateDepth--;
+    }
+
+    /**
+     * Whether the brace about to be lexed closes a template substitution rather than
+     * a block, an object literal or a function body inside one.
+     *
+     * @return true if the template resumes at this brace.
+     */
+    private boolean isTemplateSubstitutionEnd() {
+        return templateDepth > 0 && templateBraces[templateDepth - 1] == 0;
+    }
+
+    /**
+     * Track a brace lexed inside a template substitution, so that only the brace that
+     * matches the opening ${ is taken to end it.
+     *
+     * @param type the token type just added.
+     */
+    private void trackTemplateBrace(final TokenType type) {
+        if (templateDepth == 0) {
+            return;
+        }
+
+        if (type == LBRACE) {
+            templateBraces[templateDepth - 1]++;
+        } else if (type == RBRACE) {
+            templateBraces[templateDepth - 1]--;
+        }
+    }
+
 
     /**
      * Convert a regex token to a token object.
@@ -1803,6 +1835,12 @@ public class Lexer extends Scanner {
 
             // Detect end of file.
             if (atEOF()) {
+                if (templateDepth > 0) {
+                    // A template substitution was left open.
+                    error(Lexer.message("missing.close.quote"), TEMPLATE, position, limit);
+                    templateDepth = 0;
+                }
+
                 if (!nested) {
                     // Add an EOF token at the end.
                     add(EOF, position);
@@ -1830,12 +1868,21 @@ public class Lexer extends Scanner {
                 // Scan and add a number.
                 scanNumber();
             } else if ((type = TokenLookup.lookupOperator(ch0, ch1, ch2, ch3)) != null) {
+                if (type == RBRACE && isTemplateSubstitutionEnd()) {
+                    // This brace matches the ${ of a template substitution, so it is
+                    // not a token of its own: the template resumes here.
+                    skip(1);
+                    scanTemplatePart(false);
+
+                    continue;
+                }
                 // Get the number of characters in the token.
                 final int typeLength = type.getLength();
                 // Skip that many characters.
                 skip(typeLength);
                 // Add operator token.
                 add(type, position - typeLength);
+                trackTemplateBrace(type);
                 // Some operator tokens also mark the beginning of regexp, XML, or here string literals.
                 // We break to let the parser decide what it is.
                 if (canStartLiteral(type)) {

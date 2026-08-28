@@ -56,3 +56,27 @@ var tail = function () `plain`;
 print(tail());
 var tailSub = function () `sum ${1 + 1}`;
 print(tailSub());
+
+// A substitution is lexed like any other expression, so a slash in it is division
+// or a regular expression exactly as it would be outside the template.
+var a = 6, b = 3;
+print(`${a / b}`);
+print(`${1 / 2}`);
+print(`${a / b} tail`);
+print(`${1} ${a / b}`);
+print(`${/c+/.source}`);
+print(`${"aa".replace(/a/g, "b")}`);
+
+// A brace inside a comment, a string or a regular expression does not end the
+// substitution.
+print(`x${ 1 // }
+}y`);
+print(`x${ /* } */ 1 }y`);
+print(`${ /}/.source }`);
+print(`${ "}" }`);
+
+// An escaped line terminator still advances the line count, so a later error
+// points at the right line.
+var escaped = `a\
+b`;
+print(escaped.length);
