@@ -26,6 +26,7 @@ package org.codelibs.sai.internal.runtime.test;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotEquals;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -85,6 +86,22 @@ public class CodeStoreAndPathTest {
 
     private static final String[] ENGINE_OPTIONS_OPT = new String[] { "--persistent-code-cache", "--optimistic-types=true" };
     private static final String[] ENGINE_OPTIONS_NOOPT = new String[] { "--persistent-code-cache", "--optimistic-types=false" };
+    private static final String[] ENGINE_OPTIONS_ES6 =
+            new String[] { "--persistent-code-cache", "--optimistic-types=false", "--language=es6" };
+
+    @Test
+    public void es6CodeCacheIsSeparateTest() throws ScriptException {
+        System.setProperty("sai.persistent.code.cache", codeCache);
+        final SaiScriptEngineFactory fac = new SaiScriptEngineFactory();
+
+        fac.getScriptEngine(ENGINE_OPTIONS_NOOPT).eval(code1);
+        fac.getScriptEngine(ENGINE_OPTIONS_ES6).eval(code1);
+
+        // The store is consulted before the source is parsed, so an entry compiled under
+        // one language level must never answer a run at the other: es5 would be handed
+        // code its own parser would have rejected.
+        assertNotEquals(getCodeCachePath(false, true), getCodeCachePath(false, false));
+    }
 
     @Test
     public void pathHandlingTest() {
@@ -153,11 +170,18 @@ public class CodeStoreAndPathTest {
     }
 
     private static Path getCodeCachePath(final boolean optimistic) {
+        return getCodeCachePath(optimistic, false);
+    }
+
+    private static Path getCodeCachePath(final boolean optimistic, final boolean es6) {
         final String codeCache = System.getProperty("sai.persistent.code.cache");
         final Path codeCachePath = FileSystems.getDefault().getPath(codeCache).toAbsolutePath();
         final String[] files = codeCachePath.toFile().list();
         for (final String file : files) {
-            if (file.endsWith("_opt") == optimistic) {
+            final boolean isEs6 = file.endsWith("_es6");
+            final String withoutLanguage = isEs6 ? file.substring(0, file.length() - "_es6".length()) : file;
+
+            if (isEs6 == es6 && withoutLanguage.endsWith("_opt") == optimistic) {
                 return codeCachePath.resolve(file);
             }
         }

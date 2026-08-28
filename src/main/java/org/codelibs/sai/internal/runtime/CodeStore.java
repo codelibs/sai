@@ -260,8 +260,21 @@ public abstract class CodeStore implements Loggable {
 
         private static String getVersionDir(final ScriptEnvironment env) throws IOException {
             try {
-                final String versionDir = OptimisticTypesPersistence.getVersionDirName();
-                return env._optimistic_types ? versionDir + "_opt" : versionDir;
+                final StringBuilder versionDir = new StringBuilder(OptimisticTypesPersistence.getVersionDirName());
+
+                if (env._optimistic_types) {
+                    versionDir.append("_opt");
+                }
+
+                // The language level decides what the source even parses as, so a script
+                // stored under one must never be loaded under the other: the store is
+                // consulted before parsing, so an es6 entry would answer an es5 run and
+                // hand it code the es5 parser would have rejected.
+                if (env._es6) {
+                    versionDir.append("_es6");
+                }
+
+                return versionDir.toString();
             } catch (final Exception e) {
                 throw new IOException(e);
             }
