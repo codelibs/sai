@@ -29,6 +29,7 @@ package org.codelibs.sai.internal.parser;
 import static org.codelibs.sai.internal.codegen.CompilerConstants.ANON_FUNCTION_PREFIX;
 import static org.codelibs.sai.internal.codegen.CompilerConstants.EVAL;
 import static org.codelibs.sai.internal.codegen.CompilerConstants.PROGRAM;
+import static org.codelibs.sai.internal.parser.TokenType.ARROW;
 import static org.codelibs.sai.internal.parser.TokenType.ASSIGN;
 import static org.codelibs.sai.internal.parser.TokenType.CASE;
 import static org.codelibs.sai.internal.parser.TokenType.CATCH;
@@ -142,6 +143,12 @@ public class Parser extends AbstractParser implements Loggable {
     private final boolean scripting;
 
     private List<Statement> functionDeclarations;
+
+    /**
+     * Name of the binding that carries {@code this} into arrow functions. Internal
+     * names start with a colon so that they cannot collide with a source identifier.
+     */
+    private static final String ARROW_THIS = ":arrowthis";
 
     private final BlockLexicalContext lc = new BlockLexicalContext();
     private final Deque<Object> defaultNames = new ArrayDeque<>();
@@ -575,11 +582,18 @@ public class Parser extends AbstractParser implements Loggable {
      */
     private void detectSpecialProperty(final IdentNode ident) {
         if (isArguments(ident)) {
+            if (lc.getCurrentFunction().getKind() == FunctionNode.Kind.ARROW) {
+                throw error(AbstractParser.message("no.arguments.in.arrow"), ident.getToken());
+            }
             lc.setFlag(lc.getCurrentFunction(), FunctionNode.USES_ARGUMENTS);
         }
     }
 
     private boolean useBlockScope() {
+        return isES6();
+    }
+
+    private boolean isES6() {
         return env._es6;
     }
 
@@ -697,6 +711,7 @@ public class Parser extends AbstractParser implements Loggable {
         functionDeclarations = new ArrayList<>();
         sourceElements(allowPropertyFunction);
         addFunctionDeclarations(script);
+        declareArrowThis(script);
         functionDeclarations = null;
 
         expect(EOF);
@@ -1930,6 +1945,12 @@ public class Parser extends AbstractParser implements Loggable {
         case THIS:
             final String name = type.getName();
             next();
+            if (lc.getCurrentFunction().getKind() == FunctionNode.Kind.ARROW) {
+                // An arrow function has no this of its own. Read the binding that the
+                // nearest enclosing non-arrow function declares instead.
+                markArrowThis();
+                return new IdentNode(primaryToken, finish, ARROW_THIS);
+            }
             lc.setFlag(lc.getCurrentFunction(), FunctionNode.USES_THIS);
             return new IdentNode(primaryToken, finish, name);
         case IDENT:
@@ -2765,6 +2786,86 @@ public class Parser extends AbstractParser implements Loggable {
         return functionNode;
     }
 
+    /**
+     * Look ahead for the arrow of an arrow function: an identifier, or a
+     * parenthesised list, followed by {@code =>}. Only token types are read; nothing
+     * is consumed, and the lookahead buffer grows as needed.
+     *
+     * A line terminator is not allowed before the arrow, and EOL is a token of its
+     * own, so no EOL skipping happens here.
+     *
+     * @return true if an arrow function starts at the current token.
+     */
+    private boolean isArrowFunction() {
+        if (type == IDENT || isNonStrictModeIdent()) {
+            return T(k + 1) == ARROW;
+        }
+
+        if (type != LPAREN) {
+            return false;
+        }
+
+        // Find the parenthesis that closes this one. What is in between only has to
+        // balance here; it is parsed properly once this is known to be an arrow.
+        int depth = 0;
+
+        for (int i = k;; i++) {
+            final TokenType tokenType = T(i);
+
+            if (tokenType == LPAREN) {
+                depth++;
+            } else if (tokenType == RPAREN) {
+                if (--depth == 0) {
+                    return T(i + 1) == ARROW;
+                }
+            } else if (tokenType == EOF) {
+                return false;
+            }
+        }
+    }
+
+    /**
+     * ArrowFunction :
+     *      ArrowParameters => ConciseBody
+     *
+     * Parse an arrow function. The result is an ordinary FunctionNode of kind ARROW,
+     * spanning the whole arrow expression, so that it stays re-parseable from its own
+     * source range.
+     *
+     * @return Expression node.
+     */
+    private Expression arrowFunction() {
+        final long arrowToken = token;
+        final int arrowLine = line;
+
+        final List<IdentNode> parameters;
+
+        if (type == LPAREN) {
+            next();
+            parameters = formalParameterList();
+            expect(RPAREN);
+        } else {
+            final IdentNode parameter = getIdent();
+            verifyStrictIdent(parameter, "function parameter");
+            parameters = Collections.singletonList(parameter);
+        }
+
+        expect(ARROW);
+
+        final IdentNode name =
+                new IdentNode(arrowToken, Token.descPosition(arrowToken), getDefaultValidFunctionName(arrowLine, false));
+
+        FunctionNode functionNode;
+        hideDefaultName();
+        try {
+            functionNode = functionBody(arrowToken, name, parameters, FunctionNode.Kind.ARROW, arrowLine);
+        } finally {
+            defaultNames.pop();
+        }
+
+        return functionNode.setFlag(lc, FunctionNode.IS_ANONYMOUS);
+    }
+
     private String getDefaultValidFunctionName(final int functionLine, final boolean isStatement) {
         final String defaultFunctionName = getDefaultFunctionName();
         if (isValidIdentifier(defaultFunctionName)) {
@@ -2894,8 +2995,9 @@ public class Parser extends AbstractParser implements Loggable {
             assert functionNode != null;
             final int functionId = functionNode.getId();
             parseBody = reparsedFunction == null || functionId <= reparsedFunction.getFunctionNodeId();
-            // Sai extension: expression closures
-            if (!env._no_syntax_extensions && type != LBRACE) {
+            // Sai extension: expression closures. An arrow function's concise body has
+            // the same shape but is not an extension, so it is always allowed.
+            if ((kind == FunctionNode.Kind.ARROW || !env._no_syntax_extensions) && type != LBRACE) {
                 /*
                  * Example:
                  *
@@ -2955,6 +3057,8 @@ public class Parser extends AbstractParser implements Loggable {
                 expect(RBRACE);
                 functionNode.setFinish(finish);
             }
+
+            declareArrowThis(functionNode);
         } finally {
             functionNode = restoreFunctionNode(functionNode, lastToken);
         }
@@ -3120,6 +3224,10 @@ public class Parser extends AbstractParser implements Loggable {
      * @return Expression node.
      */
     private Expression unaryExpression() {
+        if (isES6() && isArrowFunction()) {
+            return arrowFunction();
+        }
+
         final int unaryLine = line;
         final long unaryToken = token;
 
@@ -3402,6 +3510,46 @@ public class Parser extends AbstractParser implements Loggable {
     @Override
     public String toString() {
         return "'JavaScript Parsing'";
+    }
+
+    /**
+     * Record that the nearest enclosing function that is not an arrow has to declare
+     * the binding arrow functions read {@code this} from. Arrows nested inside arrows
+     * all reach the same function, so one binding serves all of them. The program is
+     * of kind SCRIPT, so the walk always terminates.
+     */
+    private void markArrowThis() {
+        final Iterator<FunctionNode> functions = lc.getFunctions();
+
+        while (functions.hasNext()) {
+            final FunctionNode function = functions.next();
+
+            if (function.getKind() != FunctionNode.Kind.ARROW) {
+                lc.setFlag(function, FunctionNode.USES_THIS | FunctionNode.USES_ARROW_THIS);
+                return;
+            }
+        }
+    }
+
+    /**
+     * Prepend {@code var :arrowthis = this;} to the body of the function being
+     * parsed, if an arrow function inside it asked for the binding. From here on it
+     * is an ordinary variable, so the closure machinery gives the arrows access to it.
+     *
+     * @param functionNode the function whose body is currently open
+     */
+    private void declareArrowThis(final FunctionNode functionNode) {
+        if ((lc.getFlags(functionNode) & FunctionNode.USES_ARROW_THIS) == 0) {
+            return;
+        }
+
+        final long firstToken = functionNode.getFirstToken();
+        final int start = Token.descPosition(firstToken);
+        final IdentNode binding = new IdentNode(firstToken, start, ARROW_THIS);
+        final IdentNode thisNode = new IdentNode(firstToken, start, TokenType.THIS.getName());
+
+        prependStatement(new VarNode(functionNode.getLineNumber(), Token.recast(firstToken, TokenType.VAR), start, binding,
+                thisNode));
     }
 
     private static void markEval(final LexicalContext lc) {

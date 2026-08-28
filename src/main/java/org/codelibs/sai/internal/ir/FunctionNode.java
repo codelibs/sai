@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2026, CodeLibs Project and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,7 +71,9 @@ public final class FunctionNode extends LexicalContextExpression implements Flag
         /** a getter, @see {@link UserAccessorProperty} */
         GETTER,
         /** a setter, @see {@link UserAccessorProperty} */
-        SETTER
+        SETTER,
+        /** an ES6 arrow function - takes this from the enclosing function */
+        ARROW
     }
 
     /** Source of entity. */
@@ -229,6 +232,13 @@ public final class FunctionNode extends LexicalContextExpression implements Flag
      * Is the function node cached?
      */
     public static final int IS_CACHED = 1 << 27;
+
+    /**
+     * Is this function the nearest non-arrow enclosing function of an arrow function
+     * that uses {@code this}? Such a function declares the binding those arrows read
+     * instead of their own {@code this}.
+     */
+    public static final int USES_ARROW_THIS = 1 << 28;
 
     /** extension callsite flags mask */
     public static final int EXTENSION_CALLSITE_FLAGS = IS_PRINT_PARSE | IS_PRINT_LOWER_PARSE | IS_PRINT_AST | IS_PRINT_LOWER_AST
