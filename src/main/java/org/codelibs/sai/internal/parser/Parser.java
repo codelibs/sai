@@ -1119,7 +1119,9 @@ public class Parser extends AbstractParser implements Loggable {
         final int nameIndex = k + 1;
 
         if (T(nameIndex) != IDENT) {
-            throw error(AbstractParser.message("expected.ident", type.getNameOrType()), getToken(nameIndex));
+            final long nameToken = getToken(nameIndex);
+            throw error(AbstractParser.message("expected", IDENT.getNameOrType(), Token.toString(source, nameToken)),
+                    nameToken);
         }
 
         return createIdentNode(getToken(nameIndex), finish, (String) getValue(getToken(nameIndex)));
