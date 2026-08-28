@@ -1,0 +1,3 @@
+test/script/error/binary_octal_literal_es5.js:26:7 Missing space after numeric literal
+print(0b101);
+       ^
