@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2026, CodeLibs Project and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -360,6 +361,9 @@ public final class RecompilableScriptFunctionData extends ScriptFunctionData imp
         if (functionNode.getKind() == FunctionNode.Kind.GETTER || functionNode.getKind() == FunctionNode.Kind.SETTER) {
             flags |= IS_PROPERTY_ACCESSOR;
         }
+        if (functionNode.getKind() == FunctionNode.Kind.METHOD) {
+            flags |= IS_METHOD;
+        }
         return flags;
     }
 
@@ -392,11 +396,29 @@ public final class RecompilableScriptFunctionData extends ScriptFunctionData imp
         }
         parser.setReparsedFunction(this);
 
-        final FunctionNode program =
-                parser.parse(CompilerConstants.PROGRAM.symbolName(), descPosition, Token.descLength(token), isPropertyAccessor());
+        final FunctionNode program = parser.parse(CompilerConstants.PROGRAM.symbolName(), descPosition,
+                Token.descLength(token), programKind());
         // Parser generates a program AST even if we're recompiling a single function, so when we are only
         // recompiling a single function, extract it from the program.
         return (isProgram() ? program : extractFunctionFromScript(program)).setName(null, functionName);
+    }
+
+    /**
+     * What the source range of this function looks like on its own. Neither a property
+     * accessor nor a method definition is a program in its own right, so the parser
+     * has to be told which one to expect.
+     *
+     * @return the kind of program to re-parse the range as
+     */
+    private Parser.ProgramKind programKind() {
+        if (isPropertyAccessor()) {
+            return Parser.ProgramKind.PROPERTY_ACCESSOR;
+        }
+        if (isMethod()) {
+            return Parser.ProgramKind.METHOD;
+        }
+
+        return Parser.ProgramKind.NORMAL;
     }
 
     private FunctionNode getCachedAst() {

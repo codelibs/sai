@@ -1,0 +1,6 @@
+test/script/error/method_definition_es5.js:26:11 Expected : but found (
+var o = { m() { return 1; } };
+           ^
+test/script/error/method_definition_es5.js:26:26 Expected eof but found }
+var o = { m() { return 1; } };
+                          ^
