@@ -1,0 +1,6 @@
+test/script/error/class_duplicate_constructor.js:30:4 A class may only have one constructor
+    constructor() {
+    ^
+test/script/error/class_duplicate_constructor.js:31:4 Expected eof but found }
+    }
+    ^

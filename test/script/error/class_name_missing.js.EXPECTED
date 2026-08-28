@@ -1,0 +1,6 @@
+test/script/error/class_name_missing.js:27:6 Expected ident but found {
+class {
+      ^
+test/script/error/class_name_missing.js:28:0 Expected eof but found }
+}
+^
