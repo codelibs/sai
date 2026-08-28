@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2026, CodeLibs Project and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,22 +61,33 @@ public class ParserTest {
     }
 
     private Context context;
+    private Context es6Context;
 
     @BeforeClass
     public void setupTest() {
+        this.context = newContext(null);
+        this.es6Context = newContext("es6");
+    }
+
+    private static Context newContext(final String language) {
         final Options options = new Options("sai");
         options.set("anon.functions", true);
         options.set("parse.only", true);
         options.set("scripting", true);
         options.set("const.as.var", true);
+        if (language != null) {
+            options.set("language", language);
+        }
 
         final ErrorManager errors = new ErrorManager();
-        this.context = new Context(options, errors, Thread.currentThread().getContextClassLoader());
+
+        return new Context(options, errors, Thread.currentThread().getContextClassLoader());
     }
 
     @AfterClass
     public void tearDownTest() {
         this.context = null;
+        this.es6Context = null;
     }
 
     @Test
@@ -86,17 +98,22 @@ public class ParserTest {
                 public boolean exclude(final File file, final String content) {
                     return content != null && content.contains("@negative");
                 }
-            });
+            }, context);
         }
         parseTestSet(TEST_BASIC_DIR, new TestFilter() {
             @Override
             public boolean exclude(final File file, final String content) {
                 return file.getName().equals("es6");
             }
-        });
+        }, context);
+
+        // The es6 directory is excluded above because the context above is in the
+        // default language mode, where its contents are not valid. Sweep it separately
+        // in the mode it is written for.
+        parseTestSet(TEST_BASIC_DIR + File.separator + "es6", null, es6Context);
     }
 
-    private void parseTestSet(final String testSet, final TestFilter filter) {
+    private void parseTestSet(final String testSet, final TestFilter filter, final Context parseContext) {
         passed = 0;
         failed = 0;
         skipped = 0;
@@ -107,7 +124,7 @@ public class ParserTest {
             return;
         }
         log(testSetDir.getAbsolutePath());
-        parseJSDirectory(testSetDir, filter);
+        parseJSDirectory(testSetDir, filter, parseContext);
 
         log(testSet + " parse done!");
         log("parse ok: " + passed);
@@ -126,20 +143,20 @@ public class ParserTest {
     // skipped for now.
     private int skipped;
 
-    private void parseJSDirectory(final File dir, final TestFilter filter) {
+    private void parseJSDirectory(final File dir, final TestFilter filter, final Context parseContext) {
         if (filter != null && filter.exclude(dir, null)) {
             return;
         }
         for (final File f : dir.listFiles()) {
             if (f.isDirectory()) {
-                parseJSDirectory(f, filter);
+                parseJSDirectory(f, filter, parseContext);
             } else if (f.getName().endsWith(".js")) {
-                parseJSFile(f, filter);
+                parseJSFile(f, filter, parseContext);
             }
         }
     }
 
-    private void parseJSFile(final File file, final TestFilter filter) {
+    private void parseJSFile(final File file, final TestFilter filter, final Context parseContext) {
         if (VERBOSE) {
             log("Begin parsing " + file.getAbsolutePath());
         }
@@ -168,7 +185,7 @@ public class ParserTest {
             };
             errors.setLimit(0);
             final Source source = sourceFor(file.getAbsolutePath(), buffer);
-            new Parser(context.getEnv(), source, errors, context.getEnv()._strict, null).parse();
+            new Parser(parseContext.getEnv(), source, errors, parseContext.getEnv()._strict, null).parse();
             if (errors.getNumberOfErrors() > 0) {
                 log("Parse failed: " + file.getAbsolutePath());
                 failed++;
