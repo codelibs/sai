@@ -284,6 +284,25 @@ public class Lexer extends Scanner {
     }
 
     /**
+     * Whether the next left brace opens a function body the lexer has to pause on.
+     * Saved and restored around a speculative lookahead, which has to leave no trace.
+     *
+     * @return the current value of the flag.
+     */
+    boolean isPauseOnNextLeftBrace() {
+        return pauseOnNextLeftBrace;
+    }
+
+    /**
+     * Restore the flag read by {@link #isPauseOnNextLeftBrace()}.
+     *
+     * @param pause the value to restore.
+     */
+    void setPauseOnNextLeftBrace(final boolean pause) {
+        this.pauseOnNextLeftBrace = pause;
+    }
+
+    /**
      * Add a new token to the stream.
      *
      * @param type
