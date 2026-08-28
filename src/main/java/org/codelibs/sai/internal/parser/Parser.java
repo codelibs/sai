@@ -4791,13 +4791,29 @@ public class Parser extends AbstractParser implements Loggable {
 
             if (binding.target != null) {
                 final IdentNode name = (IdentNode) binding.target;
-                final VarNode var = new VarNode(varLine, binding.token, finish, name.setIsDeclaredHere(), value, varFlags);
-                vars.add(var);
-                out.add(var);
+                Expression initializer = value;
 
                 if (binding.defaultValue != null) {
-                    out.add(newUndefinedGuard(name, binding.defaultValue, varLine));
+                    // The default has to go into the initializer: a const binding cannot
+                    // be assigned to a second time, so filling it in afterwards failed
+                    // with "Assignment to constant" whenever the default was taken.
+                    // The value is read once into a temporary first, since testing the
+                    // read expression and then using it would read it twice.
+                    final String read = newTemporary();
+                    out.add(assignTemporary(varLine, binding.token, read, value));
+
+                    final Expression test = new BinaryNode(Token.recast(binding.token, TokenType.EQ_STRICT),
+                            identifierFor(binding.token, read),
+                            LiteralNode.newInstance(binding.token, finish, ScriptRuntime.UNDEFINED));
+                    initializer = new TernaryNode(Token.recast(binding.token, TokenType.TERNARY), test,
+                            new JoinPredecessorExpression(binding.defaultValue),
+                            new JoinPredecessorExpression(identifierFor(binding.token, read)));
                 }
+
+                final VarNode var = new VarNode(varLine, binding.token, finish, name.setIsDeclaredHere(), initializer,
+                        varFlags);
+                vars.add(var);
+                out.add(var);
 
                 continue;
             }

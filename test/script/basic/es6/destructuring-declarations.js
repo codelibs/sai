@@ -115,3 +115,39 @@ function two(o) {
     return a1 + "," + b1;
 }
 print(two({ a: 3, b: 4 }));
+
+// A const element whose default is actually taken. The default has to be part of
+// the initializer, since a const binding cannot be assigned to a second time.
+const [constDefault = 7] = [];
+print(constDefault);
+
+const { constKey = 8 } = {};
+print(constKey);
+
+const [constGiven = 1, constMissing = 2] = [9];
+print(constGiven + "," + constMissing);
+
+const [{ constNested = 3 } = {}] = [];
+print(constNested);
+
+// let and var take the same path.
+let [letDefault = 10] = [];
+var [varDefault = 11] = [];
+print(letDefault + "," + varDefault);
+
+// Only undefined takes the default.
+const [fromUndefined = 12] = [undefined];
+const [fromNull = 13] = [null];
+const [fromZero = 14] = [0];
+print(fromUndefined + "," + fromNull + "," + fromZero);
+
+// The value is read once, whether or not the default is taken.
+var reads = 0;
+var counted = { get p() { reads++; return undefined; } };
+const { p: taken = 15 } = counted;
+print(taken + " reads=" + reads);
+
+reads = 0;
+var supplied = { get p() { reads++; return 16; } };
+const { p: notTaken = 17 } = supplied;
+print(notTaken + " reads=" + reads);
