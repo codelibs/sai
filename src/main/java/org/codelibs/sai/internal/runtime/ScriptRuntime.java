@@ -651,8 +651,17 @@ public final class ScriptRuntime {
             }
 
             all = values.toArray();
+        } else if (object instanceof Object[]) {
+            // A Java array of a reference type. toApplyArgs hands back the very array it
+            // was given and Global.allocate wraps rather than copies, so the result would
+            // share storage with the source: writing to the spread copy would write
+            // through to the Java array. Copying to an Object[] also drops the component
+            // type, which would otherwise make an ordinary assignment of an unrelated
+            // value throw ArrayStoreException out of script code.
+            final Object[] array = (Object[]) object;
+            all = Arrays.copyOf(array, array.length, Object[].class);
         } else {
-            // Arrays, array-like script objects, the arguments object and Lists.
+            // Array-like script objects, the arguments object and Lists.
             all = NativeFunction.toApplyArgs(object);
         }
 
