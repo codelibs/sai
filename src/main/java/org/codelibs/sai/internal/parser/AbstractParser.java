@@ -33,6 +33,7 @@ import static org.codelibs.sai.internal.parser.TokenType.IDENT;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 
 import org.codelibs.sai.internal.ir.IdentNode;
 import org.codelibs.sai.internal.ir.LiteralNode;
@@ -147,6 +148,38 @@ public abstract class AbstractParser {
     protected final TokenType T(final int i) {
         // Get token descriptor and extract tokenType.
         return Token.descType(getToken(i));
+    }
+
+    /**
+     * Run a speculative token-type lookahead that leaves no trace on the token stream.
+     *
+     * The lexer stops scanning right after an ambiguous token - a "/", or a "&lt;" in
+     * scripting mode - so that {@link Lexer#scanLiteral} can still reinterpret it as a
+     * regular expression or a here string. Plain {@link #T(int)} lookahead defeats
+     * that: it resumes the lexer past the ambiguous token, and scanLiteral then refuses
+     * to rescan a token the stream has moved beyond, so the literal is lost for good.
+     *
+     * This runs the probe and rewinds both the lexer and the token stream to where they
+     * were, leaving the ambiguity for the real parse to resolve with the grammar
+     * context it actually has.
+     *
+     * @param probe the lookahead to run.
+     * @return whatever the probe returned.
+     */
+    protected final boolean lookahead(final BooleanSupplier probe) {
+        final Lexer.State state = lexer.saveState();
+        final boolean pause = lexer.isPauseOnNextLeftBrace();
+        final int last = stream.last();
+
+        try {
+            return probe.getAsBoolean();
+        } finally {
+            while (stream.last() > last) {
+                stream.removeLast();
+            }
+            lexer.restoreState(state);
+            lexer.setPauseOnNextLeftBrace(pause);
+        }
     }
 
     /**

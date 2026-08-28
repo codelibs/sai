@@ -3483,6 +3483,10 @@ public class Parser extends AbstractParser implements Loggable {
      * @return true if an arrow function starts at the current token.
      */
     private boolean isArrowFunction() {
+        return lookahead(this::isArrowFunctionAhead);
+    }
+
+    private boolean isArrowFunctionAhead() {
         if (type == IDENT || isNonStrictModeIdent()) {
             return T(k + 1) == ARROW;
         }
@@ -4420,6 +4424,10 @@ public class Parser extends AbstractParser implements Loggable {
      * @return true if a destructuring assignment starts at the current token
      */
     private boolean isDestructuringAssignment() {
+        return lookahead(this::isDestructuringAssignmentAhead);
+    }
+
+    private boolean isDestructuringAssignmentAhead() {
         if (type != LBRACKET && type != LBRACE) {
             return false;
         }
