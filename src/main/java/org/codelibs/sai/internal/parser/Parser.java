@@ -1521,13 +1521,45 @@ public class Parser extends AbstractParser implements Loggable {
      * @return true if a for-of head starts at the current token
      */
     private boolean isForOf() {
+        return lookahead(this::isForOfAhead);
+    }
+
+    private boolean isForOfAhead() {
         int i = k;
 
         if (T(i) == TokenType.VAR || T(i) == LET || T(i) == CONST) {
             i++;
         }
 
-        return T(i) == IDENT && T(i + 1) == IDENT && "of".equals(getValue(getToken(i + 1)));
+        if (T(i) == LBRACKET || T(i) == LBRACE) {
+            // A destructuring pattern. Find the bracket that closes it; what is in
+            // between only has to balance here, it is parsed properly once this is
+            // known to be a for-of.
+            final TokenType open = T(i);
+            final TokenType close = open == LBRACKET ? RBRACKET : RBRACE;
+            int depth = 0;
+
+            for (;; i++) {
+                final TokenType tokenType = T(i);
+
+                if (tokenType == open) {
+                    depth++;
+                } else if (tokenType == close) {
+                    if (--depth == 0) {
+                        i++;
+                        break;
+                    }
+                } else if (tokenType == EOF) {
+                    return false;
+                }
+            }
+        } else if (T(i) == IDENT) {
+            i++;
+        } else {
+            return false;
+        }
+
+        return T(i) == IDENT && "of".equals(getValue(getToken(i)));
     }
 
     /**
@@ -1565,8 +1597,19 @@ public class Parser extends AbstractParser implements Loggable {
             next();
         }
 
-        final IdentNode name = getIdent();
-        verifyStrictIdent(name, "for-of iterator");
+        final List<Binding> pattern;
+        final IdentNode name;
+
+        if (type == LBRACKET || type == LBRACE) {
+            // The leaves of a pattern with no declaration are assignment targets rather
+            // than names to declare, the same distinction destructuringAssignment makes.
+            pattern = destructuringPattern(declarationType == null);
+            name = null;
+        } else {
+            pattern = null;
+            name = getIdent();
+            verifyStrictIdent(name, "for-of iterator");
+        }
 
         // "of" is a plain identifier, not a keyword.
         final long ofToken = token;
@@ -1597,11 +1640,41 @@ public class Parser extends AbstractParser implements Loggable {
 
         Block body = newBlock();
         try {
-            if (declarationType == null) {
+            final int varFlags = declarationType == LET ? VarNode.IS_LET
+                    : declarationType == CONST ? VarNode.IS_CONST : 0;
+
+            if (pattern != null) {
+                // Bind the element to a temporary and take the pattern apart from there,
+                // so the element expression is evaluated once per iteration.
+                final String elementName = newTemporary();
+
+                if (declarationType == null) {
+                    final List<Expression> steps = new ArrayList<>();
+                    steps.add(new BinaryNode(Token.recast(ofToken, TokenType.ASSIGN),
+                            identifierFor(ofToken, elementName), element));
+                    assignBindings(elementName, pattern, steps);
+
+                    Expression result = steps.get(0);
+
+                    for (int i = 1; i < steps.size(); i++) {
+                        result = new BinaryNode(Token.recast(ofToken, TokenType.COMMARIGHT), result, steps.get(i));
+                    }
+
+                    appendStatement(new ExpressionStatement(forLine, ofToken, finish, result));
+                } else {
+                    appendStatement(assignTemporary(forLine, ofToken, elementName, element));
+
+                    final List<Statement> statements = new ArrayList<>();
+                    declareBindings(elementName, pattern, forLine, varFlags, new ArrayList<VarNode>(), statements);
+
+                    for (final Statement statement : statements) {
+                        appendStatement(statement);
+                    }
+                }
+            } else if (declarationType == null) {
                 appendStatement(new ExpressionStatement(forLine, ofToken, finish,
                         new BinaryNode(Token.recast(ofToken, TokenType.ASSIGN), name, element)));
             } else {
-                final int varFlags = declarationType == LET ? VarNode.IS_LET : declarationType == CONST ? VarNode.IS_CONST : 0;
                 appendStatement(new VarNode(forLine, declarationToken, finish, name.setIsDeclaredHere(), element, varFlags));
             }
 
