@@ -153,7 +153,7 @@ public abstract class AbstractParser {
     /**
      * Run a speculative token-type lookahead that leaves no trace on the token stream.
      *
-     * The lexer stops scanning right after an ambiguous token - a "/", or a "<" in
+     * The lexer stops scanning right after an ambiguous token - a "/", or a "&lt;" in
      * scripting mode - so that {@link Lexer#scanLiteral} can still reinterpret it as a
      * regular expression or a here string. Plain {@link #T(int)} lookahead defeats
      * that: it resumes the lexer past the ambiguous token, and scanLiteral then refuses
