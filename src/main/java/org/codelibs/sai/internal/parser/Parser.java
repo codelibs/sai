@@ -47,6 +47,7 @@ import static org.codelibs.sai.internal.parser.TokenType.IDENT;
 import static org.codelibs.sai.internal.parser.TokenType.IF;
 import static org.codelibs.sai.internal.parser.TokenType.INCPOSTFIX;
 import static org.codelibs.sai.internal.parser.TokenType.LBRACE;
+import static org.codelibs.sai.internal.parser.TokenType.LBRACKET;
 import static org.codelibs.sai.internal.parser.TokenType.LET;
 import static org.codelibs.sai.internal.parser.TokenType.LPAREN;
 import static org.codelibs.sai.internal.parser.TokenType.RBRACE;
@@ -150,6 +151,18 @@ public class Parser extends AbstractParser implements Loggable {
      * names start with a colon so that they cannot collide with a source identifier.
      */
     private static final String ARROW_THIS = ":arrowthis";
+
+    /**
+     * Prefix of the temporaries the parser introduces while desugaring. Internal
+     * names start with a colon so that they cannot collide with a source identifier.
+     */
+    private static final String TEMPORARY_PREFIX = ":pt";
+
+    /** Names of the temporaries the function currently being parsed has to declare. */
+    private List<String> temporaries;
+
+    /** Counter behind {@link #newTemporary()}, unique across one parse. */
+    private int temporaryCount;
 
     private final BlockLexicalContext lc = new BlockLexicalContext();
     private final Deque<Object> defaultNames = new ArrayDeque<>();
@@ -710,9 +723,11 @@ public class Parser extends AbstractParser implements Loggable {
                         new ArrayList<IdentNode>(), FunctionNode.Kind.SCRIPT, functionLine);
 
         functionDeclarations = new ArrayList<>();
+        temporaries = new ArrayList<>();
         sourceElements(allowPropertyFunction);
         addFunctionDeclarations(script);
         declareArrowThis(script);
+        declareTemporaries(script);
         functionDeclarations = null;
 
         expect(EOF);
@@ -2123,7 +2138,7 @@ public class Parser extends AbstractParser implements Loggable {
      * Parse an object literal.
      * @return Expression node.
      */
-    private ObjectNode objectLiteral() {
+    private Expression objectLiteral() {
         // Capture LBRACE token.
         final long objectToken = token;
         // LBRACE tested in caller.
@@ -2133,6 +2148,10 @@ public class Parser extends AbstractParser implements Loggable {
         // Prepare to accumulate elements.
         final List<PropertyNode> elements = new ArrayList<>();
         final Map<String, Integer> map = new HashMap<>();
+
+        // Properties from the first computed key onwards, as key/value pairs. They are
+        // applied to the finished object one by one so that source order is kept.
+        final List<Expression[]> deferred = new ArrayList<>();
 
         // Create a block for the object literal.
         boolean commaSeen = true;
@@ -2156,8 +2175,33 @@ public class Parser extends AbstractParser implements Loggable {
                 }
 
                 commaSeen = false;
+
+                if (isES6() && type == LBRACKET) {
+                    // ES6 computed property name.
+                    next();
+                    final Expression computedKey = assignmentExpression(false);
+                    expect(RBRACKET);
+                    expect(COLON);
+                    deferred.add(new Expression[] { computedKey, assignmentExpression(false) });
+                    break;
+                }
+
                 // Get and add the next property.
                 final PropertyNode property = propertyAssignment();
+
+                if (!deferred.isEmpty()) {
+                    // A property after a computed key has to be applied after it, and an
+                    // assignment cannot express an accessor.
+                    if (property.getValue() == null) {
+                        throw error(AbstractParser.message("no.accessor.after.computed.key"), property.getToken());
+                    }
+
+                    deferred.add(new Expression[] {
+                            LiteralNode.newInstance(property.getToken(), property.getFinish(), property.getKeyName()),
+                            property.getValue() });
+                    break;
+                }
+
                 final String key = property.getKeyName();
                 final Integer existing = map.get(key);
 
@@ -2214,7 +2258,56 @@ public class Parser extends AbstractParser implements Loggable {
             }
         }
 
-        return new ObjectNode(objectToken, finish, elements);
+        final ObjectNode objectNode = new ObjectNode(objectToken, finish, elements);
+
+        if (deferred.isEmpty()) {
+            return objectNode;
+        }
+
+        return applyDeferredProperties(objectToken, objectNode, deferred);
+    }
+
+    /**
+     * Lower an object literal that has a computed property name. Everything up to the
+     * first computed key stays an ObjectNode; the rest becomes an assignment onto a
+     * temporary, so that source order survives:
+     *
+     * <pre>
+     * { a: 1, [k]: 2, b: 3 }   becomes   (:pt = { a: 1 }, :pt[k] = 2, :pt["b"] = 3, :pt)
+     * </pre>
+     *
+     * An immediately invoked function would be the obvious alternative, but every
+     * FunctionNode has to stay re-parseable from its own source range, and a synthetic
+     * one is not. A comma expression over a temporary introduces no function at all.
+     *
+     * @param objectToken token of the literal
+     * @param objectNode the properties up to the first computed key
+     * @param deferred key/value pairs to apply afterwards, in source order
+     * @return the lowered expression
+     */
+    private Expression applyDeferredProperties(final long objectToken, final ObjectNode objectNode,
+            final List<Expression[]> deferred) {
+        final String temporary = newTemporary();
+        final int objectFinish = objectNode.getFinish();
+
+        // A synthetic node has to carry the token type its own kind is checked against:
+        // Lower.leaveIndexNode asserts that an IndexNode really is one.
+        final long identToken = Token.recast(objectToken, TokenType.IDENT);
+        final long indexToken = Token.recast(objectToken, TokenType.LBRACKET);
+
+        Expression result = new BinaryNode(Token.recast(objectToken, TokenType.ASSIGN),
+                createIdentNode(identToken, objectFinish, temporary), objectNode);
+
+        for (final Expression[] property : deferred) {
+            final Expression target =
+                    new IndexNode(indexToken, objectFinish, createIdentNode(identToken, objectFinish, temporary),
+                            property[0]);
+            result = new BinaryNode(Token.recast(objectToken, TokenType.COMMARIGHT), result,
+                    new BinaryNode(Token.recast(objectToken, TokenType.ASSIGN), target, property[1]));
+        }
+
+        return new BinaryNode(Token.recast(objectToken, TokenType.COMMARIGHT), result,
+                createIdentNode(identToken, objectFinish, temporary));
     }
 
     /**
@@ -3026,6 +3119,8 @@ public class Parser extends AbstractParser implements Loggable {
 
         final boolean parseBody;
         Object endParserState = null;
+        final List<String> prevTemporaries = temporaries;
+        temporaries = new ArrayList<>();
         try {
             // Create a new function block.
             functionNode = newFunctionNode(firstToken, ident, parameters, kind, functionLine);
@@ -3097,7 +3192,9 @@ public class Parser extends AbstractParser implements Loggable {
 
             applyParameterDefaults(functionNode, parameters, parameterDefaults);
             declareArrowThis(functionNode);
+            declareTemporaries(functionNode);
         } finally {
+            temporaries = prevTemporaries;
             functionNode = restoreFunctionNode(functionNode, lastToken);
         }
 
@@ -3641,6 +3738,39 @@ public class Parser extends AbstractParser implements Loggable {
      */
     private static IdentNode referenceTo(final IdentNode ident) {
         return new IdentNode(ident.getToken(), ident.getFinish(), ident.getName());
+    }
+
+    /**
+     * Reserve a temporary for the function currently being parsed. The name is unique
+     * across the parse, so a temporary can never be confused with one belonging to
+     * another function even though they are all declared with var.
+     *
+     * @return the name of the temporary
+     */
+    private String newTemporary() {
+        final String name = TEMPORARY_PREFIX + temporaryCount++;
+        temporaries.add(name);
+
+        return name;
+    }
+
+    /**
+     * Declare the temporaries reserved while parsing the body of the function being
+     * parsed. They carry no initializer, so where the declaration lands among the
+     * other statements does not matter; the desugaring that reserved one always
+     * assigns it before reading it.
+     *
+     * @param functionNode the function whose body is currently open
+     */
+    private void declareTemporaries(final FunctionNode functionNode) {
+        final long firstToken = functionNode.getFirstToken();
+        final int start = Token.descPosition(firstToken);
+
+        for (int i = temporaries.size() - 1; i >= 0; i--) {
+            final IdentNode name = new IdentNode(firstToken, start, temporaries.get(i));
+            prependStatement(new VarNode(functionNode.getLineNumber(), Token.recast(firstToken, TokenType.VAR), start, name,
+                    null));
+        }
     }
 
     private static void markEval(final LexicalContext lc) {
