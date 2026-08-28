@@ -788,6 +788,8 @@ public class Parser extends AbstractParser implements Loggable {
                 newFunctionNode(functionToken, new IdentNode(functionToken, Token.descPosition(functionToken), scriptName),
                         new ArrayList<IdentNode>(), FunctionNode.Kind.SCRIPT, functionLine);
 
+        restoreArrowThis(script);
+
         functionDeclarations = new ArrayList<>();
         temporaries = new ArrayList<>();
         sourceElements(programKind);
@@ -3709,6 +3711,7 @@ public class Parser extends AbstractParser implements Loggable {
             functionNode = newFunctionNode(firstToken, ident, parameters.list, kind, functionLine);
             assert functionNode != null;
             final int functionId = functionNode.getId();
+            restoreArrowThis(functionNode);
             parseBody = reparsedFunction == null || functionId <= reparsedFunction.getFunctionNodeId();
             // Sai extension: expression closures. An arrow function's concise body has
             // the same shape but is not an extension, so it is always allowed.
@@ -4261,6 +4264,33 @@ public class Parser extends AbstractParser implements Loggable {
      *
      * @param functionNode the function whose body is currently open
      */
+    /**
+     * Restore {@link FunctionNode#USES_ARROW_THIS} from the data recorded when the
+     * function was first parsed eagerly.
+     *
+     * {@link #markArrowThis()} sets the flag on the enclosing function, and only runs
+     * when an arrow's {@code this} is actually lexed. An on-demand re-parse skips the
+     * bodies of nested functions, so an arrow nested in the function being re-parsed
+     * never sets it. The general flag restore for that runs after
+     * {@code restoreFunctionNode}, which is after {@link #declareArrowThis} has already
+     * decided not to emit the binding - leaving the restored flags claiming a binding
+     * that is not there. This is the same hazard the surrounding code compensates for
+     * with markEval, so the one flag declareArrowThis reads is restored up front.
+     *
+     * @param functionNode the function being parsed.
+     */
+    private void restoreArrowThis(final FunctionNode functionNode) {
+        if (reparsedFunction == null) {
+            return;
+        }
+
+        final RecompilableScriptFunctionData data = reparsedFunction.getScriptFunctionData(functionNode.getId());
+
+        if (data != null && (data.getFunctionFlags() & FunctionNode.USES_ARROW_THIS) != 0) {
+            lc.setFlag(functionNode, FunctionNode.USES_ARROW_THIS);
+        }
+    }
+
     private void declareArrowThis(final FunctionNode functionNode) {
         if ((lc.getFlags(functionNode) & FunctionNode.USES_ARROW_THIS) == 0) {
             return;

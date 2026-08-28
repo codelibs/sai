@@ -114,3 +114,30 @@ var obj5 = {
     }
 };
 print(obj5.run(4));
+
+// A brace body takes this from the enclosing function just as a concise body does.
+// The two are not the same path: a concise body is parsed even when a nested
+// function body is being skipped, so only the brace form exercises the flag that
+// an on-demand re-parse has to restore for the enclosing function.
+function Braced() {
+    this.v = 7;
+    this.get = () => { return this.v; };
+}
+print(new Braced().get());
+
+// The same, one level further in: an arrow inside a method definition.
+var obj6 = {
+    k: 3,
+    m: function () {
+        var g = () => { return this.k; };
+        return g();
+    }
+};
+print(obj6.m());
+
+// A brace-bodied arrow that returns another arrow keeps the same this.
+function nestedBraces() {
+    var g = () => { return () => { return this; }; };
+    return typeof g()();
+}
+print(nestedBraces());
