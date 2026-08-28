@@ -149,3 +149,107 @@ class Twice extends Base {
     }
 }
 print(new Twice().twice());
+
+// Accessors. A method is a plain assignment, but an accessor is not expressible as
+// one, so it is defined on the prototype - or on the class itself when static.
+class WithAccessors {
+    get readOnly() {
+        return 2;
+    }
+
+    set writeOnly(v) {
+        this._written = v;
+    }
+
+    get paired() {
+        return this._paired;
+    }
+
+    set paired(v) {
+        this._paired = v * 2;
+    }
+
+    method() {
+        return 10;
+    }
+}
+
+var withAccessors = new WithAccessors();
+print(withAccessors.readOnly);
+withAccessors.writeOnly = 5;
+print(withAccessors._written);
+withAccessors.paired = 3;
+print(withAccessors.paired);
+print(withAccessors.method());
+
+// A getter and a setter for the same name are defined one at a time, and a
+// descriptor only changes the fields it names, so the pair survives.
+print(typeof Object.getOwnPropertyDescriptor(WithAccessors.prototype, "paired").get);
+print(typeof Object.getOwnPropertyDescriptor(WithAccessors.prototype, "paired").set);
+
+// Static accessors live on the class.
+class StaticAccessors {
+    static get value() {
+        return 3;
+    }
+
+    static set value(v) {
+        StaticAccessors.stored = v;
+    }
+}
+
+print(StaticAccessors.value);
+StaticAccessors.value = 7;
+print(StaticAccessors.stored);
+
+// Accessors are inherited and can be overridden.
+class AccessorBase {
+    get which() {
+        return "base";
+    }
+}
+
+class AccessorDerived extends AccessorBase {
+}
+
+class AccessorOverride extends AccessorBase {
+    get which() {
+        return "override";
+    }
+}
+
+print(new AccessorDerived().which);
+print(new AccessorOverride().which);
+
+// An accessor is not enumerable, as ES6 requires.
+class NotEnumerable {
+    get hidden() {
+        return 1;
+    }
+}
+
+var seen = [];
+for (var key in new NotEnumerable()) {
+    seen.push(key);
+}
+print(seen.length);
+
+// "get" and "set" are ordinary names when a parameter list follows.
+class NamedGetSet {
+    get() {
+        return "method get";
+    }
+
+    set(v) {
+        return v;
+    }
+
+    static get() {
+        return "static get";
+    }
+}
+
+var namedGetSet = new NamedGetSet();
+print(namedGetSet.get());
+print(namedGetSet.set(9));
+print(NamedGetSet.get());
