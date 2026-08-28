@@ -121,3 +121,74 @@ print(out.join(","));
 out = [];
 for (var w of [1, 2]) out.push(w * 10);
 print(out.join(","));
+
+// The loop variable may be a destructuring pattern. The element is bound to a
+// temporary once per iteration and the pattern is taken apart from there.
+for (var [a, b] of [[1, 2], [3, 4]]) {
+    print(a + ":" + b);
+}
+
+for (let [a, b] of [[5, 6]]) {
+    print(a + ":" + b);
+}
+
+for (const [a, b] of [[7, 8]]) {
+    print(a + ":" + b);
+}
+
+for (var { x, y } of [{ x: 9, y: 10 }]) {
+    print(x + ":" + y);
+}
+
+for (const { k: renamed } of [{ k: 11 }]) {
+    print(renamed);
+}
+
+// Rest, nesting and defaults inside the pattern.
+for (const [head, ...rest] of [[12, 13, 14]]) {
+    print(head + ":" + rest);
+}
+
+for (const [{ inner }] of [[{ inner: 15 }]]) {
+    print(inner);
+}
+
+for (let [withDefault = 16] of [[]]) {
+    print(withDefault);
+}
+
+// The common shape: iterating pairs.
+var pairs = [["k", 17], ["j", 18]];
+for (const [key, value] of pairs) {
+    print(key + "=" + value);
+}
+
+// With no declaration the leaves are assignment targets, member expressions included.
+var lhs1, lhs2;
+for ([lhs1, lhs2] of [[19, 20]]) {
+    print(lhs1 + ":" + lhs2);
+}
+
+var target = {};
+for ([target.field] of [[21]]) {
+    print(target.field);
+}
+
+// A let binding still gets a fresh copy per iteration, so closures made in the
+// body capture that iteration's value.
+var captured = [];
+for (let [each] of [[22], [23]]) {
+    captured.push(function () { return each; });
+}
+print(captured[0]() + "," + captured[1]());
+
+// break and continue are unaffected.
+for (const [n] of [[24], [25], [26]]) {
+    if (n === 25) {
+        continue;
+    }
+    if (n === 26) {
+        break;
+    }
+    print(n);
+}
