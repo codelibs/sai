@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2026, CodeLibs Project and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +41,17 @@ public final class OrphanTestFinder implements ITest {
 
     public OrphanTestFinder(final Set<String> orphanFiles) {
         this.orphanFiles = orphanFiles;
+    }
+
+    /**
+     * TestNG finds this class by its {@code @Test} method as well as through the
+     * factory in ScriptTest, and that factory leaves it out when test.js.includes
+     * narrows the run. Without a constructor TestNG can call itself, that
+     * combination fails the whole run before a single script test executes. An
+     * instance built this way has no orphan set and so has nothing to report.
+     */
+    public OrphanTestFinder() {
+        this(null);
     }
 
     @Override
