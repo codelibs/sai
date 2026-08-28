@@ -2822,6 +2822,72 @@ public class Parser extends AbstractParser implements Loggable {
     }
 
     /**
+     * Whether an accessor starts at the current {@code get} or {@code set} token.
+     *
+     * A member named "get" is an ordinary method, so what follows decides: an accessor
+     * has a property name after the keyword, a method has its parameter list.
+     *
+     * @return true if this is a getter or setter definition.
+     */
+    private boolean isClassAccessor() {
+        final Object value = getValue(token);
+
+        if (!"get".equals(value) && !"set".equals(value)) {
+            return false;
+        }
+
+        final TokenType next = T(k + 1);
+
+        return next != LPAREN && next != RBRACE && next != SEMICOLON && next != ASSIGN;
+    }
+
+    /** Where a class member is defined: the class itself when static, its prototype otherwise. */
+    private Expression memberTarget(final long memberToken, final String classTemporary, final boolean isStatic) {
+        final Expression classRef = identifierFor(memberToken, classTemporary);
+
+        return isStatic ? classRef
+                : new AccessNode(Token.recast(memberToken, TokenType.PERIOD), finish, classRef, "prototype");
+    }
+
+    /**
+     * {@code Object.defineProperty(target, "name", {get: fn, configurable: true, enumerable: false})}.
+     *
+     * A method is a plain assignment, but an accessor is not expressible as one, and
+     * the class body has no object literal to carry it the way an object literal member
+     * would. Defining one at a time is correct for a get/set pair as well: a descriptor
+     * only changes the fields it names, so a later setter keeps the getter beside it.
+     *
+     * @param memberToken token the synthetic nodes are attributed to
+     * @param memberLine line the synthetic nodes are attributed to
+     * @param target the object to define the accessor on
+     * @param accessor the parsed accessor
+     * @param getter true for a getter, false for a setter
+     * @return the defineProperty call
+     */
+    private Expression defineAccessor(final long memberToken, final int memberLine, final Expression target,
+            final PropertyFunction accessor, final boolean getter) {
+        final long token = Token.recast(memberToken, IDENT);
+        final List<PropertyNode> descriptor = new ArrayList<>();
+
+        descriptor.add(new PropertyNode(token, finish, identifierFor(token, getter ? "get" : "set").setIsPropertyName(),
+                accessor.functionNode, null, null));
+        descriptor.add(new PropertyNode(token, finish, identifierFor(token, "configurable").setIsPropertyName(),
+                LiteralNode.newInstance(token, finish, true), null, null));
+        descriptor.add(new PropertyNode(token, finish, identifierFor(token, "enumerable").setIsPropertyName(),
+                LiteralNode.newInstance(token, finish, false), null, null));
+
+        final List<Expression> arguments = new ArrayList<>();
+        arguments.add(target);
+        arguments.add(LiteralNode.newInstance(token, finish, accessor.ident.getPropertyName()));
+        arguments.add(new ObjectNode(token, finish, descriptor));
+
+        return new CallNode(memberLine, token, finish,
+                new AccessNode(Token.recast(memberToken, TokenType.PERIOD), finish, identifierFor(token, "Object"),
+                        "defineProperty"),
+                arguments, false);
+    }
+
+    /**
      * ClassDeclaration / ClassExpression :
      *      class BindingIdentifier? ClassTail
      *
@@ -2913,6 +2979,23 @@ public class Parser extends AbstractParser implements Loggable {
 
                 final long memberToken = token;
                 final int memberLine = line;
+
+                if ((type == IDENT || isNonStrictModeIdent()) && isClassAccessor()) {
+                    // get x() {} / set x(v) {}, read exactly as an object literal reads
+                    // them, but defined on the target rather than collected into a
+                    // literal - there is no object literal here to hold an accessor.
+                    final boolean getter = "get".equals((String) getValue(token));
+                    next();
+
+                    final PropertyFunction accessor = getter ? propertyGetterFunction(memberToken, memberLine)
+                            : propertySetterFunction(memberToken, memberLine);
+
+                    members.add(defineAccessor(memberToken, memberLine,
+                            memberTarget(memberToken, classTemporary, isStatic), accessor, getter));
+
+                    continue;
+                }
+
                 final IdentNode memberName = getIdentifierName();
 
                 if (!isStatic && "constructor".equals(memberName.getName())) {
@@ -2925,12 +3008,10 @@ public class Parser extends AbstractParser implements Loggable {
                 }
 
                 final FunctionNode method = methodDefinition(memberToken, memberLine, memberName);
-                final Expression target = isStatic ? identifierFor(memberToken, classTemporary)
-                        : new AccessNode(Token.recast(memberToken, TokenType.PERIOD), finish,
-                                identifierFor(memberToken, classTemporary), "prototype");
 
                 members.add(new BinaryNode(Token.recast(memberToken, TokenType.ASSIGN),
-                        new AccessNode(Token.recast(memberToken, TokenType.PERIOD), finish, target, memberName.getName()),
+                        new AccessNode(Token.recast(memberToken, TokenType.PERIOD), finish,
+                                memberTarget(memberToken, classTemporary, isStatic), memberName.getName()),
                         method));
             }
 
