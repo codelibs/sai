@@ -83,3 +83,18 @@ print(calls);
 // Array patterns read by index, so a string works.
 [a, b] = "hi";
 print(a + b);
+
+// A computed key works in the assignment form too, where the leaves are targets.
+var assignKey = "x";
+var computedTarget;
+({ [assignKey]: computedTarget } = { x: 32 });
+print(computedTarget);
+
+var assignEvaluations = 0;
+function countingAssignKey() {
+    assignEvaluations++;
+    return "x";
+}
+var countedTarget;
+({ [countingAssignKey()]: countedTarget } = { x: 33 });
+print(countedTarget + " evals=" + assignEvaluations);
