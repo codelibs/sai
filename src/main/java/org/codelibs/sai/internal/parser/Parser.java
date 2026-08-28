@@ -204,6 +204,9 @@ public class Parser extends AbstractParser implements Loggable {
 
     private RecompilableScriptFunctionData reparsedFunction;
 
+    /** Template substitutions currently being parsed, @see #skipFunctionBody. */
+    private int templateSubstitutions;
+
     /**
      * Constructor
      *
@@ -3133,19 +3136,25 @@ public class Parser extends AbstractParser implements Loggable {
         final long templateToken = token;
         Expression concat = getLiteral();
 
-        while (true) {
-            concat = new BinaryNode(Token.recast(templateToken, TokenType.ADD), concat, expression());
+        templateSubstitutions++;
 
-            if (type != TEMPLATE_MIDDLE && type != TEMPLATE_TAIL) {
-                throw error(AbstractParser.message("expected.literal", "template"), token);
+        try {
+            while (true) {
+                concat = new BinaryNode(Token.recast(templateToken, TokenType.ADD), concat, expression());
+
+                if (type != TEMPLATE_MIDDLE && type != TEMPLATE_TAIL) {
+                    throw error(AbstractParser.message("expected.literal", "template"), token);
+                }
+
+                final boolean last = type == TEMPLATE_TAIL;
+                concat = new BinaryNode(Token.recast(templateToken, TokenType.ADD), concat, getLiteral());
+
+                if (last) {
+                    return concat;
+                }
             }
-
-            final boolean last = type == TEMPLATE_TAIL;
-            concat = new BinaryNode(Token.recast(templateToken, TokenType.ADD), concat, getLiteral());
-
-            if (last) {
-                return concat;
-            }
+        } finally {
+            templateSubstitutions--;
         }
     }
 
@@ -3827,6 +3836,12 @@ public class Parser extends AbstractParser implements Loggable {
     private boolean skipFunctionBody(final FunctionNode functionNode) {
         if (reparsedFunction == null) {
             // Not reparsing, so don't skip any function body.
+            return false;
+        }
+        if (templateSubstitutions > 0) {
+            // Inside a template substitution. Skipping restarts the lexer at the closing
+            // brace of this body, and a lexer started there knows nothing of the template
+            // around it. Declining is a supported outcome - the caller drops the body.
             return false;
         }
         // Skip to the RBRACE of this function, and continue parsing from there.
