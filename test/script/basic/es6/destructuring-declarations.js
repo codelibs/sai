@@ -151,3 +151,50 @@ reads = 0;
 var supplied = { get p() { reads++; return 16; } };
 const { p: notTaken = 17 } = supplied;
 print(notTaken + " reads=" + reads);
+
+// A computed key in a pattern, the counterpart of { [k]: v } in a literal.
+var computedKey = "x";
+var { [computedKey]: fromComputed } = { x: 18 };
+print(fromComputed);
+
+let { [computedKey]: letComputed } = { x: 19 };
+const { [computedKey]: constComputed } = { x: 20 };
+print(letComputed + "," + constComputed);
+
+var { ["a" + "b"]: fromExpression } = { ab: 21 };
+print(fromExpression);
+
+var { [1 + 1]: fromNumber } = { 2: 22 };
+print(fromNumber);
+
+var { [computedKey]: withDefault = 23 } = {};
+print(withDefault);
+
+var plainFirst = "b";
+var { a: before, [plainFirst]: between, c: after } = { a: 24, b: 25, c: 26 };
+print(before + "," + between + "," + after);
+
+var nestedKey = "p";
+var { [nestedKey]: { q: fromNested } } = { p: { q: 27 } };
+print(fromNested);
+
+// The key expression runs exactly once, and the keys run in source order.
+var evaluations = 0;
+function countingKey() {
+    evaluations++;
+    return "x";
+}
+var { [countingKey()]: counted } = { x: 28 };
+print(counted + " evals=" + evaluations);
+
+evaluations = 0;
+var { [countingKey()]: missing = 29 } = {};
+print(missing + " evals=" + evaluations);
+
+var order = [];
+function logKey(name) {
+    order.push(name);
+    return name;
+}
+var { [logKey("first")]: one, [logKey("second")]: two } = { first: 30, second: 31 };
+print(order.join(",") + " " + one + "," + two);

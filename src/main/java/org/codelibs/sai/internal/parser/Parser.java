@@ -4668,14 +4668,15 @@ public class Parser extends AbstractParser implements Loggable {
      */
     private void assignBindings(final String source, final List<Binding> bindings, final List<Expression> steps) {
         for (final Binding binding : bindings) {
-            Expression value = valueOfBinding(source, binding);
+            final Expression key = bindingKey(binding, steps);
+            Expression value = valueOfBinding(source, binding, key);
 
             if (binding.defaultValue != null) {
                 final Expression test = new BinaryNode(Token.recast(binding.token, TokenType.EQ_STRICT), value,
                         LiteralNode.newInstance(binding.token, finish, ScriptRuntime.UNDEFINED));
                 value = new TernaryNode(Token.recast(binding.token, TokenType.TERNARY), test,
                         new JoinPredecessorExpression(binding.defaultValue),
-                        new JoinPredecessorExpression(readFrom(binding.token, source, binding.key)));
+                        new JoinPredecessorExpression(readFrom(binding.token, source, key)));
             }
 
             if (binding.target != null) {
@@ -4794,6 +4795,23 @@ public class Parser extends AbstractParser implements Loggable {
 
         while (type != RBRACE) {
             final long keyToken = token;
+
+            if (type == LBRACKET) {
+                // A computed key, the pattern counterpart of { [k]: v } in a literal.
+                next();
+                final Expression computed = assignmentExpression(false);
+                expect(RBRACKET);
+                expect(COLON);
+                bindings.add(patternElement(computed, assignment));
+
+                if (type != COMMARIGHT) {
+                    break;
+                }
+                next();
+
+                continue;
+            }
+
             final String keyName;
             IdentNode shorthand = null;
 
@@ -4868,7 +4886,8 @@ public class Parser extends AbstractParser implements Loggable {
     private void declareBindings(final String source, final List<Binding> bindings, final int varLine, final int varFlags,
             final List<VarNode> vars, final List<Statement> out) {
         for (final Binding binding : bindings) {
-            final Expression value = valueOfBinding(source, binding);
+            final Expression key = bindingKey(binding, out, varLine);
+            final Expression value = valueOfBinding(source, binding, key);
 
             if (binding.target != null) {
                 final IdentNode name = (IdentNode) binding.target;
@@ -5052,13 +5071,49 @@ public class Parser extends AbstractParser implements Loggable {
      * What one binding reads out of the source: an element by key, or, for a rest
      * element, everything from its index onwards as an array.
      */
-    private Expression valueOfBinding(final String source, final Binding binding) {
+    private Expression valueOfBinding(final String source, final Binding binding, final Expression key) {
         if (binding.rest) {
             return new RuntimeNode(binding.token, finish, RuntimeNode.Request.TO_ARRAY,
-                    identifierFor(binding.token, source), binding.key);
+                    identifierFor(binding.token, source), key);
         }
 
-        return readFrom(binding.token, source, binding.key);
+        return readFrom(binding.token, source, key);
+    }
+
+    /**
+     * The key to read a binding by, evaluated at most once.
+     *
+     * An array index and a plain property name are literals and can be used as they
+     * are. A computed key is an arbitrary expression that has to run exactly once and
+     * in source order, so it goes into a temporary first.
+     *
+     * @param binding the binding
+     * @param out receives the assignment, when one is needed
+     * @param line line to attribute a synthetic assignment to
+     * @return the key expression to use
+     */
+    private Expression bindingKey(final Binding binding, final List<Statement> out, final int line) {
+        if (binding.key instanceof LiteralNode) {
+            return binding.key;
+        }
+
+        final String key = newTemporary();
+        out.add(assignTemporary(line, binding.token, key, binding.key));
+
+        return identifierFor(binding.token, key);
+    }
+
+    /** {@link #bindingKey(Binding, List, int)} for the comma-expression form. */
+    private Expression bindingKey(final Binding binding, final List<Expression> steps) {
+        if (binding.key instanceof LiteralNode) {
+            return binding.key;
+        }
+
+        final String key = newTemporary();
+        steps.add(new BinaryNode(Token.recast(binding.token, TokenType.ASSIGN), identifierFor(binding.token, key),
+                binding.key));
+
+        return identifierFor(binding.token, key);
     }
 
     /** {@code source[key]}, with the token types the IR checks for. */
