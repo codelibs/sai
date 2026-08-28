@@ -80,3 +80,36 @@ print(`${ "}" }`);
 var escaped = `a\
 b`;
 print(escaped.length);
+
+// A function body inside a substitution, in a function that is only compiled when
+// it is first called. The body cannot be skipped there: a lexer restarted at its
+// closing brace would know nothing of the template around it.
+function bodyInSubstitution() {
+    return `${ (function () { return 7; })() }`;
+}
+print(bodyInSubstitution());
+
+function methodInSubstitution() {
+    return `${ ({ m() { return 8; } }).m() }`;
+}
+print(methodInSubstitution());
+
+function arrowInSubstitution() {
+    return `${ (() => { return 9; })() }`;
+}
+print(arrowInSubstitution());
+
+function twoBodiesInSubstitution() {
+    return `${ (function () { return 1; })() + (function () { return 2; })() }`;
+}
+print(twoBodiesInSubstitution());
+
+function nestedTemplateWithBody() {
+    return `a${ `b${ (function () { return 1; })() }c` }d`;
+}
+print(nestedTemplateWithBody());
+
+function bracesInsideTheBody() {
+    return `${ (function () { var o = { a: { b: 6 } }; return o.a.b; })() }`;
+}
+print(bracesInsideTheBody());
