@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2026, CodeLibs Project and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,7 +56,7 @@ public enum TokenType {
             BINARY, "-", 12, true), DECPREFIX(UNARY, "--", 15, true), ASSIGN_SUB(BINARY, "-=", 2, false), PERIOD(BRACKET, ".", 17, true), DIV(
             BINARY, "/", 13, true), ASSIGN_DIV(BINARY, "/=", 2, false), COLON(BINARY, ":"), SEMICOLON(BINARY, ";"), LT(BINARY, "<", 10,
             true), SHL(BINARY, "<<", 11, true), ASSIGN_SHL(BINARY, "<<=", 2, false), LE(BINARY, "<=", 10, true), ASSIGN(BINARY, "=", 2,
-            false), EQ(BINARY, "==", 9, true), EQ_STRICT(BINARY, "===", 9, true), BIND(BINARY, "=>", 9, true), GT(BINARY, ">", 10, true), GE(
+            false), EQ(BINARY, "==", 9, true), EQ_STRICT(BINARY, "===", 9, true), ARROW(BINARY, "=>"), GT(BINARY, ">", 10, true), GE(
             BINARY, ">=", 10, true), SAR(BINARY, ">>", 11, true), ASSIGN_SAR(BINARY, ">>=", 2, false), SHR(BINARY, ">>>", 11, true), ASSIGN_SHR(
             BINARY, ">>>=", 2, false), TERNARY(BINARY, "?", 3, false), LBRACKET(BRACKET, "[", 17, true), RBRACKET(BRACKET, "]", 0, true), BIT_XOR(
             BINARY, "^", 7, true), ASSIGN_BIT_XOR(BINARY, "^=", 2, false), LBRACE(BRACKET, "{"), BIT_OR(BINARY, "|", 6, true), ASSIGN_BIT_OR(
