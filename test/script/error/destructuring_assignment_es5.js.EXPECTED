@@ -1,0 +1,3 @@
+test/script/error/destructuring_assignment_es5.js:27:0 Invalid left hand side for assignment
+[a, b] = [1, 2];
+^
