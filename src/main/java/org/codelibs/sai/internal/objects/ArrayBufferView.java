@@ -29,13 +29,18 @@ import static org.codelibs.sai.internal.runtime.ECMAErrors.rangeError;
 import static org.codelibs.sai.internal.runtime.ECMAErrors.typeError;
 import static org.codelibs.sai.internal.runtime.UnwarrantedOptimismException.INVALID_PROGRAM_POINT;
 
+import java.lang.invoke.MethodHandle;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 import org.codelibs.sai.internal.dynalink.CallSiteDescriptor;
 import org.codelibs.sai.internal.dynalink.linker.GuardedInvocation;
 import org.codelibs.sai.internal.dynalink.linker.LinkRequest;
 import org.codelibs.sai.internal.objects.annotations.Attribute;
+import org.codelibs.sai.internal.objects.annotations.Function;
 import org.codelibs.sai.internal.objects.annotations.Getter;
 import org.codelibs.sai.internal.objects.annotations.ScriptClass;
 import org.codelibs.sai.internal.runtime.JSType;
@@ -43,10 +48,17 @@ import org.codelibs.sai.internal.runtime.PropertyMap;
 import org.codelibs.sai.internal.runtime.ScriptObject;
 import org.codelibs.sai.internal.runtime.ScriptRuntime;
 import org.codelibs.sai.internal.runtime.arrays.ArrayData;
+import org.codelibs.sai.internal.runtime.arrays.IteratorAction;
 import org.codelibs.sai.internal.runtime.arrays.TypedArrayData;
+import org.codelibs.sai.internal.runtime.linker.Bootstrap;
 
 /**
  * ArrayBufferView, es6 class or TypedArray implementation
+ * <p>
+ * This class doubles as the shared {@code %TypedArray%.prototype} of ES6 22.2.3: the
+ * {@code @Function}s declared here end up on a single prototype object that
+ * {@link Global} splices in below the prototype of each of the nine concrete typed
+ * array types, so a method only has to be written once.
  */
 @ScriptClass("ArrayBufferView")
 public abstract class ArrayBufferView extends ScriptObject {
@@ -370,6 +382,173 @@ public abstract class ArrayBufferView extends ScriptObject {
 
         //second is byteoffset
         return arrayView.factory().construct(arrayView.buffer, begin * bytesPerElement + byteOffset, length);
+    }
+
+    private static final Object MAP_CALLBACK_INVOKER = new Object();
+    private static final Object FILTER_CALLBACK_INVOKER = new Object();
+
+    private static MethodHandle createIteratorCallbackInvoker(final Object key, final Class<?> rtype) {
+        return Global.instance().getDynamicInvoker(key, new Callable<MethodHandle>() {
+            @Override
+            public MethodHandle call() {
+                return Bootstrap.createDynamicInvoker("dyn:call", rtype, Object.class, Object.class, Object.class, double.class,
+                        Object.class);
+            }
+        });
+    }
+
+    /**
+     * ES6 22.2.3.5.1 ValidateTypedArray. Every {@code %TypedArray%.prototype} method starts
+     * here, so that {@code null} and {@code undefined} receivers - and objects that merely
+     * look like typed arrays - are rejected before any element is touched.
+     *
+     * @param self self reference
+     * @return self, narrowed to ArrayBufferView
+     */
+    private static ArrayBufferView validate(final Object self) {
+        if (self instanceof ArrayBufferView) {
+            return (ArrayBufferView) self;
+        }
+        throw typeError("not.a.typed.array", ScriptRuntime.safeToString(self));
+    }
+
+    /**
+     * ES6 22.2.3.15 %TypedArray%.prototype.join ( separator )
+     *
+     * @param self      self reference
+     * @param separator element separator, "," if undefined
+     * @return the elements joined into a string
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static String join(final Object self, final Object separator) {
+        return NativeArray.join(validate(self), separator);
+    }
+
+    /**
+     * ES6 22.2.3.12 %TypedArray%.prototype.forEach ( callbackfn [ , thisArg ] )
+     *
+     * @param self       self reference
+     * @param callbackfn callback function per element
+     * @param thisArg    this argument
+     * @return undefined
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
+    public static Object forEach(final Object self, final Object callbackfn, final Object thisArg) {
+        return NativeArray.forEach(validate(self), callbackfn, thisArg);
+    }
+
+    /**
+     * ES6 22.2.3.7 %TypedArray%.prototype.every ( callbackfn [ , thisArg ] )
+     *
+     * @param self       self reference
+     * @param callbackfn callback function per element
+     * @param thisArg    this argument
+     * @return true if the callback returned true for every element
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
+    public static boolean every(final Object self, final Object callbackfn, final Object thisArg) {
+        return NativeArray.every(validate(self), callbackfn, thisArg);
+    }
+
+    /**
+     * ES6 22.2.3.24 %TypedArray%.prototype.some ( callbackfn [ , thisArg ] )
+     *
+     * @param self       self reference
+     * @param callbackfn callback function per element
+     * @param thisArg    this argument
+     * @return true if the callback returned true for at least one element
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
+    public static boolean some(final Object self, final Object callbackfn, final Object thisArg) {
+        return NativeArray.some(validate(self), callbackfn, thisArg);
+    }
+
+    /**
+     * ES6 22.2.3.19 %TypedArray%.prototype.reduce ( callbackfn [ , initialValue ] )
+     *
+     * @param self self reference
+     * @param args callback function and optional initial value
+     * @return accumulated result
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
+    public static Object reduce(final Object self, final Object... args) {
+        return NativeArray.reduce(validate(self), args);
+    }
+
+    /**
+     * ES6 22.2.3.20 %TypedArray%.prototype.reduceRight ( callbackfn [ , initialValue ] )
+     *
+     * @param self self reference
+     * @param args callback function and optional initial value
+     * @return accumulated result
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
+    public static Object reduceRight(final Object self, final Object... args) {
+        return NativeArray.reduceRight(validate(self), args);
+    }
+
+    /**
+     * ES6 22.2.3.18 %TypedArray%.prototype.map ( callbackfn [ , thisArg ] )
+     * <p>
+     * Unlike {@code Array.prototype.map} this returns a typed array of the same type as
+     * the receiver, not a {@code NativeArray}.
+     *
+     * @param self       self reference
+     * @param callbackfn callback function per element
+     * @param thisArg    this argument
+     * @return a new typed array of the same type holding the mapped elements
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
+    public static Object map(final Object self, final Object callbackfn, final Object thisArg) {
+        final ArrayBufferView view = validate(self);
+        final ArrayBufferView mapped = view.factory().construct(view.elementLength());
+
+        return new IteratorAction<ArrayBufferView>(view, callbackfn, thisArg, mapped) {
+            private final MethodHandle mapInvoker = createIteratorCallbackInvoker(MAP_CALLBACK_INVOKER, Object.class);
+
+            @Override
+            protected boolean forEach(final Object val, final double i) throws Throwable {
+                final Object mappedValue = mapInvoker.invokeExact(callbackfn, thisArg, val, i, self);
+                result.set((int) i, mappedValue, 0);
+                return true;
+            }
+        }.apply();
+    }
+
+    /**
+     * ES6 22.2.3.9 %TypedArray%.prototype.filter ( callbackfn [ , thisArg ] )
+     * <p>
+     * Typed arrays have a fixed length, so the kept elements are collected first and the
+     * result array is only allocated once its length is known.
+     *
+     * @param self       self reference
+     * @param callbackfn callback function per element
+     * @param thisArg    this argument
+     * @return a new typed array of the same type holding the kept elements
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
+    public static Object filter(final Object self, final Object callbackfn, final Object thisArg) {
+        final ArrayBufferView view = validate(self);
+        final List<Object> kept = new ArrayList<>();
+
+        new IteratorAction<Object>(view, callbackfn, thisArg, ScriptRuntime.UNDEFINED) {
+            private final MethodHandle filterInvoker = createIteratorCallbackInvoker(FILTER_CALLBACK_INVOKER, boolean.class);
+
+            @Override
+            protected boolean forEach(final Object val, final double i) throws Throwable {
+                if ((boolean) filterInvoker.invokeExact(callbackfn, thisArg, val, i, self)) {
+                    kept.add(val);
+                }
+                return true;
+            }
+        }.apply();
+
+        final ArrayBufferView filtered = view.factory().construct(kept.size());
+        for (int i = 0; i < kept.size(); i++) {
+            filtered.set(i, kept.get(i), 0);
+        }
+
+        return filtered;
     }
 
     @Override
