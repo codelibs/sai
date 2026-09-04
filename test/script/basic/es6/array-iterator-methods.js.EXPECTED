@@ -1,0 +1,31 @@
+0,0,0
+function,function,function
+function
+0 1 done done
+"a" "b" done
+[0,"a"] [1,"b"] done
+true,true,false
+true,true,true
+1 1 2
+1
+2
+done
+done
+[0,null] [1,1]
+[0,"z"]
+for-of reached 0
+keys true
+keys true
+values true
+values true
+entries true
+entries true
+[2,3,4] [1]
+[3,4] [1,2]
+[] [1,2,3,4]
+[1,2,3,4] []
+[] [1,2,3,4]
+[] [1,2,3,4]
+[2,3] [1,4]
+[] [1,2,3,4]
+["b","c"] 1,a

@@ -1369,7 +1369,14 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
         final long relativeStart = JSType.toLong(start);
 
         final long actualStart = relativeStart < 0 ? Math.max(len + relativeStart, 0) : Math.min(relativeStart, len);
-        final long actualDeleteCount = Math.min(Math.max(JSType.toLong(deleteCount), 0), len - actualStart);
+
+        // ES6 deletes through to the end when deleteCount is left out altogether. ES5.1
+        // read the absent argument as undefined and so deleted nothing, and scripts run
+        // without --language=es6 keep that. The test is the argument count rather than
+        // an undefined deleteCount, because an explicit splice(1, undefined) deletes
+        // nothing under both editions.
+        final long actualDeleteCount = args.length == 1 && Global.getEnv()._es6 ? len - actualStart
+                : Math.min(Math.max(JSType.toLong(deleteCount), 0), len - actualStart);
 
         NativeArray returnValue;
 
@@ -1861,6 +1868,48 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
         }
 
         return sobj;
+    }
+
+    /**
+     * ECMA6 22.1.3.13 Array.prototype.keys ( )
+     *
+     * See {@link ArrayIterator}: the returned object has a next method but is not an
+     * iterable, so it does not work with for-of.
+     *
+     * @param self self reference
+     * @return an iterator over the indices of the array
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static Object keys(final Object self) {
+        return ArrayIterator.newIterator(checkNonNullSelf(self), ArrayIterator.Kind.KEYS);
+    }
+
+    /**
+     * ECMA6 22.1.3.29 Array.prototype.values ( )
+     *
+     * See {@link ArrayIterator}: the returned object has a next method but is not an
+     * iterable, so it does not work with for-of.
+     *
+     * @param self self reference
+     * @return an iterator over the elements of the array
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static Object values(final Object self) {
+        return ArrayIterator.newIterator(checkNonNullSelf(self), ArrayIterator.Kind.VALUES);
+    }
+
+    /**
+     * ECMA6 22.1.3.4 Array.prototype.entries ( )
+     *
+     * See {@link ArrayIterator}: the returned object has a next method but is not an
+     * iterable, so it does not work with for-of.
+     *
+     * @param self self reference
+     * @return an iterator over [index, element] pairs
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static Object entries(final Object self) {
+        return ArrayIterator.newIterator(checkNonNullSelf(self), ArrayIterator.Kind.ENTRIES);
     }
 
     /**
