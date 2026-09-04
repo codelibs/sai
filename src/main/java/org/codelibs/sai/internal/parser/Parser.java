@@ -1429,6 +1429,13 @@ public class Parser extends AbstractParser implements Loggable {
                 return;
             }
 
+            if (isES6() && isForInPattern()) {
+                forNode = forInPattern(forNode, startLine);
+                appendStatement(forNode);
+
+                return;
+            }
+
             List<VarNode> vars = null;
 
             switch (type) {
@@ -1550,6 +1557,46 @@ public class Parser extends AbstractParser implements Loggable {
     }
 
     private boolean isForOfAhead() {
+        final int i = skipForVariable();
+
+        return i >= 0 && T(i) == IDENT && "of".equals(getValue(getToken(i)));
+    }
+
+    /**
+     * Look ahead for the {@code in} of a for-in loop whose variable is a destructuring
+     * pattern. A plain name is left to the ordinary for-in path; only a pattern needs
+     * the loop rewriting.
+     *
+     * @return true if a for-in head with a pattern starts at the current token
+     */
+    private boolean isForInPattern() {
+        return lookahead(this::isForInPatternAhead);
+    }
+
+    private boolean isForInPatternAhead() {
+        int i = k;
+
+        if (T(i) == TokenType.VAR || T(i) == LET || T(i) == CONST) {
+            i++;
+        }
+
+        if (T(i) != LBRACKET && T(i) != LBRACE) {
+            return false;
+        }
+
+        i = skipForVariable();
+
+        return i >= 0 && T(i) == TokenType.IN;
+    }
+
+    /**
+     * Skip the loop variable at the head of a for loop, which may be a destructuring
+     * pattern, without parsing it.
+     *
+     * @return the index of the token after the variable, or -1 if what is there cannot
+     *         be a loop variable at all
+     */
+    private int skipForVariable() {
         int i = k;
 
         if (T(i) == TokenType.VAR || T(i) == LET || T(i) == CONST) {
@@ -1558,8 +1605,8 @@ public class Parser extends AbstractParser implements Loggable {
 
         if (T(i) == LBRACKET || T(i) == LBRACE) {
             // A destructuring pattern. Find the bracket that closes it; what is in
-            // between only has to balance here, it is parsed properly once this is
-            // known to be a for-of.
+            // between only has to balance here, it is parsed properly once the head is
+            // known to be a for-of or a for-in.
             final TokenType open = T(i);
             final TokenType close = open == LBRACKET ? RBRACKET : RBRACE;
             int depth = 0;
@@ -1575,16 +1622,16 @@ public class Parser extends AbstractParser implements Loggable {
                         break;
                     }
                 } else if (tokenType == EOF) {
-                    return false;
+                    return -1;
                 }
             }
         } else if (T(i) == IDENT) {
             i++;
         } else {
-            return false;
+            return -1;
         }
 
-        return T(i) == IDENT && "of".equals(getValue(getToken(i)));
+        return i;
     }
 
     /**
@@ -1701,6 +1748,97 @@ public class Parser extends AbstractParser implements Loggable {
                         new BinaryNode(Token.recast(ofToken, TokenType.ASSIGN), name, element)));
             } else {
                 appendStatement(new VarNode(forLine, declarationToken, finish, name.setIsDeclaredHere(), element, varFlags));
+            }
+
+            appendStatement(new BlockStatement(forLine, getStatement()));
+        } finally {
+            body = restoreBlock(body);
+        }
+
+        forNode = forNode.setBody(lc, body);
+        forNode.setFinish(body.getFinish());
+
+        return forNode;
+    }
+
+    /**
+     * Parse a for-in head whose loop variable is a destructuring pattern, and its body.
+     * The loop itself iterates a temporary, and the pattern is taken apart from that
+     * temporary at the top of the body:
+     *
+     * <pre>
+     * for (var [i, j] in obj) body;
+     * </pre>
+     * <pre>
+     * for (:pt0 in obj) { var i = :pt0[0]; var j = :pt0[1]; { body } }
+     * </pre>
+     *
+     * The key a for-in hands over is always a string, so an array pattern reads it out
+     * character by character, which follows from patterns reading by index.
+     *
+     * As in a for-of, the bindings are declared inside the body rather than around the
+     * loop, so a let binding is fresh on every iteration.
+     *
+     * @param forNodeArg the loop being built
+     * @param forLine    line the loop starts on
+     * @return the completed loop
+     */
+    private ForNode forInPattern(final ForNode forNodeArg, final int forLine) {
+        ForNode forNode = forNodeArg;
+
+        if (forNode.isForEach()) {
+            throw error(AbstractParser.message("no.pattern.in.for.each"), token);
+        }
+
+        TokenType declarationType = null;
+
+        if (type == TokenType.VAR || type == LET || type == CONST) {
+            declarationType = type;
+            next();
+        }
+
+        // The leaves of a pattern with no declaration are assignment targets rather than
+        // names to declare, the same distinction destructuringAssignment makes.
+        final List<Binding> pattern = destructuringPattern(declarationType == null);
+
+        final long inToken = token;
+        expect(TokenType.IN);
+
+        final String keyName = newTemporary();
+
+        forNode = forNode.setIsForIn(lc).setTest(lc, new JoinPredecessorExpression());
+        forNode = forNode.setInit(lc, identifierFor(inToken, keyName));
+
+        // Get the collection expression.
+        forNode = forNode.setModify(lc, joinPredecessorExpression());
+
+        expect(RPAREN);
+
+        Block body = newBlock();
+        try {
+            if (declarationType == null) {
+                final List<Expression> steps = new ArrayList<>();
+                assignBindings(keyName, pattern, steps);
+
+                if (!steps.isEmpty()) {
+                    Expression result = steps.get(0);
+
+                    for (int i = 1; i < steps.size(); i++) {
+                        result = new BinaryNode(Token.recast(inToken, TokenType.COMMARIGHT), result, steps.get(i));
+                    }
+
+                    appendStatement(new ExpressionStatement(forLine, inToken, finish, result));
+                }
+            } else {
+                final int varFlags = declarationType == LET ? VarNode.IS_LET
+                        : declarationType == CONST ? VarNode.IS_CONST : 0;
+
+                final List<Statement> statements = new ArrayList<>();
+                declareBindings(keyName, pattern, forLine, varFlags, new ArrayList<VarNode>(), statements);
+
+                for (final Statement statement : statements) {
+                    appendStatement(statement);
+                }
             }
 
             appendStatement(new BlockStatement(forLine, getStatement()));
@@ -2214,16 +2352,37 @@ public class Parser extends AbstractParser implements Loggable {
                 final long catchToken = token;
                 next();
                 expect(LPAREN);
-                final IdentNode exception = getIdent();
 
-                // ECMA 12.4.1 strict mode restrictions
-                verifyStrictIdent(exception, "catch argument");
+                final List<Binding> pattern;
+                final IdentNode exception;
+
+                if (isES6() && (type == LBRACKET || type == LBRACE)) {
+                    // The exception is caught by a parameter of its own and taken apart
+                    // at the top of the body, the same shape the other pattern positions
+                    // are lowered to.
+                    final long patternToken = token;
+                    pattern = destructuringPattern();
+                    exception = createIdentNode(Token.recast(patternToken, IDENT), finish, newPatternParameter());
+                } else {
+                    pattern = null;
+                    exception = getIdent();
+
+                    // ECMA 12.4.1 strict mode restrictions
+                    verifyStrictIdent(exception, "catch argument");
+                }
 
                 // Sai extension: catch clause can have optional
                 // condition. So, a single try can have more than one
                 // catch clause each with it's own condition.
                 final Expression ifExpression;
                 if (!env._no_syntax_extensions && type == IF) {
+                    if (pattern != null) {
+                        // The condition decides whether the body runs, so it is evaluated
+                        // before the pattern has been taken apart and cannot see any of
+                        // the names in it.
+                        throw error(AbstractParser.message("no.pattern.in.conditional.catch"), token);
+                    }
+
                     next();
                     // Get the exception condition.
                     ifExpression = expression();
@@ -2236,7 +2395,7 @@ public class Parser extends AbstractParser implements Loggable {
                 Block catchBlock = newBlock();
                 try {
                     // Get CATCH body.
-                    final Block catchBody = getBlock(true);
+                    final Block catchBody = pattern == null ? getBlock(true) : catchPatternBody(catchLine, exception, pattern);
                     final CatchNode catchNode = new CatchNode(catchLine, catchToken, finish, exception, ifExpression, catchBody, false);
                     appendStatement(catchNode);
                 } finally {
@@ -2276,6 +2435,45 @@ public class Parser extends AbstractParser implements Loggable {
         }
 
         appendStatement(new BlockStatement(startLine, outer));
+    }
+
+    /**
+     * Build the body of a catch clause whose parameter was written as a pattern:
+     *
+     * <pre>
+     * catch ([i, j]) { body }
+     * </pre>
+     * <pre>
+     * catch (:pp0) { let i = :pp0[0]; let j = :pp0[1]; { body } }
+     * </pre>
+     *
+     * The bindings are let rather than var so that they belong to the catch clause the
+     * way the plain exception name does, and the written body keeps a block of its own
+     * so that a declaration in it can still shadow one of them.
+     *
+     * @param catchLine line the catch clause starts on
+     * @param exception the parameter the exception is caught by
+     * @param pattern   the pattern to take it apart with
+     * @return the body to give the catch clause
+     */
+    private Block catchPatternBody(final int catchLine, final IdentNode exception, final List<Binding> pattern) {
+        Block wrapper = newBlock();
+        try {
+            final List<Statement> statements = new ArrayList<>();
+            declareBindings(exception.getName(), pattern, catchLine, VarNode.IS_LET, new ArrayList<VarNode>(), statements);
+
+            for (final Statement statement : statements) {
+                appendStatement(statement);
+            }
+
+            appendStatement(new BlockStatement(catchLine, getBlock(true)));
+        } finally {
+            wrapper = restoreBlock(wrapper);
+        }
+
+        wrapper.setFinish(finish);
+
+        return wrapper;
     }
 
     /**

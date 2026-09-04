@@ -1,0 +1,9 @@
+test/script/error/for_each_destructuring.js:28:10 A destructuring pattern is not supported in a for each loop
+for each (var [a, b] in { xy: 1 }) {
+          ^
+test/script/error/for_each_destructuring.js:28:33 Expected ; but found )
+for each (var [a, b] in { xy: 1 }) {
+                                 ^
+test/script/error/for_each_destructuring.js:30:0 Expected eof but found }
+}
+^

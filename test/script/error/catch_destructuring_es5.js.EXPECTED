@@ -1,0 +1,6 @@
+test/script/error/catch_destructuring_es5.js:28:9 Expected ident but found [
+} catch ([a, b]) {
+         ^
+test/script/error/catch_destructuring_es5.js:30:0 Expected eof but found }
+}
+^

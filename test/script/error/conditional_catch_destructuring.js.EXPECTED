@@ -1,0 +1,6 @@
+test/script/error/conditional_catch_destructuring.js:30:16 A destructuring pattern is not supported in a catch clause with a condition
+} catch ([a, b] if a === 1) {
+                ^
+test/script/error/conditional_catch_destructuring.js:32:0 Expected eof but found }
+}
+^
