@@ -98,6 +98,8 @@ public abstract class ScriptFunctionData implements Serializable {
     public static final int IS_METHOD = 1 << 7;
     /** Is this the constructor a class did not write out? */
     public static final int IS_CLASS_CONSTRUCTOR = 1 << 8;
+    /** Is this an ES6 arrow function? */
+    public static final int IS_ARROW = 1 << 9;
 
     /** Flag for strict or built-in functions */
     public static final int IS_STRICT_OR_BUILTIN = IS_STRICT | IS_BUILTIN;
@@ -137,6 +139,10 @@ public abstract class ScriptFunctionData implements Serializable {
 
     final boolean isClassConstructor() {
         return (flags & IS_CLASS_CONSTRUCTOR) != 0;
+    }
+
+    final boolean isArrow() {
+        return (flags & IS_ARROW) != 0;
     }
 
     /**

@@ -1,3 +1,0 @@
-test/script/error/arguments_in_arrow.js:27:18 arguments is not supported in an arrow function
-    var f = () => arguments.length;
-                  ^

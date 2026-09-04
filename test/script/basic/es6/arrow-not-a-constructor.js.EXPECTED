@@ -1,0 +1,21 @@
+length,name
+false undefined
+TypeError
+arguments,caller,length,name
+TypeError
+true object
+true
+2 true
+3
+5 false
+5 5
+3
+deep
+own:2:7
+late
+2
+method
+inner
+changed
+3
+from eval
