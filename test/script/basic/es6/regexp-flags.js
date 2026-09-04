@@ -34,18 +34,34 @@ print("g                 = '" + /x/g.flags + "'");
 print("i                 = '" + /x/i.flags + "'");
 print("m                 = '" + /x/m.flags + "'");
 print("gim               = '" + /x/gim.flags + "'");
+print("u                 = '" + /x/u.flags + "'");
 print("y                 = '" + /x/y.flags + "'");
-print("gimy              = '" + /x/gimy.flags + "'");
+print("uy                = '" + /x/uy.flags + "'");
+print("gimuy             = '" + /x/gimuy.flags + "'");
 
 // the order is fixed by the spec, not by the order the flags were written in
 print("igm -> gim        = '" + /x/igm.flags + "'");
 print("mig -> gim        = '" + /x/mig.flags + "'");
-print("ygmi -> gimy      = '" + /x/ygmi.flags + "'");
+print("yugmi -> gimuy    = '" + /x/yugmi.flags + "'");
 print("new RegExp('x','mg') = '" + new RegExp("x", "mg").flags + "'");
-print("new RegExp('x','yg') = '" + new RegExp("x", "yg").flags + "'");
+print("new RegExp('x','yu') = '" + new RegExp("x", "yu").flags + "'");
+
+// every subset of gimuy, in every written order, comes back in spec order
+var flags = ["g", "i", "m", "u", "y"];
+var bad = [];
+for (var mask = 0; mask < 32; mask++) {
+    var chosen = flags.filter(function (f, bit) { return mask & (1 << bit); });
+    var reversed = chosen.slice().reverse().join("");
+    var expected = chosen.join("");
+    var got = new RegExp("x", reversed).flags;
+    if (got !== expected) {
+        bad.push("'" + reversed + "' -> '" + got + "' (expected '" + expected + "')");
+    }
+}
+print("all 32 subsets    = " + (bad.length === 0 ? "ok" : bad.join(", ")));
 
 // flags and toString read the same string, so they cannot disagree
-print("toString          = '" + String(/x/gimy) + "'");
+print("toString          = '" + String(/x/gimuy) + "'");
 
 // like source, global, ignoreCase and multiline, it lives on the regexp itself
 // rather than on RegExp.prototype - sai keeps the ES5 placement for all of them

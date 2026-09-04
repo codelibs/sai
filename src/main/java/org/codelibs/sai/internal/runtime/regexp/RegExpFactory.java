@@ -94,7 +94,12 @@ public class RegExpFactory {
         final String key = es6 ? pattern + "/" + flags + "/es6" : pattern + "/" + flags;
         RegExp regexp = REGEXP_CACHE.get(key);
         if (regexp == null) {
-            regexp = instance.compile(pattern, flags, es6);
+            // Joni matches UTF-16 code units, so it cannot give the u flag its meaning, while
+            // java.util.regex matches code points, which is what the flag asks for. A pattern
+            // that carries u therefore goes to the JDK engine whichever factory is installed.
+            regexp = flags.indexOf('u') >= 0
+                    ? new JdkRegExp(pattern, flags, es6)
+                    : instance.compile(pattern, flags, es6);
             REGEXP_CACHE.put(key, regexp);
         }
         return regexp;
@@ -111,14 +116,5 @@ public class RegExpFactory {
      */
     public static void validate(final String pattern, final String flags, final boolean es6) throws ParserException {
         create(pattern, flags, es6);
-    }
-
-    /**
-     * Returns true if the instance uses the JDK's {@code java.util.regex} package.
-     *
-     * @return true if instance uses JDK regex package
-     */
-    public static boolean usesJavaUtilRegex() {
-        return instance != null && instance.getClass() == RegExpFactory.class;
     }
 }

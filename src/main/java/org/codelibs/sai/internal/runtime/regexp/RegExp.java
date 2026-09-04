@@ -53,6 +53,9 @@ public abstract class RegExp {
     /** Sticky flag for this regexp */
     private boolean sticky;
 
+    /** Unicode flag for this regexp */
+    private boolean unicode;
+
     /** BitVector that keeps track of groups in negative lookahead */
     protected BitVector groupsInNegativeLookahead;
 
@@ -61,7 +64,8 @@ public abstract class RegExp {
      *
      * @param source the source string
      * @param flags the flags string
-     * @param es6 whether the ES6 flags are accepted; {@code y} is a syntax error without it
+     * @param es6 whether the ES6 flags are accepted; {@code y} and {@code u} are a syntax
+     *            error without it
      */
     protected RegExp(final String source, final String flags, final boolean es6) {
         this.source = source.length() == 0 ? "(?:)" : source;
@@ -94,6 +98,15 @@ public abstract class RegExp {
                     throwParserException("repeated.flag", "y");
                 }
                 this.sticky = true;
+                break;
+            case 'u':
+                if (!es6) {
+                    throwParserException("unsupported.flag", "u");
+                }
+                if (this.unicode) {
+                    throwParserException("repeated.flag", "u");
+                }
+                this.unicode = true;
                 break;
             default:
                 throwParserException("unsupported.flag", Character.toString(ch));
@@ -154,6 +167,16 @@ public abstract class RegExp {
      */
     public boolean isSticky() {
         return sticky;
+    }
+
+    /**
+     * Get the unicode flag of this regular expression. A unicode regular expression matches
+     * code points rather than UTF-16 code units.
+     *
+     * @return the unicode flag
+     */
+    public boolean isUnicode() {
+        return unicode;
     }
 
     /**
