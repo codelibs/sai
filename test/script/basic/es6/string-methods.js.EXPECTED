@@ -1,0 +1,83 @@
+2
+134071
+57271
+97
+97
+undefined
+undefined
+98
+97
+2
+1
+true
+1
+2
+fi
+2
+normalize XYZ: RangeError
+normalize nfc: RangeError
+""
+ab
+ababab
+""
+""
+""
+abab
+repeat -1: RangeError
+repeat Infinity: RangeError
+repeat -Infinity: RangeError
+true
+false
+true
+true
+true
+false
+startsWith regexp: TypeError
+true
+false
+true
+true
+true
+false
+endsWith regexp: TypeError
+true
+false
+false
+true
+true
+includes regexp: TypeError
+includes RegExp object: TypeError
+true
+""
+abc
+true
+2
+2
+a
+fromCodePoint -1: RangeError
+fromCodePoint too big: RangeError
+fromCodePoint fraction: RangeError
+fromCodePoint NaN: RangeError
+fromCodePoint Infinity: RangeError
+null this codePointAt: TypeError
+undefined this codePointAt: TypeError
+null this normalize: TypeError
+undefined this normalize: TypeError
+null this repeat: TypeError
+undefined this repeat: TypeError
+null this startsWith: TypeError
+undefined this startsWith: TypeError
+null this endsWith: TypeError
+undefined this endsWith: TypeError
+null this includes: TypeError
+undefined this includes: TypeError
+1212
+true
+true
+codePointAt true false true 1
+normalize true false true 0
+repeat true false true 1
+startsWith true false true 1
+endsWith true false true 1
+includes true false true 1
+fromCodePoint true false true 1
