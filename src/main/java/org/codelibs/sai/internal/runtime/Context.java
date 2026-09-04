@@ -1195,6 +1195,18 @@ public final class Context {
         return global == null ? null : getContext(global);
     }
 
+    /**
+     * Was the current global started with --language=es6? Answers false when there is no
+     * current global at all, which is the conservative answer: nothing observable has been
+     * created yet, so the ES5 shape is the safe one to hand back.
+     *
+     * @return true if the running context asked for ES6 semantics
+     */
+    static boolean isES6() {
+        final Context context = getContextTrustedOrNull();
+        return context != null && context.getEnv()._es6;
+    }
+
     private static Context getContext(final Global global) {
         // We can't invoke Global.getContext() directly, as it's a protected override, and Global isn't in our package.
         // In order to access the method, we must cast it to ScriptObject first (which is in our package) and then let

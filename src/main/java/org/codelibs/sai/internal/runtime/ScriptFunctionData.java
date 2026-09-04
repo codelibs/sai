@@ -449,7 +449,15 @@ public abstract class ScriptFunctionData implements Serializable {
                 new CompiledFunction(getGenericInvoker(runtimeScope), getGenericConstructor(runtimeScope), null);
         boundList.add(bind(bindTarget, fn, self, allArgs));
 
-        return new FinalScriptFunctionData(name, Math.max(0, getArity() - length), boundList, boundFlags);
+        return new FinalScriptFunctionData(boundName(), Math.max(0, getArity() - length), boundList, boundFlags);
+    }
+
+    /**
+     * ES6 19.2.3.2 gives a bound function the name "bound " + the name of its target, so binding
+     * twice yields "bound bound f". ES5 leaves the target's name alone.
+     */
+    private String boundName() {
+        return Context.isES6() ? "bound " + name : name;
     }
 
     /**
