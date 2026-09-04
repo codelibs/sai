@@ -88,6 +88,7 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
     private static final Object MAP_CALLBACK_INVOKER = new Object();
     private static final Object FILTER_CALLBACK_INVOKER = new Object();
     private static final Object REDUCE_CALLBACK_INVOKER = new Object();
+    private static final Object FIND_CALLBACK_INVOKER = new Object();
     private static final Object CALL_CMP = new Object();
     private static final Object TO_LOCALE_STRING = new Object();
 
@@ -226,6 +227,10 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
 
     private static MethodHandle getFILTER_CALLBACK_INVOKER() {
         return createIteratorCallbackInvoker(FILTER_CALLBACK_INVOKER, boolean.class);
+    }
+
+    private static MethodHandle getFIND_CALLBACK_INVOKER() {
+        return createIteratorCallbackInvoker(FIND_CALLBACK_INVOKER, boolean.class);
     }
 
     private static MethodHandle getREDUCE_CALLBACK_INVOKER() {
@@ -1721,6 +1726,167 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
     @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
     public static Object reduceRight(final Object self, final Object... args) {
         return reduceInner(reverseArrayLikeIterator(self), self, args);
+    }
+
+    /**
+     * ECMA6 22.1.3.8 Array.prototype.find ( predicate [ , thisArg ] )
+     *
+     * @param self      self reference
+     * @param predicate predicate function applied to each element
+     * @param thisArg   this argument for the predicate
+     * @return the first element the predicate accepts, or undefined
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
+    public static Object find(final Object self, final Object predicate, final Object thisArg) {
+        return findInternal(self, predicate, thisArg, false);
+    }
+
+    /**
+     * ECMA6 22.1.3.9 Array.prototype.findIndex ( predicate [ , thisArg ] )
+     *
+     * @param self      self reference
+     * @param predicate predicate function applied to each element
+     * @param thisArg   this argument for the predicate
+     * @return the index of the first element the predicate accepts, or -1
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
+    public static Object findIndex(final Object self, final Object predicate, final Object thisArg) {
+        return findInternal(self, predicate, thisArg, true);
+    }
+
+    private static Object findInternal(final Object self, final Object predicate, final Object thisArg,
+            final boolean wantIndex) {
+        // Global.toObject must run before anything else so that a null or undefined
+        // self is rejected with a TypeError even when the array turns out to be empty.
+        final ScriptObject sobj = checkNonNullSelf(self);
+        final long len = JSType.toUint32(sobj.getLength());
+        final MethodHandle invoker = getFIND_CALLBACK_INVOKER();
+        // ES6 requires the predicate to be callable even when it is never invoked.
+        final boolean strict = Bootstrap.isStrictCallable(predicate);
+        final Object callbackThis = thisArg == ScriptRuntime.UNDEFINED && !strict ? Context.getGlobal() : thisArg;
+
+        for (long k = 0; k < len; k++) {
+            // Unlike forEach, find and findIndex visit holes and pass undefined for them.
+            final Object val = sobj.get(k);
+            final boolean matched;
+            try {
+                matched = (boolean) invoker.invokeExact(predicate, callbackThis, val, (double) k, (Object) sobj);
+            } catch (final RuntimeException | Error e) {
+                throw e;
+            } catch (final Throwable t) {
+                throw new RuntimeException(t);
+            }
+
+            if (matched) {
+                return wantIndex ? (Object) (double) k : val;
+            }
+        }
+
+        return wantIndex ? (Object) (double) -1 : ScriptRuntime.UNDEFINED;
+    }
+
+    /**
+     * ECMA6 22.1.3.6 Array.prototype.fill ( value [ , start [ , end ] ] )
+     *
+     * @param self  self reference
+     * @param value value to store in every visited slot
+     * @param start start index, negative counts from the end
+     * @param end   end index, exclusive, negative counts from the end
+     * @return the array itself
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
+    public static Object fill(final Object self, final Object value, final Object start, final Object end) {
+        final ScriptObject sobj = checkNonNullSelf(self);
+        final long len = JSType.toUint32(sobj.getLength());
+        final long from = relativeIndex(start, len);
+        final long to = end == ScriptRuntime.UNDEFINED ? len : relativeIndex(end, len);
+
+        for (long k = from; k < to; k++) {
+            sobj.set(k, value, CALLSITE_STRICT);
+        }
+
+        return sobj;
+    }
+
+    /**
+     * ECMA6 22.1.3.3 Array.prototype.copyWithin ( target, start [ , end ] )
+     *
+     * @param self   self reference
+     * @param target index the copied range is written to
+     * @param start  start index of the copied range
+     * @param end    end index of the copied range, exclusive
+     * @return the array itself
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 2)
+    public static Object copyWithin(final Object self, final Object target, final Object start, final Object end) {
+        final ScriptObject sobj = checkNonNullSelf(self);
+        final long len = JSType.toUint32(sobj.getLength());
+
+        long to = relativeIndex(target, len);
+        long from = relativeIndex(start, len);
+        final long last = end == ScriptRuntime.UNDEFINED ? len : relativeIndex(end, len);
+
+        long count = Math.min(last - from, len - to);
+        long direction = 1;
+
+        // The source and the destination may overlap, so copy backwards when the
+        // destination starts inside the source range.
+        if (from < to && to < from + count) {
+            direction = -1;
+            from += count - 1;
+            to += count - 1;
+        }
+
+        while (count > 0) {
+            if (sobj.has(from)) {
+                sobj.set(to, sobj.get(from), CALLSITE_STRICT);
+            } else {
+                sobj.delete(to, true);
+            }
+            from += direction;
+            to += direction;
+            count--;
+        }
+
+        return sobj;
+    }
+
+    /**
+     * ECMA6 22.1.2.3 Array.of ( ...items )
+     *
+     * Unlike the Array constructor, a single numeric argument is stored as an
+     * element rather than taken as a length: {@code Array.of(2)} is {@code [2]}.
+     *
+     * @param self self reference
+     * @param args elements of the new array
+     * @return a new array holding the arguments
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 0, where = Where.CONSTRUCTOR)
+    public static Object of(final Object self, final Object... args) {
+        return new NativeArray(args.clone());
+    }
+
+    /**
+     * Coerce self to a ScriptObject, rejecting null and undefined with a TypeError.
+     * Array.prototype functions must do this eagerly - see JDK-8011365.
+     */
+    private static ScriptObject checkNonNullSelf(final Object self) {
+        final Object obj = Global.toObject(self);
+
+        if (!(obj instanceof ScriptObject)) {
+            throw typeError("not.an.object", ScriptRuntime.safeToString(self));
+        }
+
+        return (ScriptObject) obj;
+    }
+
+    /**
+     * ES6 relative index conversion shared by fill and copyWithin: a negative
+     * index counts from the end, and the result is clamped to [0, len].
+     */
+    private static long relativeIndex(final Object index, final long len) {
+        final long relative = JSType.toLong(index);
+        return relative < 0 ? Math.max(len + relative, 0) : Math.min(relative, len);
     }
 
     /**
