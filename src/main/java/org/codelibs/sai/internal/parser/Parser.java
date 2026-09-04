@@ -3729,7 +3729,9 @@ public class Parser extends AbstractParser implements Loggable {
             case TEMPLATE_HEAD:
                 // A template directly after an expression is a tagged template,
                 // which needs the literal parts as data rather than concatenated.
-                throw error(AbstractParser.message("no.tagged.template"), token);
+                lhs = taggedTemplate(callLine, callToken, lhs);
+
+                break;
 
             default:
                 break loop;
@@ -3781,6 +3783,91 @@ public class Parser extends AbstractParser implements Loggable {
         } finally {
             templateSubstitutions--;
         }
+    }
+
+    /**
+     * MemberExpression TemplateLiteral
+     *
+     * Parse a tagged template, which hands the literal parts to the tag as data rather
+     * than concatenating them:
+     *
+     * <pre>
+     * tag`a${x}b`   becomes   tag(TEMPLATE_OBJECT("&lt;key&gt;", ["a", "b"], ["a", "b"]), x)
+     * </pre>
+     *
+     * The strings are data, so the call site needs an identity of its own: the same site
+     * has to produce the same frozen object every time it runs, including after a
+     * recompilation. A compiled constant would not survive one, but a position in the
+     * source does, so the key is the source and the position of the template.
+     *
+     * @param line line of the call
+     * @param callToken token the tag expression starts at
+     * @param tag the expression being tagged with the template
+     * @return the call
+     */
+    private Expression taggedTemplate(final int line, final long callToken, final Expression tag) {
+        assert type == TEMPLATE || type == TEMPLATE_HEAD;
+
+        final long templateToken = token;
+        final List<Expression> cooked = new ArrayList<>();
+        final List<Expression> raw = new ArrayList<>();
+        final List<Expression> substitutions = new ArrayList<>();
+
+        boolean last = type == TEMPLATE;
+        addTemplatePart(cooked, raw);
+
+        if (!last) {
+            templateSubstitutions++;
+
+            try {
+                while (true) {
+                    substitutions.add(expression());
+
+                    if (type != TEMPLATE_MIDDLE && type != TEMPLATE_TAIL) {
+                        throw error(AbstractParser.message("expected.literal", "template"), token);
+                    }
+
+                    last = type == TEMPLATE_TAIL;
+                    addTemplatePart(cooked, raw);
+
+                    if (last) {
+                        break;
+                    }
+                }
+            } finally {
+                templateSubstitutions--;
+            }
+        }
+
+        final String key = source.getDigest() + "#" + Token.descPosition(templateToken);
+
+        final List<Expression> arguments = new ArrayList<>();
+        arguments.add(new RuntimeNode(templateToken, finish, RuntimeNode.Request.TEMPLATE_OBJECT,
+                LiteralNode.newInstance(templateToken, finish, key), arrayOf(templateToken, cooked),
+                arrayOf(templateToken, raw)));
+        arguments.addAll(substitutions);
+
+        // A method call keeps its receiver by itself - CallNode reads it back out of the
+        // access node - so unlike spreadCall there is no temporary to introduce here.
+        return new CallNode(line, Token.recast(callToken, LPAREN), finish, tag, arguments, false);
+    }
+
+    /**
+     * Take one literal part of a template as data: the cooked value an ordinary template
+     * would concatenate, and the raw text exactly as it was written.
+     */
+    private void addTemplatePart(final List<Expression> cooked, final List<Expression> raw) {
+        final long partToken = token;
+        final String rawText = source.getString(Token.descPosition(partToken), Token.descLength(partToken));
+        // An escape that is invalid everywhere else is allowed in a tagged template; only
+        // the cooked value of the part it is in goes missing.
+        final String cookedText = lexer.valueOfTemplateCooked(partToken, isStrictMode);
+
+        next();
+
+        raw.add(LiteralNode.newInstance(partToken, finish, Lexer.normalizeEOL(rawText)));
+        cooked.add(cookedText == null ? LiteralNode.newInstance(partToken, finish, ScriptRuntime.UNDEFINED)
+                : LiteralNode.newInstance(partToken, finish, cookedText));
     }
 
     /**
@@ -3908,6 +3995,15 @@ public class Parser extends AbstractParser implements Loggable {
 
                 // Create property access node.
                 lhs = new AccessNode(callToken, finish, lhs, property.getName());
+
+                break;
+
+            case TEMPLATE:
+            case TEMPLATE_HEAD:
+                // A template binds to the member expression before it, which is what
+                // makes "new tag`x`" construct what the tag returns rather than tag
+                // itself. A template token is only ever produced in ES6 mode.
+                lhs = taggedTemplate(line, callToken, lhs);
 
                 break;
 

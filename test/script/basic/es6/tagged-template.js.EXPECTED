@@ -1,0 +1,23 @@
+true 3 foo "bar\n"
+"bar\\n"
+123 456
+tagged
+true true
+0,1 ["a","b"]
+false false false
+true true true
+true 2 x1
+1 true \1\xz\uz\u{110000}\u{z}
+ok
+receiver!
+2 2
+chained held
+a\nb1c
+a1b
+only
+function 1
+3 10 3 10
+3 10
+0,1
+shared shared false
+plain a1b

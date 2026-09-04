@@ -1035,6 +1035,48 @@ public class Lexer extends Scanner {
     }
 
     /**
+     * The cooked value of one literal part of a template, for a tagged template.
+     *
+     * A tagged template may hold an escape that is not valid anywhere else - an octal
+     * one, a malformed hex one, a code point out of range - and its tag is still
+     * called; only the cooked value of the part it is in goes missing.
+     *
+     * @param token the part
+     * @param strict whether the surrounding code is strict
+     * @return the cooked string, or null if an escape in it is invalid
+     */
+    String valueOfTemplateCooked(final long token, final boolean strict) {
+        final int savePosition = position;
+
+        try {
+            return normalizeEOL(valueOfString(Token.descPosition(token), Token.descLength(token), strict));
+        } catch (final ParserException e) {
+            return null;
+        } finally {
+            // valueOfString restores the position itself only when it returns normally;
+            // an error thrown part way through leaves it inside the string, and here the
+            // error is swallowed and lexing goes on.
+            reset(savePosition);
+        }
+    }
+
+    /**
+     * A template reports a line ending as a line feed, however it was written. The
+     * cooked value of a part goes through here, and so does the raw text the parser
+     * takes straight out of the source for a tagged template.
+     *
+     * @param text the text as it stands
+     * @return the text with every line ending a line feed
+     */
+    static String normalizeEOL(final String text) {
+        if (text.indexOf('\r') < 0) {
+            return text;
+        }
+
+        return text.replace("\r\n", "\n").replace('\r', '\n');
+    }
+
+    /**
      * Scan over a string literal.
      * @param add true if we nare not just scanning but should actually modify the token stream
      */
@@ -1957,11 +1999,12 @@ public class Lexer extends Scanner {
         case STRING:
             return source.getString(start, len); // String
         case ESCSTRING:
+            return valueOfString(start, len, strict); // String
         case TEMPLATE:
         case TEMPLATE_HEAD:
         case TEMPLATE_MIDDLE:
         case TEMPLATE_TAIL:
-            return valueOfString(start, len, strict); // String
+            return normalizeEOL(valueOfString(start, len, strict)); // String
         case IDENT:
             return valueOfIdent(start, len); // String
         case REGEX:
