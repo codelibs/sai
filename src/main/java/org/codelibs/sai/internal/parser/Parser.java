@@ -4764,8 +4764,17 @@ public class Parser extends AbstractParser implements Loggable {
                 // A rest element takes everything from here on, so it ends the pattern.
                 final long restToken = token;
                 next();
-                bindings.add(new Binding(restToken, LiteralNode.newInstance(restToken, finish, Integer.valueOf(index)),
-                        patternTarget(assignment), null, null, true));
+                final Expression restKey = LiteralNode.newInstance(restToken, finish, Integer.valueOf(index));
+
+                // What the tail lands in is a target like any other, so it can be a
+                // pattern too. Without this the target is parsed as an expression, and an
+                // array literal in an assignment ends up standing where a store has to
+                // go, which is not something bytecode generation can express.
+                if (type == LBRACKET || type == LBRACE) {
+                    bindings.add(new Binding(restToken, restKey, null, destructuringPattern(assignment), null, true));
+                } else {
+                    bindings.add(new Binding(restToken, restKey, patternTarget(assignment), null, null, true));
+                }
 
                 if (type == COMMARIGHT) {
                     throw error(AbstractParser.message("rest.not.last.in.pattern"), token);

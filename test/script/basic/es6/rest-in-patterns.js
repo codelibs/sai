@@ -65,3 +65,27 @@ print(afterHole.join(","));
 var o = {};
 [o.head, ...o.tail] = [1, 2, 3];
 print(o.head + ":" + o.tail.join(","));
+
+// The rest target can itself be a pattern. It is the same "take the tail into an
+// array" step, so what lands there is destructured like any other array.
+var a, b, c;
+[a, ...[b, c]] = [1, 2, 3];
+print(a + ":" + b + ":" + c);
+
+[...[a, b]] = [4, 5];
+print(a + ":" + b);
+
+[a, ...{ 0: b }] = [6, 7];
+print(a + ":" + b);
+
+[a, ...[b, ...c]] = [8, 9, 10, 11];
+print(a + ":" + b + ":" + c.join(","));
+
+[a, ...[[b], [c]]] = [12, [13], [14]];
+print(a + ":" + b + ":" + c);
+
+// The tail is a fresh array, so an element target that reads from the source still
+// sees the source unchanged.
+var src = [15, 16, 17], first, last;
+[first, ...[src[2], last]] = src;
+print(first + ":" + last + ":" + src.join(","));
