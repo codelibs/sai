@@ -193,6 +193,30 @@ public final class NativeFloat64Array extends ArrayBufferView {
         return FACTORY;
     }
 
+    /**
+     * ES6 22.2.2.2 %TypedArray%.of ( ...items )
+     *
+     * @param self  self reference
+     * @param items the elements
+     * @return a new Float64Array holding the elements
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 0, where = Where.CONSTRUCTOR)
+    public static NativeFloat64Array of(final Object self, final Object... items) {
+        return (NativeFloat64Array) ArrayBufferView.ofImpl(FACTORY, items);
+    }
+
+    /**
+     * ES6 22.2.2.1 %TypedArray%.from ( source [ , mapfn [ , thisArg ] ] )
+     *
+     * @param self self reference
+     * @param args source, and optionally a map function and its this argument
+     * @return a new Float64Array holding the elements
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1, where = Where.CONSTRUCTOR)
+    public static NativeFloat64Array from(final Object self, final Object... args) {
+        return (NativeFloat64Array) ArrayBufferView.fromImpl(FACTORY, args);
+    }
+
     @Override
     protected boolean isFloatArray() {
         return true;
