@@ -1,0 +1,49 @@
+1,1,1,2,0
+3
+2
+undefined
+-1
+undefined
+-1
+number
+10:0:2 20:1:2
+2
+0=undefined,1=1,2=undefined,3=3
+0
+b
+1
+-1
+[0,0,0,0]
+[1,0,0,4]
+[1,2,0,0]
+[1,2,0,4]
+[1,2,3,4]
+[1,2,3,4]
+[]
+[7,7,7]
+true
+[4,5,3,4,5]
+[1,4,5,4,5]
+[2,3,4,5,5]
+[1,2,1,2,3]
+[1,2,3,3,4]
+[1,2,3,4,5]
+[]
+true
+false,[null,3,3]
+1,2
+[1,"a",true]
+[]
+true
+find true
+find true
+findIndex true
+findIndex true
+fill true
+fill true
+copyWithin true
+copyWithin true
+find callable true
+find callable true
+find callable true
+find callable true
