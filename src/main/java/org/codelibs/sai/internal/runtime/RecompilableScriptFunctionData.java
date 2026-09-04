@@ -26,6 +26,7 @@
 
 package org.codelibs.sai.internal.runtime;
 
+import static org.codelibs.sai.internal.codegen.CompilerConstants.ANON_FUNCTION_PREFIX;
 import static org.codelibs.sai.internal.lookup.Lookup.MH;
 
 import java.io.IOException;
@@ -324,7 +325,7 @@ public final class RecompilableScriptFunctionData extends ScriptFunctionData imp
 
     private static String functionName(final FunctionNode fn) {
         if (fn.isAnonymous()) {
-            return "";
+            return inferredFunctionName(fn);
         }
         final FunctionNode.Kind kind = fn.getKind();
         if (kind == FunctionNode.Kind.GETTER || kind == FunctionNode.Kind.SETTER) {
@@ -332,6 +333,24 @@ public final class RecompilableScriptFunctionData extends ScriptFunctionData imp
             return name.substring(GET_SET_PREFIX_LENGTH);
         }
         return fn.getIdent().getName();
+    }
+
+    /**
+     * The name an anonymous function reports as its own. ES6 NamedEvaluation hands one to a
+     * function expression that appears on the right of a binding, so {@code var f = function(){}}
+     * is called "f"; ES5 has no such rule and every anonymous function is called "".
+     *
+     * The parser has already done the derivation - {@code getDefaultValidFunctionName} put the
+     * binding name in the ident, which is why a stack trace has said "at f" for a long time. When
+     * it could not derive anything it fell back to {@code ANON_FUNCTION_PREFIX + line}, and that
+     * prefix is the only marker distinguishing the two cases, so it is what we filter on.
+     */
+    private static String inferredFunctionName(final FunctionNode fn) {
+        if (!Context.isES6()) {
+            return "";
+        }
+        final String name = fn.getIdent().getName();
+        return name.startsWith(ANON_FUNCTION_PREFIX.symbolName()) ? "" : name;
     }
 
     private static long tokenFor(final FunctionNode fn) {
