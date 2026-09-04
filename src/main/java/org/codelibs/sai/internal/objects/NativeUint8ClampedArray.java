@@ -201,7 +201,8 @@ public final class NativeUint8ClampedArray extends ArrayBufferView {
 
         @Override
         public ArrayData set(final int index, final double value, final boolean strict) {
-            return set(index, rint(value), strict);
+            // rint() returns a double, so without the cast this would call itself forever
+            return set(index, (int) rint(value), strict);
         }
 
         private static double rint(final double rint) {
