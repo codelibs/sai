@@ -28,6 +28,7 @@ package org.codelibs.sai.internal.objects;
 import static org.codelibs.sai.internal.lookup.Lookup.MH;
 import static org.codelibs.sai.internal.runtime.ECMAErrors.typeError;
 import static org.codelibs.sai.internal.runtime.ScriptRuntime.UNDEFINED;
+import static org.codelibs.sai.internal.runtime.linker.SaiCallSiteDescriptor.CALLSITE_STRICT;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -436,6 +437,77 @@ public final class NativeObject {
         } else {
             throw notAnObject(obj);
         }
+    }
+
+    /**
+     * ES6 19.1.2.1 Object.assign ( target, ...sources )
+     *
+     * Copies the own enumerable properties of every source onto the target. A
+     * {@code null} or {@code undefined} source is skipped; a {@code null} or
+     * {@code undefined} target is a TypeError.
+     *
+     * @param self self reference
+     * @param args target followed by the sources
+     * @return the target object
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR, arity = 2)
+    public static Object assign(final Object self, final Object... args) {
+        final Object target = args.length > 0 ? args[0] : UNDEFINED;
+        // ToObject(target) - throws a TypeError for null and undefined
+        final Object to = Global.toObject(target);
+
+        for (int i = 1; i < args.length; i++) {
+            final Object source = args[i];
+            if (source == null || source == UNDEFINED) {
+                continue;
+            }
+            copyOwnEnumerable(to, Global.toObject(source));
+        }
+
+        return to;
+    }
+
+    private static void copyOwnEnumerable(final Object to, final Object from) {
+        if (from instanceof ScriptObject) {
+            final ScriptObject sobj = (ScriptObject) from;
+            for (final String key : sobj.getOwnKeys(false)) {
+                // a getter on the source is read as a value, a setter on the target is invoked
+                setMember(to, key, sobj.get(key));
+            }
+        } else if (from instanceof ScriptObjectMirror) {
+            final ScriptObjectMirror mirror = (ScriptObjectMirror) from;
+            for (final String key : mirror.getOwnKeys(false)) {
+                setMember(to, key, mirror.getMember(key));
+            }
+        } else {
+            throw notAnObject(from);
+        }
+    }
+
+    private static void setMember(final Object to, final String key, final Object value) {
+        if (to instanceof ScriptObject) {
+            ((ScriptObject) to).set(key, value, CALLSITE_STRICT);
+        } else if (to instanceof ScriptObjectMirror) {
+            ((ScriptObjectMirror) to).setMember(key, value);
+        } else {
+            throw notAnObject(to);
+        }
+    }
+
+    /**
+     * ES6 19.1.2.10 Object.is ( value1, value2 )
+     *
+     * The SameValue comparison: unlike {@code ===} it holds for two NaNs and
+     * fails for {@code +0} against {@code -0}.
+     *
+     * @param self self reference
+     * @param x    first value
+     * @param y    second value
+     * @return true if both values are the same value
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
+    public static boolean is(final Object self, final Object x, final Object y) {
+        return ScriptRuntime.sameValue(x, y);
     }
 
     /**
