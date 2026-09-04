@@ -2327,7 +2327,16 @@ public final class Global extends Scope {
         // built-in constructors
         this.builtinArray = initConstructorAndSwitchPoint("Array", ScriptFunction.class);
         this.builtinBoolean = initConstructorAndSwitchPoint("Boolean", ScriptFunction.class);
-        this.builtinNumber = initConstructorAndSwitchPoint("Number", ScriptFunction.class);
+        // ES6 20.1.2.12 and 20.1.2.13 want Number.parseInt and Number.parseFloat to be the very
+        // same function objects as the global ones - the identity is observable and kangax tests
+        // it. An @Function on NativeNumber would be a second object, so these two are set here,
+        // between initConstructor and tagBuiltinProperties, where the global functions already
+        // exist and the switch point still picks them up.
+        this.builtinNumber = initConstructor("Number", ScriptFunction.class);
+        this.builtinNumber.addOwnProperty("parseInt", Attribute.NOT_ENUMERABLE, this.parseInt);
+        this.builtinNumber.addOwnProperty("parseFloat", Attribute.NOT_ENUMERABLE, this.parseFloat);
+        tagBuiltinProperties("Number", this.builtinNumber);
+
         this.builtinString = initConstructorAndSwitchPoint("String", ScriptFunction.class);
         this.builtinMath = initConstructorAndSwitchPoint("Math", ScriptObject.class);
 

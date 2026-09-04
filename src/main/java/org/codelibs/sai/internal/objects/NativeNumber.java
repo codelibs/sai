@@ -85,6 +85,18 @@ public final class NativeNumber extends ScriptObject {
     @Property(attributes = Attribute.NON_ENUMERABLE_CONSTANT, where = Where.CONSTRUCTOR)
     public static final double POSITIVE_INFINITY = Double.POSITIVE_INFINITY;
 
+    /** ES6 20.1.2.1 the difference between 1 and the smallest representable value greater than 1 */
+    @Property(attributes = Attribute.NON_ENUMERABLE_CONSTANT, where = Where.CONSTRUCTOR)
+    public static final double EPSILON = 2.220446049250313e-16; // 2^-52, i.e. Math.ulp(1.0)
+
+    /** ES6 20.1.2.6 the largest integer n such that n and n + 1 are both exactly representable */
+    @Property(attributes = Attribute.NON_ENUMERABLE_CONSTANT, where = Where.CONSTRUCTOR)
+    public static final double MAX_SAFE_INTEGER = 9007199254740991.0; // 2^53 - 1
+
+    /** ES6 20.1.2.8 the smallest integer n such that n and n - 1 are both exactly representable */
+    @Property(attributes = Attribute.NON_ENUMERABLE_CONSTANT, where = Where.CONSTRUCTOR)
+    public static final double MIN_SAFE_INTEGER = -9007199254740991.0; // -(2^53 - 1)
+
     private final double value;
 
     // initialized by saigen
@@ -147,6 +159,71 @@ public final class NativeNumber extends ScriptObject {
         final double num = (args.length > 0) ? JSType.toNumber(args[0]) : 0.0;
 
         return newObj ? new NativeNumber(num) : num;
+    }
+
+    /**
+     * ES6 20.1.2.2 Number.isFinite ( number )
+     *
+     * @param self  self reference
+     * @param value value to test
+     *
+     * @return true if value is a Number that is neither NaN nor an infinity
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
+    public static boolean isFinite(final Object self, final Object value) {
+        // Unlike the global isFinite, this one does not coerce: anything that is not already a
+        // Number is false, so Number.isFinite("1") is false where isFinite("1") is true.
+        return JSType.isNumber(value) && JSType.isFinite(((Number) value).doubleValue());
+    }
+
+    /**
+     * ES6 20.1.2.3 Number.isInteger ( number )
+     *
+     * @param self  self reference
+     * @param value value to test
+     *
+     * @return true if value is a Number with no fractional part
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
+    public static boolean isInteger(final Object self, final Object value) {
+        if (!JSType.isNumber(value)) {
+            return false;
+        }
+        final double d = ((Number) value).doubleValue();
+        return JSType.isFinite(d) && Math.floor(d) == d;
+    }
+
+    /**
+     * ES6 20.1.2.4 Number.isNaN ( number )
+     *
+     * @param self  self reference
+     * @param value value to test
+     *
+     * @return true if value is the Number NaN
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
+    public static boolean isNaN(final Object self, final Object value) {
+        // Again no coercion, so Number.isNaN("NaN") is false where the global isNaN("NaN") is true
+        return JSType.isNumber(value) && Double.isNaN(((Number) value).doubleValue());
+    }
+
+    /**
+     * ES6 20.1.2.5 Number.isSafeInteger ( number )
+     *
+     * @param self  self reference
+     * @param value value to test
+     *
+     * @return true if value is an integer Number that round trips through a double
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
+    public static boolean isSafeInteger(final Object self, final Object value) {
+        if (!JSType.isNumber(value)) {
+            return false;
+        }
+        final double d = ((Number) value).doubleValue();
+        // 2^53 itself is out: it is representable, but so is 2^53 + 1 rounding down onto it, so the
+        // two are no longer distinguishable and the integer is not safe.
+        return JSType.isFinite(d) && Math.floor(d) == d && Math.abs(d) <= MAX_SAFE_INTEGER;
     }
 
     /**
