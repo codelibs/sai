@@ -322,6 +322,12 @@ public class Parser extends AbstractParser implements Loggable {
         /** A single method definition, {@code m() {}}. */
         METHOD,
         /**
+         * The method definition a class wrote out as its constructor. Its range is an
+         * ordinary method's, but it has to be told apart from one so that the check
+         * rejecting a call without {@code new} is put back on re-parsing.
+         */
+        CONSTRUCTOR_METHOD,
+        /**
          * A whole class, of which only the constructor it did not write out is wanted.
          * That constructor has no source of its own, so the class it belongs to is its
          * range and the rest of the class is parsed and thrown away.
@@ -991,12 +997,12 @@ public class Parser extends AbstractParser implements Loggable {
             return;
         }
 
-        if (programKind == ProgramKind.METHOD) {
+        if (programKind == ProgramKind.METHOD || programKind == ProgramKind.CONSTRUCTOR_METHOD) {
             // A method definition on its own, which is how one is re-parsed. It is the
             // whole of the range, so it is read before the statement forms rather than
             // among them: a key that is a string, a number or an expression starts a
             // statement of its own otherwise.
-            methodReparse();
+            methodReparse(programKind == ProgramKind.CONSTRUCTOR_METHOD);
             return;
         }
 
@@ -1120,7 +1126,7 @@ public class Parser extends AbstractParser implements Loggable {
      * them, and a function inside it starts later in the source than the method does,
      * so it can never be mistaken for the method either.
      */
-    private void methodReparse() {
+    private void methodReparse(final boolean classConstructor) {
         final long methodToken = methodStartToken(token);
         final int methodLine = line;
         final IdentNode methodName;
@@ -1137,7 +1143,7 @@ public class Parser extends AbstractParser implements Loggable {
         }
 
         addPropertyFunctionStatement(new PropertyFunction(methodName,
-                methodDefinition(methodToken, methodLine, methodName)));
+                methodDefinition(methodToken, methodLine, methodName, classConstructor)));
     }
 
     /**
@@ -3478,7 +3484,7 @@ public class Parser extends AbstractParser implements Loggable {
                     if (constructor != null) {
                         throw error(AbstractParser.message("duplicate.constructor"), memberToken);
                     }
-                    constructor = methodDefinition(methodToken, memberLine, constructorName);
+                    constructor = methodDefinition(methodToken, memberLine, constructorName, true);
 
                     continue;
                 }
@@ -3514,13 +3520,21 @@ public class Parser extends AbstractParser implements Loggable {
 
             if (superClass != null) {
                 // Instances see the superclass prototype, and the class itself sees the
-                // superclass, which is how a static member is inherited.
+                // superclass, which is how a static member is inherited. Both have to ask
+                // whether there is one first, because ES6 allows "extends null": that
+                // ends the instances' prototype chain immediately and leaves the class
+                // itself with Function.prototype. "extends undefined" stays a TypeError,
+                // which reading the prototype of undefined below still produces.
                 steps.add(protoAssignment(classToken, new AccessNode(Token.recast(classToken, TokenType.PERIOD), finish,
                         identifierFor(classToken, classTemporary), "prototype"),
-                        new AccessNode(Token.recast(classToken, TokenType.PERIOD), finish,
-                                identifierFor(classToken, SUPERCLASS), "prototype")));
-                steps.add(protoAssignment(classToken, identifierFor(classToken, classTemporary),
-                        identifierFor(classToken, SUPERCLASS)));
+                        new TernaryNode(Token.recast(classToken, TokenType.TERNARY), superclassIsNull(classToken),
+                                new JoinPredecessorExpression(LiteralNode.newInstance(classToken, finish)),
+                                new JoinPredecessorExpression(new AccessNode(Token.recast(classToken, TokenType.PERIOD),
+                                        finish, identifierFor(classToken, SUPERCLASS), "prototype")))));
+                steps.add(new BinaryNode(Token.recast(classToken, TokenType.OR),
+                        new JoinPredecessorExpression(superclassIsNull(classToken)),
+                        new JoinPredecessorExpression(protoAssignment(classToken,
+                                identifierFor(classToken, classTemporary), identifierFor(classToken, SUPERCLASS)))));
             }
 
             steps.addAll(members);
@@ -3538,6 +3552,12 @@ public class Parser extends AbstractParser implements Loggable {
             inSubclass = prevInSubclass;
             superUsable = prevSuperUsable;
         }
+    }
+
+    /** {@code :superclass === null}, the test that tells "extends null" from a real base. */
+    private Expression superclassIsNull(final long classToken) {
+        return new BinaryNode(Token.recast(classToken, TokenType.EQ_STRICT), identifierFor(classToken, SUPERCLASS),
+                LiteralNode.newInstance(classToken, finish));
     }
 
     private Expression protoAssignment(final long classToken, final Expression target, final Expression value) {
@@ -3568,16 +3588,20 @@ public class Parser extends AbstractParser implements Loggable {
             final boolean parseBody = reparsedFunction == null
                     || constructor.getId() <= reparsedFunction.getFunctionNodeId();
 
-            if (parseBody && inSubclass) {
-                lc.setFlag(constructor, FunctionNode.USES_ARGUMENTS | FunctionNode.USES_THIS);
+            if (parseBody) {
+                if (inSubclass) {
+                    lc.setFlag(constructor, FunctionNode.USES_ARGUMENTS | FunctionNode.USES_THIS);
 
-                final List<Expression> arguments = new ArrayList<>();
-                arguments.add(new IdentNode(Token.recast(classToken, TokenType.THIS), finish, TokenType.THIS.getName()));
-                arguments.add(identifierFor(classToken, ARGUMENTS_NAME));
+                    final List<Expression> arguments = new ArrayList<>();
+                    arguments.add(new IdentNode(Token.recast(classToken, TokenType.THIS), finish, TokenType.THIS.getName()));
+                    arguments.add(identifierFor(classToken, ARGUMENTS_NAME));
 
-                appendStatement(new ExpressionStatement(classLine, classToken, finish, new CallNode(classLine, classToken,
-                        finish, new AccessNode(Token.recast(classToken, TokenType.PERIOD), finish,
-                                identifierFor(classToken, SUPERCLASS), "apply"), arguments, false)));
+                    appendStatement(new ExpressionStatement(classLine, classToken, finish, new CallNode(classLine, classToken,
+                            finish, new AccessNode(Token.recast(classToken, TokenType.PERIOD), finish,
+                                    identifierFor(classToken, SUPERCLASS), "apply"), arguments, false)));
+                }
+
+                requireNew(constructor, classToken);
             }
 
             constructor.setFinish(finish);
@@ -3606,12 +3630,17 @@ public class Parser extends AbstractParser implements Loggable {
      * @return the function
      */
     private FunctionNode methodDefinition(final long methodToken, final int methodLine, final IdentNode name) {
+        return methodDefinition(methodToken, methodLine, name, false);
+    }
+
+    private FunctionNode methodDefinition(final long methodToken, final int methodLine, final IdentNode name,
+            final boolean classConstructor) {
         expect(LPAREN);
         final Parameters parameters = new Parameters();
         formalParameterList(RPAREN, parameters);
         expect(RPAREN);
 
-        return functionBody(methodToken, name, parameters, FunctionNode.Kind.METHOD, methodLine);
+        return functionBody(methodToken, name, parameters, FunctionNode.Kind.METHOD, methodLine, classConstructor);
     }
 
     /**
@@ -4512,6 +4541,11 @@ public class Parser extends AbstractParser implements Loggable {
      */
     private FunctionNode functionBody(final long firstToken, final IdentNode ident, final Parameters parameters,
             final FunctionNode.Kind kind, final int functionLine) {
+        return functionBody(firstToken, ident, parameters, kind, functionLine, false);
+    }
+
+    private FunctionNode functionBody(final long firstToken, final IdentNode ident, final Parameters parameters,
+            final FunctionNode.Kind kind, final int functionLine, final boolean classConstructor) {
         FunctionNode functionNode = null;
         long lastToken = 0L;
 
@@ -4587,6 +4621,11 @@ public class Parser extends AbstractParser implements Loggable {
                 }
                 expect(RBRACE);
                 functionNode.setFinish(finish);
+            }
+
+            if (classConstructor) {
+                lc.setFlag(functionNode, FunctionNode.IS_CLASS_CONSTRUCTOR);
+                requireNew(functionNode, firstToken);
             }
 
             declareRestParameter(functionNode, parameters);
@@ -5179,6 +5218,27 @@ public class Parser extends AbstractParser implements Loggable {
      * @param functionNode the function whose body is currently open
      * @param parameters the parameters, carrying the rest binding if there is one
      */
+    /**
+     * Prepend the check that rejects a call of a class constructor that did not come
+     * from {@code new}, to the body of the constructor being parsed.
+     *
+     * A class body is strict code, so a call with no receiver leaves {@code this}
+     * undefined, and that is what the check looks at. A super call is
+     * {@code :superclass.call(this, ..)} and passes the instance, so it goes through.
+     *
+     * The check is a runtime request rather than a throw of a TypeError read out of
+     * the scope, for the same reason the members of a class body are defined by one: a
+     * local named TypeError would otherwise break every class below it.
+     *
+     * @param functionNode the constructor whose body is currently open
+     * @param token token the synthetic nodes are attributed to
+     */
+    private void requireNew(final FunctionNode functionNode, final long token) {
+        prependStatement(new ExpressionStatement(functionNode.getLineNumber(), token, finish,
+                new RuntimeNode(token, finish, RuntimeNode.Request.REQUIRE_NEW,
+                        thisFor(Token.recast(token, TokenType.THIS)))));
+    }
+
     private void declareRestParameter(final FunctionNode functionNode, final Parameters parameters) {
         if (parameters.rest == null) {
             return;

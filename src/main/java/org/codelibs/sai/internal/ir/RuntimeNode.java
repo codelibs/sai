@@ -94,7 +94,9 @@ public class RuntimeNode extends Expression {
         /** Define a non-enumerable method, for an ES6 class body */
         DEFINE_METHOD,
         /** Define a non-enumerable accessor, for an ES6 class body */
-        DEFINE_ACCESSOR;
+        DEFINE_ACCESSOR,
+        /** Reject a call of an ES6 class constructor that did not come from new */
+        REQUIRE_NEW;
 
         /** token type */
         private final TokenType tokenType;
