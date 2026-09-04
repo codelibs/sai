@@ -26,6 +26,7 @@
 package org.codelibs.sai.internal.objects;
 
 import static org.codelibs.sai.internal.lookup.Lookup.MH;
+import static org.codelibs.sai.internal.runtime.ECMAErrors.rangeError;
 import static org.codelibs.sai.internal.runtime.ECMAErrors.typeError;
 import static org.codelibs.sai.internal.runtime.JSType.isRepresentableAsInt;
 import static org.codelibs.sai.internal.runtime.ScriptRuntime.UNDEFINED;
@@ -34,6 +35,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.text.Collator;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -457,6 +459,27 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
     @SpecializedFunction
     public static String fromCharCode(final Object self, final double value) {
         return Character.toString((char) JSType.toUint16(value));
+    }
+
+    /**
+     * ECMA6 21.1.2.2 String.fromCodePoint ( ...codePoints )
+     * @param self self reference
+     * @param args array of arguments to be interpreted as code points
+     * @return string built from the given code points
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1, where = Where.CONSTRUCTOR)
+    public static String fromCodePoint(final Object self, final Object... args) {
+        final StringBuilder sb = new StringBuilder(args.length);
+        for (final Object arg : args) {
+            final double num = JSType.toNumber(arg);
+            // Anything that is not a non-negative integral value below the Unicode
+            // limit is out of range - that includes NaN and both infinities.
+            if (num != (int) num || num < 0 || num > Character.MAX_CODE_POINT) {
+                throw rangeError("invalid.code.point", JSType.toString(arg));
+            }
+            sb.appendCodePoint((int) num);
+        }
+        return sb.toString();
     }
 
     /**
@@ -1152,6 +1175,154 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
         }
 
         return str.substring(start, end + 1);
+    }
+
+    /**
+     * ECMA6 21.1.3.3 String.prototype.codePointAt ( pos )
+     * @param self self reference
+     * @param pos  index of the code unit the code point starts at
+     * @return the code point at the given index, or undefined if the index is out of range
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static Object codePointAt(final Object self, final Object pos) {
+        final String str = checkObjectToString(self);
+        // ToInteger: NaN becomes 0 and fractions truncate towards zero. A long keeps the
+        // infinities and anything else too large safely outside the valid index range.
+        final long index = (long) JSType.toNumber(pos);
+        if (index < 0 || index >= str.length()) {
+            return UNDEFINED;
+        }
+        return str.codePointAt((int) index);
+    }
+
+    /**
+     * ECMA6 21.1.3.12 String.prototype.normalize ( [ form ] )
+     * @param self self reference
+     * @param form one of "NFC", "NFD", "NFKC" or "NFKD"
+     * @return the string in the requested Unicode normalization form
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 0)
+    public static String normalize(final Object self, final Object form) {
+        final String str = checkObjectToString(self);
+        final String f = form == UNDEFINED ? "NFC" : JSType.toString(form);
+
+        // Match the four legal forms by hand rather than letting Normalizer.Form.valueOf
+        // reject the rest: it throws IllegalArgumentException, and the spec asks for a
+        // RangeError. Normalizer itself is locale independent.
+        if (!"NFC".equals(f) && !"NFD".equals(f) && !"NFKC".equals(f) && !"NFKD".equals(f)) {
+            throw rangeError("invalid.normalization.form", f);
+        }
+
+        return Normalizer.normalize(str, Normalizer.Form.valueOf(f));
+    }
+
+    /**
+     * ECMA6 21.1.3.13 String.prototype.repeat ( count )
+     * @param self  self reference
+     * @param count how many times to repeat the string
+     * @return the string repeated count times
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static String repeat(final Object self, final Object count) {
+        final String str = checkObjectToString(self);
+        final double num = JSType.toNumber(count);
+
+        // ToInteger truncates towards zero, so -0.5 becomes -0 and stays legal, while both
+        // infinities keep their sign and are rejected.
+        if (Double.isInfinite(num)) {
+            throw rangeError("invalid.repeat.count", JSType.toString(count));
+        }
+        final long n = (long) num;
+        if (n < 0) {
+            throw rangeError("invalid.repeat.count", JSType.toString(count));
+        }
+        if (str.isEmpty()) {
+            return "";
+        }
+        // String.repeat would raise OutOfMemoryError rather than a script error here.
+        if (n > Integer.MAX_VALUE / str.length()) {
+            throw rangeError("repeated.string.too.big");
+        }
+
+        return str.repeat((int) n);
+    }
+
+    /**
+     * ECMA6 21.1.3.18 String.prototype.startsWith ( searchString [ , position ] )
+     * @param self     self reference
+     * @param search   string to look for
+     * @param position index to start the comparison at
+     * @return true if the string starts with search at position
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
+    public static boolean startsWith(final Object self, final Object search, final Object position) {
+        final String str = checkObjectToString(self);
+        final String searchStr = checkSearchString(search, "startsWith");
+        final int start = clampToLength(position, str.length());
+
+        return str.startsWith(searchStr, start);
+    }
+
+    /**
+     * ECMA6 21.1.3.6 String.prototype.endsWith ( searchString [ , endPosition ] )
+     * @param self        self reference
+     * @param search      string to look for
+     * @param endPosition index the string is treated as ending at
+     * @return true if the string ends with search at endPosition
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
+    public static boolean endsWith(final Object self, final Object search, final Object endPosition) {
+        final String str = checkObjectToString(self);
+        final String searchStr = checkSearchString(search, "endsWith");
+        // The second argument is where the string is taken to end, not where the match starts.
+        final int end = endPosition == UNDEFINED ? str.length() : clampToLength(endPosition, str.length());
+        final int start = end - searchStr.length();
+
+        return start >= 0 && str.startsWith(searchStr, start);
+    }
+
+    /**
+     * ECMA6 21.1.3.7 String.prototype.includes ( searchString [ , position ] )
+     * @param self     self reference
+     * @param search   string to look for
+     * @param position index to start the search at
+     * @return true if the string contains search at or after position
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
+    public static boolean includes(final Object self, final Object search, final Object position) {
+        final String str = checkObjectToString(self);
+        final String searchStr = checkSearchString(search, "includes");
+        final int start = clampToLength(position, str.length());
+
+        return str.indexOf(searchStr, start) != -1;
+    }
+
+    /**
+     * ECMA6 7.2.8 IsRegExp. Sai has no Symbol.match, so a value is a regular expression
+     * exactly when it is an object carrying the RegExp [[Class]].
+     */
+    private static boolean isRegExp(final Object obj) {
+        return obj instanceof ScriptObject && "RegExp".equals(((ScriptObject) obj).getClassName());
+    }
+
+    /**
+     * Shared step 4 of startsWith/endsWith/includes: a regular expression is rejected before
+     * it is converted, otherwise /a/ would silently be searched for as the string "/a/".
+     */
+    private static String checkSearchString(final Object search, final String method) {
+        if (isRegExp(search)) {
+            throw typeError("regexp.string.method.argument", method);
+        }
+        return JSType.toString(search);
+    }
+
+    private static int clampToLength(final Object position, final int length) {
+        final double num = JSType.toNumber(position);
+        if (num >= length) {
+            return length;
+        }
+        // NaN and every negative value clamp to 0; ToInteger then truncates towards zero.
+        return num > 0 ? (int) num : 0;
     }
 
     /**
