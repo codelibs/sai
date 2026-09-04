@@ -70,11 +70,12 @@ public class RegExpFactory {
      *
      * @param pattern RegExp pattern string
      * @param flags   RegExp flags string
+     * @param es6     whether the ES6 flags are accepted
      * @return new RegExp
      * @throws ParserException if flags is invalid or pattern string has syntax error.
      */
-    public RegExp compile(final String pattern, final String flags) throws ParserException {
-        return new JdkRegExp(pattern, flags);
+    public RegExp compile(final String pattern, final String flags, final boolean es6) throws ParserException {
+        return new JdkRegExp(pattern, flags, es6);
     }
 
     /**
@@ -82,14 +83,18 @@ public class RegExpFactory {
      *
      * @param pattern RegExp pattern string
      * @param flags   flag string
+     * @param es6     whether the ES6 flags are accepted
      * @return new RegExp
      * @throws ParserException if invalid source or flags
      */
-    public static RegExp create(final String pattern, final String flags) {
-        final String key = pattern + "/" + flags;
+    public static RegExp create(final String pattern, final String flags, final boolean es6) {
+        // The cache is static and outlives any single context, so the ES6 flags have to be
+        // part of the key. Sharing one entry would hand a /x/y compiled under --language=es6
+        // to a context that must reject it.
+        final String key = es6 ? pattern + "/" + flags + "/es6" : pattern + "/" + flags;
         RegExp regexp = REGEXP_CACHE.get(key);
         if (regexp == null) {
-            regexp = instance.compile(pattern, flags);
+            regexp = instance.compile(pattern, flags, es6);
             REGEXP_CACHE.put(key, regexp);
         }
         return regexp;
@@ -100,11 +105,12 @@ public class RegExpFactory {
      *
      * @param pattern RegExp pattern string
      * @param flags  flag string
+     * @param es6    whether the ES6 flags are accepted
      *
      * @throws ParserException if invalid source or flags
      */
-    public static void validate(final String pattern, final String flags) throws ParserException {
-        create(pattern, flags);
+    public static void validate(final String pattern, final String flags, final boolean es6) throws ParserException {
+        create(pattern, flags, es6);
     }
 
     /**

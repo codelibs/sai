@@ -34,11 +34,18 @@ print("g                 = '" + /x/g.flags + "'");
 print("i                 = '" + /x/i.flags + "'");
 print("m                 = '" + /x/m.flags + "'");
 print("gim               = '" + /x/gim.flags + "'");
+print("y                 = '" + /x/y.flags + "'");
+print("gimy              = '" + /x/gimy.flags + "'");
 
 // the order is fixed by the spec, not by the order the flags were written in
 print("igm -> gim        = '" + /x/igm.flags + "'");
 print("mig -> gim        = '" + /x/mig.flags + "'");
+print("ygmi -> gimy      = '" + /x/ygmi.flags + "'");
 print("new RegExp('x','mg') = '" + new RegExp("x", "mg").flags + "'");
+print("new RegExp('x','yg') = '" + new RegExp("x", "yg").flags + "'");
+
+// flags and toString read the same string, so they cannot disagree
+print("toString          = '" + String(/x/gimy) + "'");
 
 // like source, global, ignoreCase and multiline, it lives on the regexp itself
 // rather than on RegExp.prototype - sai keeps the ES5 placement for all of them

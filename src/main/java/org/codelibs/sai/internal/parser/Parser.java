@@ -725,7 +725,8 @@ public class Parser extends AbstractParser implements Loggable {
         return isES6();
     }
 
-    private boolean isES6() {
+    @Override
+    protected boolean isES6() {
         return env._es6;
     }
 

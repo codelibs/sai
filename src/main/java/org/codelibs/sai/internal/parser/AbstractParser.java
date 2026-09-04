@@ -117,6 +117,16 @@ public abstract class AbstractParser {
     }
 
     /**
+     * Are the ES6 language features enabled for this parse? Subclasses that know their
+     * script environment override this.
+     *
+     * @return true if ES6 is enabled
+     */
+    protected boolean isES6() {
+        return false;
+    }
+
+    /**
      * Get the ith token.
      *
      * @param i Index of token.
@@ -577,7 +587,7 @@ public abstract class AbstractParser {
             if (value instanceof RegexToken) {
                 final RegexToken regex = (RegexToken) value;
                 try {
-                    RegExpFactory.validate(regex.getExpression(), regex.getOptions());
+                    RegExpFactory.validate(regex.getExpression(), regex.getOptions(), isES6());
                 } catch (final ParserException e) {
                     throw error(e.getMessage());
                 }

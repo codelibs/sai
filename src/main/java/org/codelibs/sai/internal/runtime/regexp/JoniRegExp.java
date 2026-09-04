@@ -49,11 +49,12 @@ public class JoniRegExp extends RegExp {
      *
      * @param pattern RegExp pattern string
      * @param flags RegExp flag string
+     * @param es6 whether the ES6 flags are accepted
      * @throws ParserException if flags is invalid or pattern string has syntax error.
      */
     @SuppressWarnings("this-escape")
-    public JoniRegExp(final String pattern, final String flags) throws ParserException {
-        super(pattern, flags);
+    public JoniRegExp(final String pattern, final String flags, final boolean es6) throws ParserException {
+        super(pattern, flags, es6);
 
         int option = Option.SINGLELINE;
 
@@ -102,8 +103,8 @@ public class JoniRegExp extends RegExp {
     public static class Factory extends RegExpFactory {
 
         @Override
-        public RegExp compile(final String pattern, final String flags) throws ParserException {
-            return new JoniRegExp(pattern, flags);
+        public RegExp compile(final String pattern, final String flags, final boolean es6) throws ParserException {
+            return new JoniRegExp(pattern, flags, es6);
         }
 
     }
@@ -120,6 +121,13 @@ public class JoniRegExp extends RegExp {
         @Override
         public boolean search(final int start) {
             return joniMatcher.search(start, input.length(), Option.NONE) > -1;
+        }
+
+        @Override
+        public boolean match(final int start) {
+            // Joni's match, unlike its search, anchors the match at 'start' and still lets
+            // anchors and lookaround see the whole input - exactly a sticky match.
+            return joniMatcher.match(start, input.length(), Option.NONE) > -1;
         }
 
         @Override

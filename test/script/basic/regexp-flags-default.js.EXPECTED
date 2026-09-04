@@ -1,0 +1,9 @@
+no flags = ''
+gim      = 'gim'
+mig      = 'gim'
+toString = '/x/gim'
+sticky   = false
+y rejected = true
+new RegExp x/y rejected = true
+u rejected = true
+new RegExp x/u rejected = true

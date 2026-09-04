@@ -42,6 +42,15 @@ public interface RegExpMatcher extends MatchResult {
     boolean search(int start);
 
     /**
+     * Matches the pattern at exactly {@code start}, without scanning forward, as a sticky
+     * regular expression does. Anchors, lookahead and lookbehind still see the whole input.
+     *
+     * @param start the index in the input string the match has to begin at
+     * @return {@code true} if the pattern matched there
+     */
+    boolean match(int start);
+
+    /**
      * Get the input string.
      *
      * @return the input string
