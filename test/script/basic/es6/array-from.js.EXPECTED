@@ -1,0 +1,33 @@
+1
+true
+["foo","bar"]
+[null,null,null]
+["a","b"]
+[1,2,3]
+true,[1,null,3]
+[1,2,3]
+["a","b","c"]
+[]
+[1,2,3]
+[]
+[]
+[]
+[]
+["a","b"]
+["foo0","bar1"]
+[2,4,6]
+["a0","b1","c2"]
+[10,20]
+[]
+[1,2,3]
+[7,8]
+["x","y"]
+["p","q"]
+["p0","q1"]
+["m","n"]
+from true
+from true
+mapfn true
+mapfn true
+mapfn true
+mapfn true

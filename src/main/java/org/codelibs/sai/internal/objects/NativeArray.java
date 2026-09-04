@@ -89,6 +89,7 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
     private static final Object FILTER_CALLBACK_INVOKER = new Object();
     private static final Object REDUCE_CALLBACK_INVOKER = new Object();
     private static final Object FIND_CALLBACK_INVOKER = new Object();
+    private static final Object FROM_CALLBACK_INVOKER = new Object();
     private static final Object CALL_CMP = new Object();
     private static final Object TO_LOCALE_STRING = new Object();
 
@@ -231,6 +232,17 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
 
     private static MethodHandle getFIND_CALLBACK_INVOKER() {
         return createIteratorCallbackInvoker(FIND_CALLBACK_INVOKER, boolean.class);
+    }
+
+    private static MethodHandle getFROM_CALLBACK_INVOKER() {
+        return Global.instance().getDynamicInvoker(FROM_CALLBACK_INVOKER, new Callable<MethodHandle>() {
+            @Override
+            public MethodHandle call() {
+                // Array.from's map function is called with (element, index) only.
+                return Bootstrap.createDynamicInvoker("dyn:call", Object.class, Object.class, Object.class, Object.class,
+                        double.class);
+            }
+        });
     }
 
     private static MethodHandle getREDUCE_CALLBACK_INVOKER() {
@@ -1849,6 +1861,99 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
         }
 
         return sobj;
+    }
+
+    /**
+     * ECMA6 22.1.2.1 Array.from ( items [ , mapfn [ , thisArg ] ] )
+     *
+     * ES6 reads items through the iterator protocol, which this engine does not have.
+     * Elements are read by index instead, the same approximation for-of and spread
+     * make: an array, a string, the arguments object and any object with a length and
+     * indexed properties all work, and so do a Java array, List or Iterable, but an
+     * object that is only iterable does not.
+     *
+     * @param self    self reference
+     * @param items   the array-like value to copy
+     * @param mapfn   function applied to every element, called with (element, index)
+     * @param thisArg this argument for mapfn
+     * @return a new array holding the elements
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1, where = Where.CONSTRUCTOR)
+    public static Object from(final Object self, final Object items, final Object mapfn, final Object thisArg) {
+        final boolean mapping = mapfn != ScriptRuntime.UNDEFINED;
+
+        MethodHandle invoker = null;
+        Object callbackThis = thisArg;
+
+        if (mapping) {
+            // A mapfn that is present but not callable is a TypeError even when items
+            // turns out to be empty, so this has to happen before anything is read.
+            final boolean strict = Bootstrap.isStrictCallable(mapfn);
+            callbackThis = thisArg == ScriptRuntime.UNDEFINED && !strict ? Context.getGlobal() : thisArg;
+            invoker = getFROM_CALLBACK_INVOKER();
+        }
+
+        final Object[] values = readArrayLike(items);
+
+        if (!mapping) {
+            return new NativeArray(values);
+        }
+
+        final Object[] mapped = new Object[values.length];
+
+        for (int k = 0; k < values.length; k++) {
+            try {
+                mapped[k] = invoker.invokeExact(mapfn, callbackThis, values[k], (double) k);
+            } catch (final RuntimeException | Error e) {
+                throw e;
+            } catch (final Throwable t) {
+                throw new RuntimeException(t);
+            }
+        }
+
+        return new NativeArray(mapped);
+    }
+
+    /**
+     * Read an array-like value into a Java array for Array.from. Holes are read as
+     * undefined rather than skipped, so Array.from({length: 3}) has three elements.
+     */
+    private static Object[] readArrayLike(final Object items) {
+        final Object obj = Global.toObject(items);
+
+        if (obj instanceof ScriptObject) {
+            final ScriptObject sobj = (ScriptObject) obj;
+            final Object[] values = new Object[toArrayLikeLength(sobj.getLength())];
+
+            for (int k = 0; k < values.length; k++) {
+                values[k] = sobj.get(k);
+            }
+
+            return values;
+        }
+
+        // A Java array, List or Iterable, or a JSObject. None of them carries a
+        // JavaScript length, so hand them to the reader ES6 spread already uses.
+        return ((ScriptObject) ScriptRuntime.TO_ARRAY(obj, 0)).getArray().asObjectArray();
+    }
+
+    /**
+     * ES6 ToLength, further clamped to what a Java array can hold. A length above
+     * Integer.MAX_VALUE cannot be materialised, which is the same limit
+     * Function.prototype.apply imposes on its argument array.
+     */
+    private static int toArrayLikeLength(final Object length) {
+        final double num = JSType.toNumber(length);
+
+        if (Double.isNaN(num) || num <= 0) {
+            return 0;
+        }
+
+        if (num > Integer.MAX_VALUE) {
+            throw rangeError("range.error.inappropriate.array.length", JSType.toString(length));
+        }
+
+        return (int) num;
     }
 
     /**
