@@ -364,7 +364,11 @@ public final class RecompilableScriptFunctionData extends ScriptFunctionData imp
         if (functionNode.getKind() == FunctionNode.Kind.METHOD) {
             flags |= IS_METHOD;
         }
-        if (functionNode.getKind() == FunctionNode.Kind.CLASS_CONSTRUCTOR) {
+        if (functionNode.getKind() == FunctionNode.Kind.CLASS_CONSTRUCTOR
+                || functionNode.getFlag(FunctionNode.IS_CLASS_CONSTRUCTOR)) {
+            // A constructor a class wrote out is an ordinary method, so that its source
+            // range is its own and it re-parses as one; the flag is what says it is also
+            // a class constructor.
             flags |= IS_CLASS_CONSTRUCTOR;
         }
         return flags;
@@ -418,7 +422,7 @@ public final class RecompilableScriptFunctionData extends ScriptFunctionData imp
             return Parser.ProgramKind.PROPERTY_ACCESSOR;
         }
         if (isMethod()) {
-            return Parser.ProgramKind.METHOD;
+            return isClassConstructor() ? Parser.ProgramKind.CONSTRUCTOR_METHOD : Parser.ProgramKind.METHOD;
         }
         if (isClassConstructor()) {
             return Parser.ProgramKind.CLASS_CONSTRUCTOR;

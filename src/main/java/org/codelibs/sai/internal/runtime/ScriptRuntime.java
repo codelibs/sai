@@ -759,6 +759,26 @@ public final class ScriptRuntime {
     }
 
     /**
+     * Reject a call of an ES6 class constructor that did not come from new.
+     *
+     * A class body is strict code, so a call with no receiver leaves this undefined,
+     * which is what the constructor asks about at the top of its body. A super call
+     * passes the instance along, so it goes through. Calling one with an explicit
+     * receiver - C.call(obj) - is a TypeError in ES6 but goes through here.
+     *
+     * @param self the receiver the constructor was called with
+     *
+     * @return undefined, when the call is a construction
+     */
+    public static Object REQUIRE_NEW(final Object self) {
+        if (self == null || self == UNDEFINED) {
+            throw typeError("class.constructor.requires.new");
+        }
+
+        return UNDEFINED;
+    }
+
+    /**
      * ECMA 11.4.3 The typeof Operator - generic implementation
      *
      * @param object   the object from which to retrieve property to type check

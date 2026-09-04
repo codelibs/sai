@@ -244,6 +244,13 @@ public final class FunctionNode extends LexicalContextExpression implements Flag
      */
     public static final int USES_ARROW_THIS = 1 << 28;
 
+    /**
+     * Is this the constructor a class wrote out? Its kind stays {@link Kind#METHOD},
+     * because its source range is its own and it is re-parsed as a method definition,
+     * so this flag is what tells the two apart.
+     */
+    public static final int IS_CLASS_CONSTRUCTOR = 1 << 29;
+
     /** extension callsite flags mask */
     public static final int EXTENSION_CALLSITE_FLAGS = IS_PRINT_PARSE | IS_PRINT_LOWER_PARSE | IS_PRINT_AST | IS_PRINT_LOWER_AST
             | IS_PRINT_SYMBOLS | IS_PROFILE | IS_TRACE_ENTEREXIT | IS_TRACE_MISSES | IS_TRACE_VALUES;
