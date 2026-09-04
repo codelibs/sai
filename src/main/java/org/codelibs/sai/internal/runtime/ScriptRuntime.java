@@ -675,6 +675,38 @@ public final class ScriptRuntime {
     }
 
     /**
+     * The strings object a tagged template hands to its tag.
+     *
+     * The same call site has to hand over the same object every time it runs, which is
+     * how a tag can keep something alongside the template it was called with, so the
+     * object is cached per Global. The key is built from the source and the position of
+     * the template rather than held in a compiled constant: a constant is remade when
+     * the enclosing function is recompiled, and a position is not.
+     *
+     * @param key    identity of the call site
+     * @param cooked the cooked strings, one per literal part of the template
+     * @param raw    the same parts as they were written
+     *
+     * @return the frozen strings object, carrying a frozen "raw" of its own
+     */
+    public static Object TEMPLATE_OBJECT(final Object key, final Object cooked, final Object raw) {
+        final Global global = Global.instance();
+        final ScriptObject cached = global.getTemplateObject(key);
+
+        if (cached != null) {
+            return cached;
+        }
+
+        final ScriptObject strings = (ScriptObject) cooked;
+
+        ((ScriptObject) raw).freeze();
+        strings.addOwnProperty("raw", Property.NOT_ENUMERABLE | Property.NOT_WRITABLE | Property.NOT_CONFIGURABLE, raw);
+        strings.freeze();
+
+        return global.putTemplateObjectIfAbsent(key, strings);
+    }
+
+    /**
      * ECMA 11.4.3 The typeof Operator - generic implementation
      *
      * @param object   the object from which to retrieve property to type check

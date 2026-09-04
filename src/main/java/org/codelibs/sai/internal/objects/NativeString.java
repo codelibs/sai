@@ -460,6 +460,46 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
     }
 
     /**
+     * ES6 21.1.2.4 String.raw ( template, ...substitutions )
+     *
+     * The tag that puts a tagged template back together as it was written: the raw parts
+     * of the template with the substitutions between them. It reads an ordinary object
+     * with a raw property just as happily, so it is useful without a tagged template.
+     *
+     * @param self self reference
+     * @param args the strings object, then the substitutions
+     * @return the raw parts of the template with the substitutions between them
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1, where = Where.CONSTRUCTOR)
+    public static String raw(final Object self, final Object... args) {
+        final ScriptObject template = toScriptObject(args.length > 0 ? args[0] : UNDEFINED);
+        final ScriptObject raw = toScriptObject(template.get("raw"));
+        final int length = JSType.toInt32(raw.get("length"));
+
+        final StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < length; i++) {
+            sb.append(JSType.toString(raw.get(i)));
+
+            if (i + 1 < length && i + 1 < args.length) {
+                sb.append(JSType.toString(args[i + 1]));
+            }
+        }
+
+        return sb.toString();
+    }
+
+    private static ScriptObject toScriptObject(final Object value) {
+        final Object object = Global.toObject(value);
+
+        if (object instanceof ScriptObject) {
+            return (ScriptObject) object;
+        }
+
+        throw typeError("not.an.object", ScriptRuntime.safeToString(value));
+    }
+
+    /**
      * ECMA 15.5.4.2 String.prototype.toString ( )
      * @param self self reference
      * @return self as string

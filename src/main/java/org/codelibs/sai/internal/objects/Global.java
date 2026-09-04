@@ -1385,6 +1385,37 @@ public final class Global extends Scope {
         }
     }
 
+    /**
+     * The strings objects of the tagged template call sites this Global has run. A call
+     * site hands over the same object every time, and keeps it for as long as the
+     * Global lives, so that a tag can key off it.
+     */
+    private final Map<Object, ScriptObject> templateObjects = new ConcurrentHashMap<>();
+
+    /**
+     * The strings object of a tagged template call site, if it has one already.
+     *
+     * @param key identity of the call site
+     * @return the object, or null if this site has not run in this Global yet
+     */
+    public ScriptObject getTemplateObject(final Object key) {
+        return templateObjects.get(key);
+    }
+
+    /**
+     * Remember the strings object of a tagged template call site.
+     *
+     * @param key identity of the call site
+     * @param strings the object to keep
+     * @return the object now held for that site, which is another thread's if it got
+     *         there first
+     */
+    public ScriptObject putTemplateObjectIfAbsent(final Object key, final ScriptObject strings) {
+        final ScriptObject existing = templateObjects.putIfAbsent(key, strings);
+
+        return existing == null ? strings : existing;
+    }
+
     private final Map<Object, InvokeByName> namedInvokers = new ConcurrentHashMap<>();
 
     /**
