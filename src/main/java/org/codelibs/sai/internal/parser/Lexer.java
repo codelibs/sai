@@ -845,15 +845,19 @@ public class Lexer extends Scanner {
             // If escape character.
             if (ch0 == '\\' && ch1 == 'u') {
                 skip(2);
-                final int ch = hexSequence(4, TokenType.IDENT);
-                if (isWhitespace((char) ch)) {
+                final int ch = unicodeEscapeSequence(TokenType.IDENT);
+                // Only a code point on the basic plane can be whitespace, and casting a
+                // higher one to char would test some unrelated unit instead.
+                if (ch >= 0 && ch <= Character.MAX_VALUE && isWhitespace((char) ch)) {
                     return null;
                 }
                 if (ch < 0) {
                     sb.append('\\');
                     sb.append('u');
                 } else {
-                    sb.append((char) ch);
+                    // A code point escape can name a character above the basic plane, and
+                    // the name it writes is then two units long.
+                    sb.appendCodePoint(ch);
                 }
             } else {
                 // Add regular character.
@@ -1497,7 +1501,7 @@ public class Lexer extends Scanner {
         // Make sure first character is valid start character.
         if (ch0 == '\\' && ch1 == 'u') {
             skip(2);
-            final int ch = hexSequence(4, TokenType.IDENT);
+            final int ch = unicodeEscapeSequence(TokenType.IDENT);
 
             if (!Character.isJavaIdentifierStart(ch)) {
                 error(Lexer.message("illegal.identifier.character"), TokenType.IDENT, start, position);
@@ -1511,7 +1515,7 @@ public class Lexer extends Scanner {
         while (!atEOF()) {
             if (ch0 == '\\' && ch1 == 'u') {
                 skip(2);
-                final int ch = hexSequence(4, TokenType.IDENT);
+                final int ch = unicodeEscapeSequence(TokenType.IDENT);
 
                 if (!Character.isJavaIdentifierPart(ch)) {
                     error(Lexer.message("illegal.identifier.character"), TokenType.IDENT, start, position);
