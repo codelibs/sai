@@ -11,7 +11,7 @@ y true true
 function 2 sm gk
 2 2 3 3
 got given static got
-method
+[] []
 false member
 bv bv
 ReferenceError

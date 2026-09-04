@@ -3272,12 +3272,36 @@ public class Parser extends AbstractParser implements Loggable {
     }
 
     /**
-     * {@code Object.defineProperty(target, "name", {get: fn, configurable: true, enumerable: false})}.
+     * Define a member of a class body on the class or on its prototype.
      *
-     * A method is a plain assignment, but an accessor is not expressible as one, and
-     * the class body has no object literal to carry it the way an object literal member
-     * would. Defining one at a time is correct for a get/set pair as well: a descriptor
-     * only changes the fields it names, so a later setter keeps the getter beside it.
+     * A class member is not enumerable, which a plain assignment cannot express, and an
+     * accessor is not expressible as an assignment at all - the class body has no object
+     * literal to carry one the way an object literal member would. A call to
+     * {@code Object.defineProperty} would express both, but it would read {@code Object}
+     * out of whatever scope the class is written in, so a local of that name would break
+     * every class below it. A runtime request names nothing.
+     *
+     * @param memberToken token the synthetic node is attributed to
+     * @param target the object to define the member on
+     * @param key the member name, which may be an expression
+     * @param value the member, a method or one half of an accessor pair
+     * @param getter TRUE or FALSE for an accessor, null for a method
+     * @return the definition
+     */
+    private Expression defineMember(final long memberToken, final Expression target, final Expression key,
+            final Expression value, final Boolean getter) {
+        final long token = Token.recast(memberToken, IDENT);
+
+        return getter == null ? new RuntimeNode(token, finish, RuntimeNode.Request.DEFINE_METHOD, target, key, value)
+                : new RuntimeNode(token, finish, RuntimeNode.Request.DEFINE_ACCESSOR, target, key, value,
+                        LiteralNode.newInstance(token, finish, getter.booleanValue()));
+    }
+
+    /**
+     * {@code Object.defineProperty(target, key, {get: fn, configurable: true, enumerable: ..})},
+     * for an accessor of an object literal whose key is an expression. An accessor is
+     * not expressible as an assignment, and an object literal cannot carry a computed
+     * key, so the property is defined after the literal is built.
      *
      * @param memberToken token the synthetic nodes are attributed to
      * @param memberLine line the synthetic nodes are attributed to
@@ -3285,8 +3309,7 @@ public class Parser extends AbstractParser implements Loggable {
      * @param key the property name, which may be an expression
      * @param accessor the parsed accessor
      * @param getter true for a getter, false for a setter
-     * @param enumerable whether the property is enumerable, which a member of an object
-     *                   literal is and a class member is not
+     * @param enumerable whether the property is enumerable
      * @return the defineProperty call
      */
     private Expression defineAccessor(final long memberToken, final int memberLine, final Expression target,
@@ -3347,16 +3370,23 @@ public class Parser extends AbstractParser implements Loggable {
         // CLASS tested in caller.
         next();
 
-        IdentNode className = null;
-
-        if (type == IDENT || isNonStrictModeIdent()) {
-            className = getIdent();
-            verifyStrictIdent(className, "class name");
-        }
-
+        final boolean prevStrictMode = isStrictMode;
         final boolean prevInSubclass = inSubclass;
         final boolean prevSuperUsable = superUsable;
+        // Everything from the class keyword to the closing brace is strict code, and
+        // newFunctionNode reads this flag, so every method the body defines is strict
+        // too. Re-parsing one lazily keeps that: RecompilableScriptFunctionData hands
+        // its own strictness to the parser it opens, so a method reparsed from a source
+        // range with no class keyword in it is still strict.
+        isStrictMode = true;
         try {
+            IdentNode className = null;
+
+            if (type == IDENT || isNonStrictModeIdent()) {
+                className = getIdent();
+                verifyStrictIdent(className, "class name");
+            }
+
             Expression superClass = null;
 
             if (type == EXTENDS) {
@@ -3417,9 +3447,8 @@ public class Parser extends AbstractParser implements Loggable {
                     final Expression accessorKey = accessor.computedKey != null ? accessor.computedKey
                             : LiteralNode.newInstance(memberToken, finish, accessor.ident.getPropertyName());
 
-                    members.add(defineAccessor(memberToken, memberLine,
-                            memberTarget(memberToken, classTemporary, isStatic), accessorKey, accessor.functionNode,
-                            getter, false));
+                    members.add(defineMember(memberToken, memberTarget(memberToken, classTemporary, isStatic),
+                            accessorKey, accessor.functionNode, Boolean.valueOf(getter)));
 
                     continue;
                 }
@@ -3455,13 +3484,12 @@ public class Parser extends AbstractParser implements Loggable {
                 }
 
                 final FunctionNode method = methodDefinition(methodToken, memberLine, memberName);
-                final Expression target = memberKey == null
-                        ? new AccessNode(Token.recast(memberToken, TokenType.PERIOD), finish,
-                                memberTarget(memberToken, classTemporary, isStatic), memberName.getName())
-                        : new IndexNode(Token.recast(memberToken, LBRACKET), finish,
-                                memberTarget(memberToken, classTemporary, isStatic), memberKey);
+                final Expression methodKey = memberKey == null
+                        ? LiteralNode.newInstance(memberToken, finish, memberName.getName())
+                        : memberKey;
 
-                members.add(new BinaryNode(Token.recast(memberToken, TokenType.ASSIGN), target, method));
+                members.add(defineMember(memberToken, memberTarget(memberToken, classTemporary, isStatic), methodKey,
+                        method, null));
             }
 
             expect(RBRACE);
@@ -3506,6 +3534,7 @@ public class Parser extends AbstractParser implements Loggable {
 
             return result;
         } finally {
+            isStrictMode = prevStrictMode;
             inSubclass = prevInSubclass;
             superUsable = prevSuperUsable;
         }

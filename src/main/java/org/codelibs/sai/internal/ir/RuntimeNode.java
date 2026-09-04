@@ -90,7 +90,11 @@ public class RuntimeNode extends Expression {
         /** Copy the elements of an array-like value into an array, for ES6 spread */
         TO_ARRAY,
         /** Look up or build the frozen strings object a tagged template hands its tag */
-        TEMPLATE_OBJECT;
+        TEMPLATE_OBJECT,
+        /** Define a non-enumerable method, for an ES6 class body */
+        DEFINE_METHOD,
+        /** Define a non-enumerable accessor, for an ES6 class body */
+        DEFINE_ACCESSOR;
 
         /** token type */
         private final TokenType tokenType;
