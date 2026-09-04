@@ -51,11 +51,12 @@ public class JdkRegExp extends RegExp {
      *
      * @param source RegExp source string
      * @param flags RegExp flag string
+     * @param es6 whether the ES6 flags are accepted
      * @throws ParserException if flags is invalid or source string has syntax error.
      */
     @SuppressWarnings("this-escape")
-    public JdkRegExp(final String source, final String flags) throws ParserException {
-        super(source, flags);
+    public JdkRegExp(final String source, final String flags, final boolean es6) throws ParserException {
+        super(source, flags, es6);
 
         int intFlags = 0;
 
@@ -108,6 +109,19 @@ public class JdkRegExp extends RegExp {
         @Override
         public boolean search(final int start) {
             return defaultMatcher.find(start);
+        }
+
+        @Override
+        public boolean match(final int start) {
+            // The region only decides where the match may begin. Turning the anchoring bounds
+            // off and the transparent bounds on keeps ^, $, lookahead and lookbehind looking at
+            // the whole input, which is what a sticky match is supposed to do. A matcher is only
+            // ever driven in one of the two modes, so the bounds outliving this call is harmless.
+            defaultMatcher.region(start, input.length());
+            defaultMatcher.useAnchoringBounds(false);
+            defaultMatcher.useTransparentBounds(true);
+
+            return defaultMatcher.lookingAt();
         }
 
         @Override

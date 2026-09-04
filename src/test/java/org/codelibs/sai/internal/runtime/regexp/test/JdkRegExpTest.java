@@ -26,9 +26,11 @@
 package org.codelibs.sai.internal.runtime.regexp.test;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
+import org.codelibs.sai.internal.runtime.ParserException;
 import org.codelibs.sai.internal.runtime.regexp.RegExp;
 import org.codelibs.sai.internal.runtime.regexp.RegExpFactory;
 import org.codelibs.sai.internal.runtime.regexp.RegExpMatcher;
@@ -47,7 +49,7 @@ public class JdkRegExpTest {
      */
     @Test
     public void testMatcher() {
-        final RegExp regexp = new RegExpFactory().compile("f(o)o", "");
+        final RegExp regexp = new RegExpFactory().compile("f(o)o", "", false);
         final RegExpMatcher matcher = regexp.match("foo");
         assertNotNull(matcher);
         assertTrue(matcher.search(0));
@@ -59,5 +61,39 @@ public class JdkRegExpTest {
         assertEquals(matcher.group(1), "o");
         assertEquals(matcher.start(1), 1);
         assertEquals(matcher.end(1), 2);
+    }
+
+    /**
+     * A sticky regular expression matches where the match is asked to start and nowhere
+     * else, while anchors keep looking at the whole input.
+     */
+    @Test
+    public void testStickyMatcher() {
+        final RegExp regexp = new RegExpFactory().compile("yy", "y", true);
+        assertTrue(regexp.isSticky());
+
+        final RegExpMatcher matcher = regexp.match("xxxyyxx");
+        assertNotNull(matcher);
+        assertFalse(matcher.match(2));
+        assertTrue(matcher.match(3));
+        assertEquals(matcher.start(), 3);
+        assertEquals(matcher.end(), 5);
+
+        final RegExpMatcher anchored = new RegExpFactory().compile("^y", "y", true).match("xy");
+        assertNotNull(anchored);
+        assertFalse(anchored.match(1));
+    }
+
+    /**
+     * The ES6 flags are only accepted when the caller asks for them.
+     */
+    @Test
+    public void testStickyFlagRejectedWithoutEs6() {
+        try {
+            new RegExpFactory().compile("yy", "y", false);
+            throw new AssertionError("expected the y flag to be rejected");
+        } catch (final ParserException e) {
+            assertTrue(e.getMessage().contains("y"), e.getMessage());
+        }
     }
 }

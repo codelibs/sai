@@ -80,7 +80,7 @@ public final class NativeRegExp extends ScriptObject {
     NativeRegExp(final String input, final String flagString, final Global global, final ScriptObject proto) {
         super(proto, $saigenmap$);
         try {
-            this.regexp = RegExpFactory.create(input, flagString);
+            this.regexp = RegExpFactory.create(input, flagString, global.getContext().getEnv()._es6);
         } catch (final ParserException e) {
             // translate it as SyntaxError object and throw it
             e.throwAsEcmaException();
@@ -254,8 +254,12 @@ public final class NativeRegExp extends ScriptObject {
         return new NativeRegExp(sb == null ? string : sb.toString(), "");
     }
 
+    /**
+     * The flags of this regexp, in the order ES6 21.2.5.3 fixes: g, i, m, u, y. Both
+     * toString and the flags getter read them from here.
+     */
     private String getFlagString() {
-        final StringBuilder sb = new StringBuilder(3);
+        final StringBuilder sb = new StringBuilder(5);
 
         if (regexp.isGlobal()) {
             sb.append('g');
@@ -265,6 +269,9 @@ public final class NativeRegExp extends ScriptObject {
         }
         if (regexp.isMultiline()) {
             sb.append('m');
+        }
+        if (regexp.isSticky()) {
+            sb.append('y');
         }
 
         return sb.toString();
@@ -383,8 +390,9 @@ public final class NativeRegExp extends ScriptObject {
      * ES6 21.2.5.3 flags
      *
      * The flags of this regexp as a string, in the order the specification
-     * fixes: g, i, m, u, y. Sai has no u or y flag, so only the first three
-     * can ever appear.
+     * fixes: g, i, m, u, y. This is the same string toString puts after the
+     * closing slash, so the two are read off one place and cannot drift apart
+     * as flags are added.
      *
      * ES6 makes flags configurable, unlike source and global next door, but it
      * still has no setter. NOT_WRITABLE is what makes an assignment to it take
@@ -398,20 +406,18 @@ public final class NativeRegExp extends ScriptObject {
      */
     @Getter(attributes = Attribute.NOT_ENUMERABLE | Attribute.NOT_WRITABLE)
     public static Object flags(final Object self) {
-        final RegExp regexp = checkRegExp(self).getRegExp();
-        final StringBuilder sb = new StringBuilder(3);
+        return checkRegExp(self).getFlagString();
+    }
 
-        if (regexp.isGlobal()) {
-            sb.append('g');
-        }
-        if (regexp.isIgnoreCase()) {
-            sb.append('i');
-        }
-        if (regexp.isMultiline()) {
-            sb.append('m');
-        }
-
-        return sb.toString();
+    /**
+     * ES6 21.2.5.12 sticky
+     *
+     * @param self self reference
+     * @return true if this regexp is flagged sticky, false otherwise
+     */
+    @Getter(attributes = Attribute.NON_ENUMERABLE_CONSTANT)
+    public static Object sticky(final Object self) {
+        return checkRegExp(self).getRegExp().isSticky();
     }
 
     /**
@@ -579,28 +585,30 @@ public final class NativeRegExp extends ScriptObject {
     }
 
     private RegExpResult execInner(final String string) {
-        final boolean isGlobal = regexp.isGlobal();
-        int start = getLastIndex();
-        if (!isGlobal) {
-            start = 0;
-        }
+        // ES6 21.2.5.2.2: a sticky regexp reads and writes lastIndex just like a global one,
+        // the difference is only that it has to match at lastIndex rather than at or after it.
+        final boolean usesLastIndex = regexp.isGlobal() || regexp.isSticky();
+        // ECMA 15.10.6.3 reads lastIndex before it looks at the flags, and JDK-8011394 pins
+        // that down: a non-global regexp still has to call valueOf on it.
+        final int lastIndexValue = getLastIndex();
+        final int start = usesLastIndex ? lastIndexValue : 0;
 
         if (start < 0 || start > string.length()) {
-            if (isGlobal) {
+            if (usesLastIndex) {
                 setLastIndex(0);
             }
             return null;
         }
 
         final RegExpMatcher matcher = regexp.match(string);
-        if (matcher == null || !matcher.search(start)) {
-            if (isGlobal) {
+        if (matcher == null || !matchAt(matcher, start)) {
+            if (usesLastIndex) {
                 setLastIndex(0);
             }
             return null;
         }
 
-        if (isGlobal) {
+        if (usesLastIndex) {
             setLastIndex(matcher.end());
         }
 
@@ -609,7 +617,18 @@ public final class NativeRegExp extends ScriptObject {
         return match;
     }
 
+    /**
+     * Find the next match at or after {@code index}, or, for a sticky regexp, at {@code index}
+     * and nowhere else.
+     */
+    private boolean matchAt(final RegExpMatcher matcher, final int index) {
+        return regexp.isSticky() ? matcher.match(index) : matcher.search(index);
+    }
+
     // String.prototype.split method ignores the global flag and should not update lastIndex property.
+    // ES6 21.2.5.11 splits with a sticky clone of the regexp, trying every position from the last
+    // split point onwards, which is what searching forward from that point already does. So split
+    // deliberately keeps using search even when the regexp is sticky.
     private RegExpResult execSplit(final String string, final int start) {
         if (start < 0 || start > string.length()) {
             return null;
@@ -697,8 +716,20 @@ public final class NativeRegExp extends ScriptObject {
         }
 
         if (!regexp.isGlobal()) {
-            if (!matcher.search(0)) {
+            // Non-global replace performs a single RegExpExec, so a sticky regexp starts from
+            // lastIndex, has to match right there, and updates lastIndex either way.
+            final boolean isSticky = regexp.isSticky();
+            final int start = isSticky ? getLastIndex() : 0;
+
+            if (start < 0 || start > string.length() || !matchAt(matcher, start)) {
+                if (isSticky) {
+                    setLastIndex(0);
+                }
                 return string;
+            }
+
+            if (isSticky) {
+                setLastIndex(matcher.end());
             }
 
             final StringBuilder sb = new StringBuilder();
@@ -716,7 +747,7 @@ public final class NativeRegExp extends ScriptObject {
 
         setLastIndex(0);
 
-        if (!matcher.search(0)) {
+        if (!matchAt(matcher, 0)) {
             return string;
         }
 
@@ -748,7 +779,7 @@ public final class NativeRegExp extends ScriptObject {
             } else {
                 previousLastIndex = thisIndex;
             }
-        } while (previousLastIndex <= string.length() && matcher.search(previousLastIndex));
+        } while (previousLastIndex <= string.length() && matchAt(matcher, previousLastIndex));
 
         sb.append(string, thisIndex, string.length());
 

@@ -50,6 +50,9 @@ public abstract class RegExp {
     /** Multi-line flag for this regexp */
     private boolean multiline;
 
+    /** Sticky flag for this regexp */
+    private boolean sticky;
+
     /** BitVector that keeps track of groups in negative lookahead */
     protected BitVector groupsInNegativeLookahead;
 
@@ -58,8 +61,9 @@ public abstract class RegExp {
      *
      * @param source the source string
      * @param flags the flags string
+     * @param es6 whether the ES6 flags are accepted; {@code y} is a syntax error without it
      */
-    protected RegExp(final String source, final String flags) {
+    protected RegExp(final String source, final String flags, final boolean es6) {
         this.source = source.length() == 0 ? "(?:)" : source;
         for (int i = 0; i < flags.length(); i++) {
             final char ch = flags.charAt(i);
@@ -81,6 +85,15 @@ public abstract class RegExp {
                     throwParserException("repeated.flag", "m");
                 }
                 this.multiline = true;
+                break;
+            case 'y':
+                if (!es6) {
+                    throwParserException("unsupported.flag", "y");
+                }
+                if (this.sticky) {
+                    throwParserException("repeated.flag", "y");
+                }
+                this.sticky = true;
                 break;
             default:
                 throwParserException("unsupported.flag", Character.toString(ch));
@@ -131,6 +144,16 @@ public abstract class RegExp {
      */
     public boolean isMultiline() {
         return multiline;
+    }
+
+    /**
+     * Get the sticky flag of this regular expression. A sticky regular expression only
+     * matches at the index the search starts at, it never scans forward for a match.
+     *
+     * @return the sticky flag
+     */
+    public boolean isSticky() {
+        return sticky;
     }
 
     /**
