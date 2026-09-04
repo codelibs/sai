@@ -1,0 +1,11 @@
+getPrototypeOf threw TypeError for 7 of 7
+getOwnPropertyDescriptor threw TypeError for 7 of 7
+getOwnPropertyNames threw TypeError for 7 of 7
+seal threw TypeError for 7 of 7
+freeze threw TypeError for 7 of 7
+preventExtensions threw TypeError for 7 of 7
+isSealed threw TypeError for 7 of 7
+isFrozen threw TypeError for 7 of 7
+isExtensible threw TypeError for 7 of 7
+keys threw TypeError for 7 of 7
+null

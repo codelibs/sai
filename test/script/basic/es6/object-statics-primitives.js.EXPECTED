@@ -1,0 +1,52 @@
+true
+true
+true
+true
+true
+undefined
+{"configurable":false,"enumerable":true,"writable":false,"value":"a"}
+undefined
+0,length
+length
+
+0
+0,1
+0
+0
+0
+true
+true
+true
+true
+true
+true
+true
+true
+false
+true
+true
+false
+getPrototypeOf(null) -> true
+getPrototypeOf(undefined) -> true
+getOwnPropertyDescriptor(null) -> true
+getOwnPropertyDescriptor(undefined) -> true
+getOwnPropertyNames(null) -> true
+getOwnPropertyNames(undefined) -> true
+seal(null) -> true
+seal(undefined) -> true
+freeze(null) -> true
+freeze(undefined) -> true
+preventExtensions(null) -> true
+preventExtensions(undefined) -> true
+isSealed(null) -> true
+isSealed(undefined) -> true
+isFrozen(null) -> true
+isFrozen(undefined) -> true
+isExtensible(null) -> true
+isExtensible(undefined) -> true
+keys(null) -> true
+keys(undefined) -> true
+a,b
+true
+true
+null

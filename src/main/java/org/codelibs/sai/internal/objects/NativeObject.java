@@ -138,6 +138,49 @@ public final class NativeObject {
     }
 
     /**
+     * ES6 19.1.2 relaxed the {@code Object} statics that inspect an object: where
+     * ES5.1 raised a {@code TypeError} for a primitive, ES6 runs {@code ToObject}
+     * on it first, so {@code Object.keys("ab")} answers {@code ["0", "1"]}.
+     * That is a change of an existing operation rather than a new one, so sai
+     * keeps the ES5.1 {@code TypeError} at the default language level and only
+     * relaxes it under {@code --language=es6}.
+     *
+     * {@code null} and {@code undefined} keep throwing either way: they have no
+     * wrapper object, and {@code ToObject} rejects them in ES6 too.
+     *
+     * @param obj the argument the caller was handed
+     * @return the wrapper object, or {@code null} when the caller should raise
+     *         the ES5.1 {@code TypeError} instead
+     */
+    private static ScriptObject es6ToObject(final Object obj) {
+        if (!Global.getEnv()._es6) {
+            return null;
+        }
+        final Object wrapped = Global.toObject(obj); // TypeError for null and undefined
+        return wrapped instanceof ScriptObject ? (ScriptObject) wrapped : null;
+    }
+
+    /**
+     * The integrity-level statics - {@code seal}, {@code freeze},
+     * {@code preventExtensions} and their three queries - were relaxed by the
+     * same ES6 change, but they never look inside the argument: a primitive is
+     * simply handed back, and is reported as sealed, frozen and not extensible.
+     * There is nothing to wrap, so this only reports whether the relaxed rule
+     * applies, raising the {@code TypeError} for {@code null} and
+     * {@code undefined} on the way.
+     *
+     * @param obj the argument the caller was handed
+     * @return true if the ES6 rule applies, false to raise the ES5.1 {@code TypeError}
+     */
+    private static boolean es6AcceptsNonObject(final Object obj) {
+        if (!Global.getEnv()._es6) {
+            return false;
+        }
+        Global.checkObjectCoercible(obj); // TypeError for null and undefined
+        return true;
+    }
+
+    /**
      * Sai extension: setIndexedPropertiesToExternalArrayData
      *
      * @param self self reference
@@ -178,6 +221,11 @@ public final class NativeObject {
             }
 
             // must be some JS primitive
+            final ScriptObject wrapped = es6ToObject(obj);
+            if (wrapped != null) {
+                return wrapped.getProto();
+            }
+
             throw notAnObject(obj);
         }
     }
@@ -225,6 +273,11 @@ public final class NativeObject {
 
             return sobjMirror.getOwnPropertyDescriptor(key);
         } else {
+            final ScriptObject wrapped = es6ToObject(obj);
+            if (wrapped != null) {
+                return wrapped.getOwnPropertyDescriptor(JSType.toString(prop));
+            }
+
             throw notAnObject(obj);
         }
     }
@@ -243,6 +296,11 @@ public final class NativeObject {
         } else if (obj instanceof ScriptObjectMirror) {
             return new NativeArray(((ScriptObjectMirror) obj).getOwnKeys(true));
         } else {
+            final ScriptObject wrapped = es6ToObject(obj);
+            if (wrapped != null) {
+                return new NativeArray(wrapped.getOwnKeys(true));
+            }
+
             throw notAnObject(obj);
         }
     }
@@ -324,6 +382,8 @@ public final class NativeObject {
             return ((ScriptObject) obj).seal();
         } else if (obj instanceof ScriptObjectMirror) {
             return ((ScriptObjectMirror) obj).seal();
+        } else if (es6AcceptsNonObject(obj)) {
+            return obj;
         } else {
             throw notAnObject(obj);
         }
@@ -342,6 +402,8 @@ public final class NativeObject {
             return ((ScriptObject) obj).freeze();
         } else if (obj instanceof ScriptObjectMirror) {
             return ((ScriptObjectMirror) obj).freeze();
+        } else if (es6AcceptsNonObject(obj)) {
+            return obj;
         } else {
             throw notAnObject(obj);
         }
@@ -360,6 +422,8 @@ public final class NativeObject {
             return ((ScriptObject) obj).preventExtensions();
         } else if (obj instanceof ScriptObjectMirror) {
             return ((ScriptObjectMirror) obj).preventExtensions();
+        } else if (es6AcceptsNonObject(obj)) {
+            return obj;
         } else {
             throw notAnObject(obj);
         }
@@ -378,6 +442,8 @@ public final class NativeObject {
             return ((ScriptObject) obj).isSealed();
         } else if (obj instanceof ScriptObjectMirror) {
             return ((ScriptObjectMirror) obj).isSealed();
+        } else if (es6AcceptsNonObject(obj)) {
+            return true;
         } else {
             throw notAnObject(obj);
         }
@@ -396,6 +462,8 @@ public final class NativeObject {
             return ((ScriptObject) obj).isFrozen();
         } else if (obj instanceof ScriptObjectMirror) {
             return ((ScriptObjectMirror) obj).isFrozen();
+        } else if (es6AcceptsNonObject(obj)) {
+            return true;
         } else {
             throw notAnObject(obj);
         }
@@ -414,6 +482,8 @@ public final class NativeObject {
             return ((ScriptObject) obj).isExtensible();
         } else if (obj instanceof ScriptObjectMirror) {
             return ((ScriptObjectMirror) obj).isExtensible();
+        } else if (es6AcceptsNonObject(obj)) {
+            return false;
         } else {
             throw notAnObject(obj);
         }
@@ -435,6 +505,11 @@ public final class NativeObject {
             final ScriptObjectMirror sobjMirror = (ScriptObjectMirror) obj;
             return new NativeArray(sobjMirror.getOwnKeys(false));
         } else {
+            final ScriptObject wrapped = es6ToObject(obj);
+            if (wrapped != null) {
+                return new NativeArray(wrapped.getOwnKeys(false));
+            }
+
             throw notAnObject(obj);
         }
     }
