@@ -1458,8 +1458,8 @@ public class Parser extends AbstractParser implements Loggable {
                 return;
             }
 
-            if (isES6() && isForInPattern()) {
-                forNode = forInPattern(forNode, startLine);
+            if (isES6() && isForInLowered()) {
+                forNode = forIn(forNode, startLine);
                 appendStatement(forNode);
 
                 return;
@@ -1791,44 +1791,90 @@ public class Parser extends AbstractParser implements Loggable {
     }
 
     /**
-     * Parse a for-in head whose loop variable is a destructuring pattern, and its body.
-     * The loop itself iterates a temporary, and the pattern is taken apart from that
-     * temporary at the top of the body:
+     * Look ahead for a for-in head that has to be rewritten: one whose loop variable is
+     * a destructuring pattern, and one that declares a plain name with let or const.
+     * As with for-of this has to be known before the head is parsed, because either way
+     * the variable is declared inside the body rather than around the loop.
+     *
+     * A var or a bare assignment target needs none of that and is left to the ordinary
+     * for-in path.
+     *
+     * @return true if a for-in head that needs rewriting starts at the current token
+     */
+    private boolean isForInLowered() {
+        return lookahead(this::isForInLoweredAhead);
+    }
+
+    private boolean isForInLoweredAhead() {
+        final TokenType declaration = T(k);
+        final int variable = declaration == TokenType.VAR || declaration == LET || declaration == CONST ? k + 1 : k;
+
+        if (T(variable) != LBRACKET && T(variable) != LBRACE && declaration != LET && declaration != CONST) {
+            return false;
+        }
+
+        final int i = skipForVariable();
+
+        return i >= 0 && T(i) == TokenType.IN;
+    }
+
+    /**
+     * Parse the head and body of a for-in loop whose variable is a destructuring pattern
+     * or a let or const declaration:
      *
      * <pre>
+     * for (let k in obj) body;
      * for (var [i, j] in obj) body;
      * </pre>
      * <pre>
+     * for (:pt0 in obj) { let k = :pt0; { body } }
      * for (:pt0 in obj) { var i = :pt0[0]; var j = :pt0[1]; { body } }
      * </pre>
      *
+     * The loop itself iterates a temporary and the variable is bound from it at the top
+     * of the body. Binding inside the body rather than around the loop is what gives a
+     * let or a const one binding per iteration: the body block gets a fresh scope every
+     * time round, so a closure made there captures that iteration's value, and a const
+     * is initialised rather than assigned to - which is also why the head of such a loop
+     * needs no initializer for a const.
+     *
      * The key a for-in hands over is always a string, so an array pattern reads it out
      * character by character, which follows from patterns reading by index.
-     *
-     * As in a for-of, the bindings are declared inside the body rather than around the
-     * loop, so a let binding is fresh on every iteration.
      *
      * @param forNodeArg the loop being built
      * @param forLine    line the loop starts on
      * @return the completed loop
      */
-    private ForNode forInPattern(final ForNode forNodeArg, final int forLine) {
+    private ForNode forIn(final ForNode forNodeArg, final int forLine) {
         ForNode forNode = forNodeArg;
-
-        if (forNode.isForEach()) {
-            throw error(AbstractParser.message("no.pattern.in.for.each"), token);
-        }
+        final long headToken = token;
 
         TokenType declarationType = null;
+        long declarationToken = 0L;
 
         if (type == TokenType.VAR || type == LET || type == CONST) {
             declarationType = type;
+            declarationToken = token;
             next();
         }
 
-        // The leaves of a pattern with no declaration are assignment targets rather than
-        // names to declare, the same distinction destructuringAssignment makes.
-        final List<Binding> pattern = destructuringPattern(declarationType == null);
+        final List<Binding> pattern;
+        final IdentNode name;
+
+        if (type == LBRACKET || type == LBRACE) {
+            if (forNode.isForEach()) {
+                throw error(AbstractParser.message("no.pattern.in.for.each"), headToken);
+            }
+
+            // The leaves of a pattern with no declaration are assignment targets rather
+            // than names to declare, the same distinction destructuringAssignment makes.
+            pattern = destructuringPattern(declarationType == null);
+            name = null;
+        } else {
+            pattern = null;
+            name = getIdent();
+            verifyStrictIdent(name, "for-in iterator");
+        }
 
         final long inToken = token;
         expect(TokenType.IN);
@@ -1843,9 +1889,16 @@ public class Parser extends AbstractParser implements Loggable {
 
         expect(RPAREN);
 
+        final int varFlags = declarationType == LET ? VarNode.IS_LET : declarationType == CONST ? VarNode.IS_CONST : 0;
+
         Block body = newBlock();
         try {
-            if (declarationType == null) {
+            if (pattern == null) {
+                // Only a let or a const reaches here with a plain name; a var keeps its
+                // single loop-wide binding on the ordinary path.
+                appendStatement(new VarNode(forLine, declarationToken, finish, name.setIsDeclaredHere(),
+                        identifierFor(inToken, keyName), varFlags));
+            } else if (declarationType == null) {
                 final List<Expression> steps = new ArrayList<>();
                 assignBindings(keyName, pattern, steps);
 
@@ -1859,9 +1912,6 @@ public class Parser extends AbstractParser implements Loggable {
                     appendStatement(new ExpressionStatement(forLine, inToken, finish, result));
                 }
             } else {
-                final int varFlags = declarationType == LET ? VarNode.IS_LET
-                        : declarationType == CONST ? VarNode.IS_CONST : 0;
-
                 final List<Statement> statements = new ArrayList<>();
                 declareBindings(keyName, pattern, forLine, varFlags, new ArrayList<VarNode>(), statements);
 

@@ -1,0 +1,17 @@
+a,b,c
+x,y
+c,c,c
+a,c
+a,b
+ReferenceError
+p,q
+inner/outer
+written
+TypeError: Assignment to constant "c"
+10,20
+0
+ab,cd
+ef,gh
+3,2
+z,z
+pq
