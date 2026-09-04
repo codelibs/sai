@@ -270,6 +270,9 @@ public final class NativeRegExp extends ScriptObject {
         if (regexp.isMultiline()) {
             sb.append('m');
         }
+        if (regexp.isUnicode()) {
+            sb.append('u');
+        }
         if (regexp.isSticky()) {
             sb.append('y');
         }
@@ -418,6 +421,17 @@ public final class NativeRegExp extends ScriptObject {
     @Getter(attributes = Attribute.NON_ENUMERABLE_CONSTANT)
     public static Object sticky(final Object self) {
         return checkRegExp(self).getRegExp().isSticky();
+    }
+
+    /**
+     * ES6 21.2.5.15 unicode
+     *
+     * @param self self reference
+     * @return true if this regexp is flagged unicode, false otherwise
+     */
+    @Getter(attributes = Attribute.NON_ENUMERABLE_CONSTANT)
+    public static Object unicode(final Object self) {
+        return checkRegExp(self).getRegExp().isUnicode();
     }
 
     /**

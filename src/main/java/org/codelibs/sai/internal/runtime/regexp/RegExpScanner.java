@@ -68,6 +68,12 @@ final class RegExpScanner extends Scanner {
     /** Are we currently inside a negated character class? */
     private boolean inNegativeClass = false;
 
+    /** Is the pattern being rewritten for java.util.regex rather than for Joni? */
+    private final boolean javaUtilRegex;
+
+    /** Is the pattern flagged with 'u', so that \\u{...} is a code point escape? */
+    private final boolean unicodeMode;
+
     private static final String NON_IDENT_ESCAPES = "$^*+(){}[]|\\.?-";
 
     private static class Capture {
@@ -99,9 +105,13 @@ final class RegExpScanner extends Scanner {
     /**
      * Constructor
      * @param string the JavaScript regexp to parse
+     * @param javaUtilRegex true if the result is handed to java.util.regex rather than to Joni
+     * @param unicodeMode true if the regexp carries the 'u' flag
      */
-    private RegExpScanner(final String string) {
+    private RegExpScanner(final String string, final boolean javaUtilRegex, final boolean unicodeMode) {
         super(string);
+        this.javaUtilRegex = javaUtilRegex;
+        this.unicodeMode = unicodeMode;
         sb = new StringBuilder(limit);
         reset(0);
         expected.put(']', 0);
@@ -131,10 +141,16 @@ final class RegExpScanner extends Scanner {
      *
      * @param string
      *            JavaScript regexp string.
+     * @param javaUtilRegex
+     *            true if the result is handed to java.util.regex rather than to Joni. The two
+     *            need different rewrites, and since the 'u' flag picks the engine per pattern
+     *            this cannot be read off the installed factory.
+     * @param unicodeMode
+     *            true if the regexp carries the 'u' flag.
      * @return Java safe regex string.
      */
-    public static RegExpScanner scan(final String string) {
-        final RegExpScanner scanner = new RegExpScanner(string);
+    public static RegExpScanner scan(final String string, final boolean javaUtilRegex, final boolean unicodeMode) {
+        final RegExpScanner scanner = new RegExpScanner(string, javaUtilRegex, unicodeMode);
 
         try {
             scanner.disjunction();
@@ -573,7 +589,46 @@ final class RegExpScanner extends Scanner {
     }
 
     private boolean unicodeEscapeSequence() {
+        if (unicodeMode && ch0 == 'u' && ch1 == '{') {
+            return unicodeCodePointEscape();
+        }
         return scanEscapeSequence('u', 4);
+    }
+
+    /*
+     * RegExpUnicodeEscapeSequence ::
+     *      u{ CodePoint }
+     *
+     * ES6 21.2.1, only reachable with the 'u' flag, which also means the pattern is on its
+     * way to java.util.regex. The backslash is already in the output, so writing "x{...}"
+     * after it turns the escape into the \x{...} java.util.regex spells the same thing.
+     */
+    private boolean unicodeCodePointEscape() {
+        skip(2); // "u{"
+
+        final StringBuilder hex = new StringBuilder();
+        while (isHexDigit(ch0)) {
+            hex.append(ch0);
+            skip(1);
+        }
+
+        // Eight digits is far more than 0x10FFFF needs and keeps the parse below a long.
+        // Under the u flag a malformed escape is an error rather than a literal "u{...}";
+        // silently matching the text of the typo would be worse than refusing it.
+        if (hex.length() == 0 || hex.length() > 8 || ch0 != '}'
+                || Long.parseLong(hex.toString(), 16) > Character.MAX_CODE_POINT) {
+            // will be converted to PatternSyntaxException
+            throw new RuntimeException("Invalid Unicode code point escape");
+        }
+
+        skip(1); // "}"
+        sb.append('x').append('{').append(hex).append('}');
+        return true;
+    }
+
+    private static boolean isHexDigit(final char ch) {
+        final char lower = Character.toLowerCase(ch);
+        return isDecimalDigit(ch) || (lower >= 'a' && lower <= 'f');
     }
 
     /*
@@ -713,7 +768,7 @@ final class RegExpScanner extends Scanner {
         switch (ch0) {
         // java.util.regex requires translation of \s and \S to explicit character list
         case 's':
-            if (RegExpFactory.usesJavaUtilRegex()) {
+            if (javaUtilRegex) {
                 sb.setLength(sb.length() - 1);
                 // No nested class required if we already are inside a character class
                 if (inCharClass) {
@@ -726,7 +781,7 @@ final class RegExpScanner extends Scanner {
             }
             return commit(1);
         case 'S':
-            if (RegExpFactory.usesJavaUtilRegex()) {
+            if (javaUtilRegex) {
                 sb.setLength(sb.length() - 1);
                 // In negative class we must use intersection to get double negation ("not anything else than space")
                 sb.append(inNegativeClass ? "&&[" : "[^").append(Lexer.getWhitespaceRegExp()).append(']');

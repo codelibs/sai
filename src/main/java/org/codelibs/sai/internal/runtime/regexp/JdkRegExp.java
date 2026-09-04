@@ -71,7 +71,7 @@ public class JdkRegExp extends RegExp {
             RegExpScanner parsed;
 
             try {
-                parsed = RegExpScanner.scan(source);
+                parsed = RegExpScanner.scan(source, true, isUnicode());
             } catch (final PatternSyntaxException e) {
                 // refine the exception with a better syntax error, if this
                 // passes, just rethrow what we have
