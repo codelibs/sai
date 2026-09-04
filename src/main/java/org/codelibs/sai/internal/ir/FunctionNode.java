@@ -251,6 +251,13 @@ public final class FunctionNode extends LexicalContextExpression implements Flag
      */
     public static final int IS_CLASS_CONSTRUCTOR = 1 << 29;
 
+    /**
+     * Is this function the nearest non-arrow enclosing function of an arrow function
+     * that uses {@code arguments}? Such a function declares the binding those arrows
+     * read instead of an arguments object of their own.
+     */
+    public static final int USES_ARROW_ARGUMENTS = 1 << 30;
+
     /** extension callsite flags mask */
     public static final int EXTENSION_CALLSITE_FLAGS = IS_PRINT_PARSE | IS_PRINT_LOWER_PARSE | IS_PRINT_AST | IS_PRINT_LOWER_AST
             | IS_PRINT_SYMBOLS | IS_PROFILE | IS_TRACE_ENTEREXIT | IS_TRACE_MISSES | IS_TRACE_VALUES;

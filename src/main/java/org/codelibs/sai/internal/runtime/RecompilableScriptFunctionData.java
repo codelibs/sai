@@ -345,7 +345,9 @@ public final class RecompilableScriptFunctionData extends ScriptFunctionData imp
     }
 
     private static int getDataFlags(final FunctionNode functionNode) {
-        int flags = IS_CONSTRUCTOR;
+        // An arrow function is not a constructor: ES6 gives it no [[Construct]], and no
+        // prototype property for one to build instances from.
+        int flags = functionNode.getKind() == FunctionNode.Kind.ARROW ? IS_ARROW : IS_CONSTRUCTOR;
         if (functionNode.isStrict()) {
             flags |= IS_STRICT;
         }

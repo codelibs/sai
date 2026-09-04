@@ -125,6 +125,9 @@ public class ScriptFunction extends ScriptObject {
     private static final PropertyMap boundfunctionmap$;
     // property map for non-strict, non-bound functions.
     private static final PropertyMap map$;
+    // property maps for arrow functions, which have no "prototype" property
+    private static final PropertyMap arrowmap$;
+    private static final PropertyMap strictarrowmap$;
 
     // Marker object for lazily initialized prototype object
     private static final Object LAZY_PROTOTYPE = new Object();
@@ -144,6 +147,12 @@ public class ScriptFunction extends ScriptObject {
         return strictModeMap.deleteProperty(strictModeMap.findProperty("prototype"));
     }
 
+    private static PropertyMap createArrowMap(final PropertyMap map) {
+        // An arrow function is not a constructor, so it has no "prototype" property for
+        // one to build instances from, the same way a bound function has none.
+        return map.deleteProperty(map.findProperty("prototype"));
+    }
+
     static {
         anonmap$ = PropertyMap.newMap();
         final ArrayList<Property> properties = new ArrayList<>(3);
@@ -155,6 +164,8 @@ public class ScriptFunction extends ScriptObject {
         map$ = PropertyMap.newMap(properties);
         strictmodemap$ = createStrictModeMap(map$);
         boundfunctionmap$ = createBoundFunctionMap(strictmodemap$);
+        arrowmap$ = createArrowMap(map$);
+        strictarrowmap$ = createArrowMap(strictmodemap$);
     }
 
     private static boolean isStrict(final int flags) {
@@ -164,6 +175,15 @@ public class ScriptFunction extends ScriptObject {
     // Choose the map based on strict mode!
     private static PropertyMap getMap(final boolean strict) {
         return strict ? strictmodemap$ : map$;
+    }
+
+    // An arrow function additionally has no "prototype" property.
+    private static PropertyMap getMap(final ScriptFunctionData data) {
+        if (data.isArrow()) {
+            return data.isStrict() ? strictarrowmap$ : arrowmap$;
+        }
+
+        return getMap(data.isStrict());
     }
 
     /**
@@ -290,7 +310,7 @@ public class ScriptFunction extends ScriptObject {
      */
     public static ScriptFunction create(final Object[] constants, final int index, final ScriptObject scope) {
         final RecompilableScriptFunctionData data = (RecompilableScriptFunctionData) constants[index];
-        return new ScriptFunction(data, getMap(data.isStrict()), scope, Global.instance());
+        return new ScriptFunction(data, getMap(data), scope, Global.instance());
     }
 
     /**

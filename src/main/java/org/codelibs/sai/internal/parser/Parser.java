@@ -156,6 +156,9 @@ public class Parser extends AbstractParser implements Loggable {
      */
     private static final String ARROW_THIS = ":arrowthis";
 
+    /** Name of the binding that carries {@code arguments} into arrow functions. */
+    private static final String ARROW_ARGUMENTS = ":arrowargs";
+
     /**
      * Prefix of the temporaries the parser introduces while desugaring. Internal
      * names start with a colon so that they cannot collide with a source identifier.
@@ -692,15 +695,30 @@ public class Parser extends AbstractParser implements Loggable {
 
     /**
      * Detect use of special properties.
+     *
+     * An arrow function has no arguments object of its own, so {@code arguments} inside
+     * one means the arguments of the nearest enclosing function that is not an arrow,
+     * read through the binding that function is made to declare - the same shape
+     * {@code this} is given.
+     *
      * @param ident Referenced property.
+     * @return the identifier to read the property through, which is not the one handed
+     *         in when it is an arrow's {@code arguments}
      */
-    private void detectSpecialProperty(final IdentNode ident) {
-        if (isArguments(ident)) {
-            if (lc.getCurrentFunction().getKind() == FunctionNode.Kind.ARROW) {
-                throw error(AbstractParser.message("no.arguments.in.arrow"), ident.getToken());
-            }
-            lc.setFlag(lc.getCurrentFunction(), FunctionNode.USES_ARGUMENTS);
+    private IdentNode detectSpecialProperty(final IdentNode ident) {
+        if (!isArguments(ident)) {
+            return ident;
         }
+
+        if (lc.getCurrentFunction().getKind() == FunctionNode.Kind.ARROW) {
+            markArrowArguments();
+
+            return new IdentNode(ident.getToken(), ident.getFinish(), ARROW_ARGUMENTS);
+        }
+
+        lc.setFlag(lc.getCurrentFunction(), FunctionNode.USES_ARGUMENTS);
+
+        return ident;
     }
 
     private boolean useBlockScope() {
@@ -822,13 +840,13 @@ public class Parser extends AbstractParser implements Loggable {
                 newFunctionNode(functionToken, new IdentNode(functionToken, Token.descPosition(functionToken), scriptName),
                         new ArrayList<IdentNode>(), FunctionNode.Kind.SCRIPT, functionLine);
 
-        restoreArrowThis(script);
+        restoreArrowBindings(script);
 
         functionDeclarations = new ArrayList<>();
         temporaries = new ArrayList<>();
         sourceElements(programKind);
         addFunctionDeclarations(script);
-        declareArrowThis(script);
+        declareArrowBindings(script);
         declareTemporaries(script);
         functionDeclarations = null;
 
@@ -2609,8 +2627,7 @@ public class Parser extends AbstractParser implements Loggable {
             if (ident == null) {
                 break;
             }
-            detectSpecialProperty(ident);
-            return ident;
+            return detectSpecialProperty(ident);
         case TEMPLATE:
         case TEMPLATE_HEAD:
             return templateLiteral();
@@ -3122,8 +3139,7 @@ public class Parser extends AbstractParser implements Loggable {
                 // ES6 shorthand: { x } is { x: x }. This is checked before the get and
                 // set handling below, so that { get, set } is a pair of shorthands
                 // rather than a malformed accessor.
-                final IdentNode value = createIdentNode(propertyToken, finish, ident);
-                detectSpecialProperty(value);
+                final IdentNode value = detectSpecialProperty(createIdentNode(propertyToken, finish, ident));
 
                 return new PropertyNode(propertyToken, finish, createIdentNode(propertyToken, finish, ident)
                         .setIsPropertyName(), value, null, null);
@@ -4558,7 +4574,7 @@ public class Parser extends AbstractParser implements Loggable {
             functionNode = newFunctionNode(firstToken, ident, parameters.list, kind, functionLine);
             assert functionNode != null;
             final int functionId = functionNode.getId();
-            restoreArrowThis(functionNode);
+            restoreArrowBindings(functionNode);
             parseBody = reparsedFunction == null || functionId <= reparsedFunction.getFunctionNodeId();
             // Sai extension: expression closures. An arrow function's concise body has
             // the same shape but is not an extension, so it is always allowed.
@@ -4630,7 +4646,7 @@ public class Parser extends AbstractParser implements Loggable {
 
             declareRestParameter(functionNode, parameters);
             applyParameterSetups(functionNode, parameters.list, parameters.setups);
-            declareArrowThis(functionNode);
+            declareArrowBindings(functionNode);
             declareTemporaries(functionNode);
         } finally {
             temporaries = prevTemporaries;
@@ -5116,6 +5132,27 @@ public class Parser extends AbstractParser implements Loggable {
     }
 
     /**
+     * Record that the nearest enclosing function that is not an arrow has to declare the
+     * binding arrow functions read {@code arguments} from, the way
+     * {@link #markArrowThis()} does for {@code this}. The walk terminates at the program,
+     * which reads the arguments of the call it is running under - the ones a script is
+     * given, or, for code passed to eval, those of the function the eval runs in.
+     */
+    private void markArrowArguments() {
+        final Iterator<FunctionNode> functions = lc.getFunctions();
+
+        while (functions.hasNext()) {
+            final FunctionNode function = functions.next();
+
+            if (function.getKind() != FunctionNode.Kind.ARROW) {
+                lc.setFlag(function, FunctionNode.USES_ARGUMENTS | FunctionNode.USES_ARROW_ARGUMENTS);
+
+                return;
+            }
+        }
+    }
+
+    /**
      * Record that an expression at this point reads {@code this}, against whichever
      * function actually owns that binding. Inside an arrow that is not the arrow.
      */
@@ -5152,44 +5189,62 @@ public class Parser extends AbstractParser implements Loggable {
      * @param functionNode the function whose body is currently open
      */
     /**
-     * Restore {@link FunctionNode#USES_ARROW_THIS} from the data recorded when the
-     * function was first parsed eagerly.
+     * Restore {@link FunctionNode#USES_ARROW_THIS} and
+     * {@link FunctionNode#USES_ARROW_ARGUMENTS} from the data recorded when the function
+     * was first parsed eagerly.
      *
-     * {@link #markArrowThis()} sets the flag on the enclosing function, and only runs
-     * when an arrow's {@code this} is actually lexed. An on-demand re-parse skips the
-     * bodies of nested functions, so an arrow nested in the function being re-parsed
-     * never sets it. The general flag restore for that runs after
-     * {@code restoreFunctionNode}, which is after {@link #declareArrowThis} has already
-     * decided not to emit the binding - leaving the restored flags claiming a binding
-     * that is not there. This is the same hazard the surrounding code compensates for
-     * with markEval, so the one flag declareArrowThis reads is restored up front.
+     * {@link #markArrowThis()} and {@link #markArrowArguments()} set the flag on the
+     * enclosing function, and only run when an arrow's {@code this} or {@code arguments}
+     * is actually lexed. An on-demand re-parse skips the bodies of nested functions, so
+     * an arrow nested in the function being re-parsed never sets it. The general flag
+     * restore for that runs after {@code restoreFunctionNode}, which is after
+     * {@link #declareArrowBindings} has already decided not to emit the binding - leaving
+     * the restored flags claiming a binding that is not there. This is the same hazard
+     * the surrounding code compensates for with markEval, so the flags
+     * declareArrowBindings reads are restored up front.
      *
      * @param functionNode the function being parsed.
      */
-    private void restoreArrowThis(final FunctionNode functionNode) {
+    private void restoreArrowBindings(final FunctionNode functionNode) {
         if (reparsedFunction == null) {
             return;
         }
 
         final RecompilableScriptFunctionData data = reparsedFunction.getScriptFunctionData(functionNode.getId());
 
-        if (data != null && (data.getFunctionFlags() & FunctionNode.USES_ARROW_THIS) != 0) {
-            lc.setFlag(functionNode, FunctionNode.USES_ARROW_THIS);
-        }
-    }
-
-    private void declareArrowThis(final FunctionNode functionNode) {
-        if ((lc.getFlags(functionNode) & FunctionNode.USES_ARROW_THIS) == 0) {
+        if (data == null) {
             return;
         }
 
+        final int flags = data.getFunctionFlags();
+
+        if ((flags & FunctionNode.USES_ARROW_THIS) != 0) {
+            lc.setFlag(functionNode, FunctionNode.USES_ARROW_THIS);
+        }
+
+        if ((flags & FunctionNode.USES_ARROW_ARGUMENTS) != 0) {
+            lc.setFlag(functionNode, FunctionNode.USES_ARGUMENTS | FunctionNode.USES_ARROW_ARGUMENTS);
+        }
+    }
+
+    private void declareArrowBindings(final FunctionNode functionNode) {
+        final int flags = lc.getFlags(functionNode);
+
+        if ((flags & FunctionNode.USES_ARROW_THIS) != 0) {
+            declareArrowBinding(functionNode, ARROW_THIS, TokenType.THIS.getName());
+        }
+
+        if ((flags & FunctionNode.USES_ARROW_ARGUMENTS) != 0) {
+            declareArrowBinding(functionNode, ARROW_ARGUMENTS, ARGUMENTS_NAME);
+        }
+    }
+
+    private void declareArrowBinding(final FunctionNode functionNode, final String name, final String value) {
         final long firstToken = functionNode.getFirstToken();
         final int start = Token.descPosition(firstToken);
-        final IdentNode binding = new IdentNode(firstToken, start, ARROW_THIS);
-        final IdentNode thisNode = new IdentNode(firstToken, start, TokenType.THIS.getName());
 
-        prependStatement(new VarNode(functionNode.getLineNumber(), Token.recast(firstToken, TokenType.VAR), start, binding,
-                thisNode));
+        prependStatement(new VarNode(functionNode.getLineNumber(), Token.recast(firstToken, TokenType.VAR), start,
+                new IdentNode(firstToken, start, name), new IdentNode(firstToken, start, value)));
     }
 
     /**
