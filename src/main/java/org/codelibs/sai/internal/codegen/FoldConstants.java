@@ -197,6 +197,14 @@ final class FoldConstants extends SimpleNodeVisitor implements Loggable {
         deadCodeRoot.accept(new SimpleNodeVisitor() {
             @Override
             public boolean enterVarNode(final VarNode varNode) {
+                if (varNode.isBlockScoped()) {
+                    // Lifting exists so that a hoisted name still exists once the code
+                    // declaring it is gone. A let, a const or a class does not hoist, so
+                    // nothing outside the dropped block could name it - and lifting one
+                    // would declare it a second time in the block the survivor is spliced
+                    // into, which is exactly where the other branch declares it too.
+                    return false;
+                }
                 statements.add(varNode.setInit(null));
                 return false;
             }
