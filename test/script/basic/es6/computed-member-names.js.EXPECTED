@@ -1,0 +1,18 @@
+4 4
+one two and a half
+punctuated punctuated
+1 1
+mv mv
+1 1 foo
+y true true
+0 l set
+1,2,3 1 2 3
+{"get":1,"set":2} re
+function 2 sm gk
+2 2 3 3
+got given static got
+method
+false member
+bv bv
+ReferenceError
+foobarbaz foobarbaz baz string

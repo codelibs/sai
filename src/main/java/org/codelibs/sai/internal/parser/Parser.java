@@ -991,6 +991,15 @@ public class Parser extends AbstractParser implements Loggable {
             return;
         }
 
+        if (programKind == ProgramKind.METHOD) {
+            // A method definition on its own, which is how one is re-parsed. It is the
+            // whole of the range, so it is read before the statement forms rather than
+            // among them: a key that is a string, a number or an expression starts a
+            // statement of its own otherwise.
+            methodReparse();
+            return;
+        }
+
         switch (type) {
         case LBRACE:
             block();
@@ -1093,22 +1102,42 @@ public class Parser extends AbstractParser implements Loggable {
                         addPropertyFunctionStatement(propertySetterFunction(propertyToken, propertyLine));
                         return;
                     }
-                } else if (programKind == ProgramKind.METHOD) {
-                    // A method definition on its own, which is how one is re-parsed.
-                    final long methodToken = token;
-                    final int methodLine = line;
-                    final IdentNode methodName = getIdent();
-
-                    addPropertyFunctionStatement(new PropertyFunction(methodName,
-                            methodDefinition(methodToken, methodLine, methodName)));
-
-                    return;
                 }
             }
 
             expressionStatement();
             break;
         }
+    }
+
+    /**
+     * Re-parse a method definition from its own source range, which holds the key as
+     * well as the function so that the range starts where the method starts.
+     *
+     * A computed key is read and thrown away. Only the function is wanted, and the
+     * runtime, which counts the functions it gets back and expects exactly one, walks
+     * the statements it is given: a key that holds a function of its own is not among
+     * them, and a function inside it starts later in the source than the method does,
+     * so it can never be mistaken for the method either.
+     */
+    private void methodReparse() {
+        final long methodToken = methodStartToken(token);
+        final int methodLine = line;
+        final IdentNode methodName;
+
+        if (type == LBRACKET) {
+            next();
+            assignmentExpression(false);
+            expect(RBRACKET);
+            methodName = syntheticMethodName(methodToken, methodLine, null);
+        } else if (isPropertyNameStart(type)) {
+            methodName = syntheticMethodName(methodToken, methodLine, propertyName().getPropertyName());
+        } else {
+            methodName = getIdentifierName();
+        }
+
+        addPropertyFunctionStatement(new PropertyFunction(methodName,
+                methodDefinition(methodToken, methodLine, methodName)));
     }
 
     /**
@@ -2709,9 +2738,9 @@ public class Parser extends AbstractParser implements Loggable {
         final List<PropertyNode> elements = new ArrayList<>();
         final Map<String, Integer> map = new HashMap<>();
 
-        // Properties from the first computed key onwards, as key/value pairs. They are
-        // applied to the finished object one by one so that source order is kept.
-        final List<Expression[]> deferred = new ArrayList<>();
+        // Properties from the first computed key onwards. They are applied to the
+        // finished object one by one so that source order is kept.
+        final List<DeferredProperty> deferred = new ArrayList<>();
 
         // Create a block for the object literal.
         boolean commaSeen = true;
@@ -2738,27 +2767,27 @@ public class Parser extends AbstractParser implements Loggable {
 
                 if (isES6() && type == LBRACKET) {
                     // ES6 computed property name.
-                    next();
-                    final Expression computedKey = assignmentExpression(false);
-                    expect(RBRACKET);
-                    expect(COLON);
-                    deferred.add(new Expression[] { computedKey, assignmentExpression(false) });
+                    deferred.add(computedProperty());
                     break;
                 }
 
                 // Get and add the next property.
-                final PropertyNode property = propertyAssignment();
+                final PropertyNode property = propertyAssignment(deferred);
+
+                if (property == null) {
+                    // An accessor with a computed name, which propertyAssignment has
+                    // already deferred: there is no PropertyNode that can hold one.
+                    break;
+                }
 
                 if (!deferred.isEmpty()) {
-                    // A property after a computed key has to be applied after it, and an
-                    // assignment cannot express an accessor.
-                    if (property.getValue() == null) {
-                        throw error(AbstractParser.message("no.accessor.after.computed.key"), property.getToken());
-                    }
+                    // A property after a computed key has to be applied after it.
+                    final boolean getterFirst = property.getGetter() != null;
 
-                    deferred.add(new Expression[] {
+                    deferred.add(new DeferredProperty(property.getToken(), line,
                             LiteralNode.newInstance(property.getToken(), property.getFinish(), property.getKeyName()),
-                            property.getValue() });
+                            property.getValue(), getterFirst ? property.getGetter() : property.getSetter(),
+                            getterFirst));
                     break;
                 }
 
@@ -2828,9 +2857,66 @@ public class Parser extends AbstractParser implements Loggable {
     }
 
     /**
+     * A property of an object literal that cannot go into the literal itself, either
+     * because its key is computed or because it comes after one that is. It is applied
+     * to the finished object instead.
+     */
+    private static final class DeferredProperty {
+        private final long token;
+        private final int line;
+        private final Expression key;
+        /** The value, for a data property or a shorthand method. */
+        private final Expression value;
+        /** The function, when this is an accessor rather than a data property. */
+        private final FunctionNode accessor;
+        private final boolean getter;
+
+        DeferredProperty(final long token, final int line, final Expression key, final Expression value,
+                final FunctionNode accessor, final boolean getter) {
+            this.token = token;
+            this.line = line;
+            this.key = key;
+            this.value = value;
+            this.accessor = accessor;
+            this.getter = getter;
+        }
+    }
+
+    /**
+     * Parse a property of an object literal whose name is computed, which may be a data
+     * property or a shorthand method:
+     *
+     * <pre>
+     * { [k]: v }   { [k]() {} }
+     * </pre>
+     *
+     * An accessor with a computed name starts with its {@code get} or {@code set}, so
+     * propertyAssignment reads that one.
+     *
+     * @return the property, to be applied to the finished object
+     */
+    private DeferredProperty computedProperty() {
+        final long keyToken = methodStartToken(token);
+        final int keyLine = line;
+        // LBRACKET tested in caller.
+        next();
+        final Expression key = assignmentExpression(false);
+        expect(RBRACKET);
+
+        if (type == LPAREN) {
+            return new DeferredProperty(keyToken, keyLine, key,
+                    methodDefinition(keyToken, keyLine, syntheticMethodName(keyToken, keyLine, null)), null, false);
+        }
+
+        expect(COLON);
+
+        return new DeferredProperty(keyToken, keyLine, key, assignmentExpression(false), null, false);
+    }
+
+    /**
      * Lower an object literal that has a computed property name. Everything up to the
-     * first computed key stays an ObjectNode; the rest becomes an assignment onto a
-     * temporary, so that source order survives:
+     * first computed key stays an ObjectNode; the rest is applied to a temporary
+     * holding it, so that source order survives:
      *
      * <pre>
      * { a: 1, [k]: 2, b: 3 }   becomes   (:pt = { a: 1 }, :pt[k] = 2, :pt["b"] = 3, :pt)
@@ -2842,11 +2928,11 @@ public class Parser extends AbstractParser implements Loggable {
      *
      * @param objectToken token of the literal
      * @param objectNode the properties up to the first computed key
-     * @param deferred key/value pairs to apply afterwards, in source order
+     * @param deferred the properties to apply afterwards, in source order
      * @return the lowered expression
      */
     private Expression applyDeferredProperties(final long objectToken, final ObjectNode objectNode,
-            final List<Expression[]> deferred) {
+            final List<DeferredProperty> deferred) {
         final String temporary = newTemporary();
         final int objectFinish = objectNode.getFinish();
 
@@ -2858,12 +2944,23 @@ public class Parser extends AbstractParser implements Loggable {
         Expression result = new BinaryNode(Token.recast(objectToken, TokenType.ASSIGN),
                 createIdentNode(identToken, objectFinish, temporary), objectNode);
 
-        for (final Expression[] property : deferred) {
-            final Expression target =
-                    new IndexNode(indexToken, objectFinish, createIdentNode(identToken, objectFinish, temporary),
-                            property[0]);
-            result = new BinaryNode(Token.recast(objectToken, TokenType.COMMARIGHT), result,
-                    new BinaryNode(Token.recast(objectToken, TokenType.ASSIGN), target, property[1]));
+        for (final DeferredProperty property : deferred) {
+            final Expression step;
+
+            if (property.accessor == null) {
+                final Expression target =
+                        new IndexNode(indexToken, objectFinish, createIdentNode(identToken, objectFinish, temporary),
+                                property.key);
+                step = new BinaryNode(Token.recast(objectToken, TokenType.ASSIGN), target, property.value);
+            } else {
+                // An accessor is not expressible as an assignment. A property of an
+                // object literal is enumerable, unlike a class member.
+                step = defineAccessor(property.token, property.line,
+                        createIdentNode(identToken, objectFinish, temporary), property.key, property.accessor,
+                        property.getter, true);
+            }
+
+            result = new BinaryNode(Token.recast(objectToken, TokenType.COMMARIGHT), result, step);
         }
 
         return new BinaryNode(Token.recast(objectToken, TokenType.COMMARIGHT), result,
@@ -2903,6 +3000,27 @@ public class Parser extends AbstractParser implements Loggable {
     }
 
     /**
+     * Whether a property name written as a literal rather than as a name starts here.
+     * Only a name can be an access node's property or a function's own name, so this is
+     * what decides that a member has to be defined by index instead.
+     */
+    private static boolean isPropertyNameStart(final TokenType type) {
+        switch (type) {
+        case STRING:
+        case ESCSTRING:
+        case DECIMAL:
+        case HEXADECIMAL:
+        case OCTAL:
+        case OCTAL_LEGACY:
+        case BINARY_NUMBER:
+        case FLOATING:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    /**
      * PropertyAssignment :
      *      PropertyName : AssignmentExpression
      *      get PropertyName ( ) { FunctionBody }
@@ -2919,9 +3037,12 @@ public class Parser extends AbstractParser implements Loggable {
      * See 11.1.5
      *
      * Parse an object literal property.
-     * @return Property or reference node.
+     *
+     * @param deferred where to put an accessor whose name is computed, which no
+     *                 PropertyNode can hold
+     * @return Property or reference node, or null when the property went into deferred
      */
-    private PropertyNode propertyAssignment() {
+    private PropertyNode propertyAssignment(final List<DeferredProperty> deferred) {
         // Capture firstToken.
         final long propertyToken = token;
         final int functionLine = line;
@@ -2958,10 +3079,26 @@ public class Parser extends AbstractParser implements Loggable {
                 switch (ident) {
                 case "get":
                     final PropertyFunction getter = propertyGetterFunction(getSetToken, functionLine);
+
+                    if (getter.computedKey != null) {
+                        deferred.add(new DeferredProperty(propertyToken, functionLine, getter.computedKey, null,
+                                getter.functionNode, true));
+
+                        return null;
+                    }
+
                     return new PropertyNode(propertyToken, finish, getter.ident, null, getter.functionNode, null);
 
                 case "set":
                     final PropertyFunction setter = propertySetterFunction(getSetToken, functionLine);
+
+                    if (setter.computedKey != null) {
+                        deferred.add(new DeferredProperty(propertyToken, functionLine, setter.computedKey, null,
+                                setter.functionNode, false));
+
+                        return null;
+                    }
+
                     return new PropertyNode(propertyToken, finish, setter.ident, null, null, setter.functionNode);
                 default:
                     break;
@@ -2971,6 +3108,18 @@ public class Parser extends AbstractParser implements Loggable {
             propertyName = createIdentNode(propertyToken, finish, ident).setIsPropertyName();
         } else {
             propertyName = propertyName();
+
+            if (isES6() && type == LPAREN) {
+                // ES6 method definition with a key a name cannot be made of:
+                // { "foo bar"() {} } is { "foo bar": function () {} }, except that the
+                // function knows it is a method so that it can be re-parsed.
+                final long methodToken = methodStartToken(propertyToken);
+
+                return new PropertyNode(propertyToken, finish, propertyName,
+                        methodDefinition(methodToken, functionLine,
+                                syntheticMethodName(methodToken, functionLine, propertyName.getPropertyName())),
+                        null, null);
+            }
         }
 
         expect(COLON);
@@ -3016,12 +3165,20 @@ public class Parser extends AbstractParser implements Loggable {
             return superCall(superLine, superToken, identifierFor(superToken, SUPERCLASS));
         }
 
-        expect(TokenType.PERIOD);
+        final Expression prototype = new AccessNode(Token.recast(superToken, TokenType.PERIOD), finish,
+                identifierFor(superToken, SUPERCLASS), "prototype");
+        final Expression member;
 
-        final IdentNode property = getIdentifierName();
-        final Expression member = new AccessNode(Token.recast(superToken, TokenType.PERIOD), finish,
-                new AccessNode(Token.recast(superToken, TokenType.PERIOD), finish,
-                        identifierFor(superToken, SUPERCLASS), "prototype"), property.getName());
+        if (type == LBRACKET) {
+            next();
+            final Expression property = expression();
+            expect(RBRACKET);
+            member = new IndexNode(Token.recast(superToken, LBRACKET), finish, prototype, property);
+        } else {
+            expect(TokenType.PERIOD);
+            member = new AccessNode(Token.recast(superToken, TokenType.PERIOD), finish, prototype,
+                    getIdentifierName().getName());
+        }
 
         return type == LPAREN ? superCall(superLine, superToken, member) : member;
     }
@@ -3075,25 +3232,28 @@ public class Parser extends AbstractParser implements Loggable {
      * @param memberToken token the synthetic nodes are attributed to
      * @param memberLine line the synthetic nodes are attributed to
      * @param target the object to define the accessor on
+     * @param key the property name, which may be an expression
      * @param accessor the parsed accessor
      * @param getter true for a getter, false for a setter
+     * @param enumerable whether the property is enumerable, which a member of an object
+     *                   literal is and a class member is not
      * @return the defineProperty call
      */
     private Expression defineAccessor(final long memberToken, final int memberLine, final Expression target,
-            final PropertyFunction accessor, final boolean getter) {
+            final Expression key, final FunctionNode accessor, final boolean getter, final boolean enumerable) {
         final long token = Token.recast(memberToken, IDENT);
         final List<PropertyNode> descriptor = new ArrayList<>();
 
         descriptor.add(new PropertyNode(token, finish, identifierFor(token, getter ? "get" : "set").setIsPropertyName(),
-                accessor.functionNode, null, null));
+                accessor, null, null));
         descriptor.add(new PropertyNode(token, finish, identifierFor(token, "configurable").setIsPropertyName(),
                 LiteralNode.newInstance(token, finish, true), null, null));
         descriptor.add(new PropertyNode(token, finish, identifierFor(token, "enumerable").setIsPropertyName(),
-                LiteralNode.newInstance(token, finish, false), null, null));
+                LiteralNode.newInstance(token, finish, enumerable), null, null));
 
         final List<Expression> arguments = new ArrayList<>();
         arguments.add(target);
-        arguments.add(LiteralNode.newInstance(token, finish, accessor.ident.getPropertyName()));
+        arguments.add(key);
         arguments.add(new ObjectNode(token, finish, descriptor));
 
         return new CallNode(memberLine, token, finish,
@@ -3204,30 +3364,54 @@ public class Parser extends AbstractParser implements Loggable {
 
                     final PropertyFunction accessor = getter ? propertyGetterFunction(memberToken, memberLine)
                             : propertySetterFunction(memberToken, memberLine);
+                    final Expression accessorKey = accessor.computedKey != null ? accessor.computedKey
+                            : LiteralNode.newInstance(memberToken, finish, accessor.ident.getPropertyName());
 
                     members.add(defineAccessor(memberToken, memberLine,
-                            memberTarget(memberToken, classTemporary, isStatic), accessor, getter));
+                            memberTarget(memberToken, classTemporary, isStatic), accessorKey, accessor.functionNode,
+                            getter, false));
 
                     continue;
                 }
 
-                final IdentNode memberName = getIdentifierName();
+                // A key that is not a plain name is kept as an expression: a member is
+                // then defined by index rather than by an access node, whose name would
+                // otherwise end up inside a call site name.
+                final long methodToken = methodStartToken(memberToken);
+                final Expression memberKey;
+                final IdentNode memberName;
 
-                if (!isStatic && "constructor".equals(memberName.getName())) {
+                if (type == LBRACKET) {
+                    next();
+                    memberKey = assignmentExpression(false);
+                    expect(RBRACKET);
+                    memberName = syntheticMethodName(methodToken, memberLine, null);
+                } else if (isPropertyNameStart(type)) {
+                    final PropertyKey key = propertyName();
+                    memberKey = LiteralNode.newInstance(memberToken, finish, key.getPropertyName());
+                    memberName = syntheticMethodName(methodToken, memberLine, key.getPropertyName());
+                } else {
+                    memberKey = null;
+                    memberName = getIdentifierName();
+                }
+
+                if (memberKey == null && !isStatic && "constructor".equals(memberName.getName())) {
                     if (constructor != null) {
                         throw error(AbstractParser.message("duplicate.constructor"), memberToken);
                     }
-                    constructor = methodDefinition(memberToken, memberLine, constructorName);
+                    constructor = methodDefinition(methodToken, memberLine, constructorName);
 
                     continue;
                 }
 
-                final FunctionNode method = methodDefinition(memberToken, memberLine, memberName);
+                final FunctionNode method = methodDefinition(methodToken, memberLine, memberName);
+                final Expression target = memberKey == null
+                        ? new AccessNode(Token.recast(memberToken, TokenType.PERIOD), finish,
+                                memberTarget(memberToken, classTemporary, isStatic), memberName.getName())
+                        : new IndexNode(Token.recast(memberToken, LBRACKET), finish,
+                                memberTarget(memberToken, classTemporary, isStatic), memberKey);
 
-                members.add(new BinaryNode(Token.recast(memberToken, TokenType.ASSIGN),
-                        new AccessNode(Token.recast(memberToken, TokenType.PERIOD), finish,
-                                memberTarget(memberToken, classTemporary, isStatic), memberName.getName()),
-                        method));
+                members.add(new BinaryNode(Token.recast(memberToken, TokenType.ASSIGN), target, method));
             }
 
             expect(RBRACE);
@@ -3351,7 +3535,45 @@ public class Parser extends AbstractParser implements Loggable {
         return functionBody(methodToken, name, parameters, FunctionNode.Kind.METHOD, methodLine);
     }
 
+    /**
+     * The token a method definition starts at, given the token its key starts at.
+     *
+     * A string token reports its position past the opening quote, and the source range
+     * of a method has to cover the whole key: the range is what the method is re-parsed
+     * from, and the re-parse has to arrive at the same method. The token is recast
+     * because what sits at that position is a property key, not a string to scan again.
+     */
+    private static long methodStartToken(final long keyToken) {
+        return Token.recast(Token.withDelimiter(keyToken), IDENT);
+    }
+
+    /**
+     * Name the function of a method whose key is not a plain identifier. A string, a
+     * number or an expression is not usable as a name, so the function is named the way
+     * an anonymous one written at that point would be. The name is built out of the key
+     * and the line alone, so that re-parsing the method on its own arrives at the same
+     * one.
+     *
+     * @param key the key as it was written, or null when it is computed
+     */
+    private IdentNode syntheticMethodName(final long methodToken, final int methodLine, final String key) {
+        return createIdentNode(Token.recast(methodToken, IDENT), finish,
+                isValidIdentifier(key) ? key : ANON_FUNCTION_PREFIX.symbolName() + methodLine);
+    }
+
     private PropertyFunction propertyGetterFunction(final long getSetToken, final int functionLine) {
+        if (isES6() && type == LBRACKET) {
+            final long keyToken = token;
+            next();
+            final Expression key = assignmentExpression(false);
+            expect(RBRACKET);
+            expect(LPAREN);
+            expect(RPAREN);
+
+            return new PropertyFunction(null, functionBody(getSetToken, accessorName(keyToken, true), new Parameters(),
+                    FunctionNode.Kind.GETTER, functionLine), key);
+        }
+
         final PropertyKey getIdent = propertyName();
         final String getterName = getIdent.getPropertyName();
         final IdentNode getNameNode = createIdentNode(((Node) getIdent).getToken(), finish, NameCodec.encode("get " + getterName));
@@ -3363,10 +3585,35 @@ public class Parser extends AbstractParser implements Loggable {
         return new PropertyFunction(getIdent, functionNode);
     }
 
+    /**
+     * Name the function of an accessor whose key is computed. There is no name to build
+     * one from, so it is the bare prefix an accessor's name carries: the runtime takes
+     * the property name back out of it by cutting that prefix off, and here nothing is
+     * left over.
+     */
+    private IdentNode accessorName(final long keyToken, final boolean getter) {
+        return createIdentNode(Token.recast(keyToken, IDENT), finish, NameCodec.encode(getter ? "get " : "set "));
+    }
+
     private PropertyFunction propertySetterFunction(final long getSetToken, final int functionLine) {
+        if (isES6() && type == LBRACKET) {
+            final long keyToken = token;
+            next();
+            final Expression key = assignmentExpression(false);
+            expect(RBRACKET);
+
+            return new PropertyFunction(null, setterBody(getSetToken, accessorName(keyToken, false), functionLine), key);
+        }
+
         final PropertyKey setIdent = propertyName();
         final String setterName = setIdent.getPropertyName();
         final IdentNode setNameNode = createIdentNode(((Node) setIdent).getToken(), finish, NameCodec.encode("set " + setterName));
+
+        return new PropertyFunction(setIdent, setterBody(getSetToken, setNameNode, functionLine));
+    }
+
+    /** The parameter list and body of a setter, with its name already read. */
+    private FunctionNode setterBody(final long getSetToken, final IdentNode setNameNode, final int functionLine) {
         expect(LPAREN);
         // be sloppy and allow missing setter parameter even though
         // spec does not permit it!
@@ -3383,18 +3630,25 @@ public class Parser extends AbstractParser implements Loggable {
             parameters.list.add(argIdent);
             parameters.setups.add(null);
         }
-        final FunctionNode functionNode = functionBody(getSetToken, setNameNode, parameters, FunctionNode.Kind.SETTER, functionLine);
 
-        return new PropertyFunction(setIdent, functionNode);
+        return functionBody(getSetToken, setNameNode, parameters, FunctionNode.Kind.SETTER, functionLine);
     }
 
     private static class PropertyFunction {
+        /** The key, when it was written as a name, a string or a number. */
         final PropertyKey ident;
         final FunctionNode functionNode;
+        /** The key expression, when it was written as a computed name. */
+        final Expression computedKey;
 
         PropertyFunction(final PropertyKey ident, final FunctionNode function) {
+            this(ident, function, null);
+        }
+
+        PropertyFunction(final PropertyKey ident, final FunctionNode function, final Expression computedKey) {
             this.ident = ident;
             this.functionNode = function;
+            this.computedKey = computedKey;
         }
     }
 

@@ -1,0 +1,6 @@
+test/script/error/string_keyed_method_es5.js:26:19 Expected : but found (
+var o = { "foo bar"() { return 4; } };
+                   ^
+test/script/error/string_keyed_method_es5.js:26:34 Expected eof but found }
+var o = { "foo bar"() { return 4; } };
+                                  ^

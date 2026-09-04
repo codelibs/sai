@@ -17,13 +17,10 @@
  */
 
 /**
- * A computed property name is applied by assigning to the finished object, and an
- * assignment cannot express an accessor, so an accessor may not follow one.
- * Putting the accessor first works.
+ * A method definition is an ES6 feature whatever its key is written as, so a
+ * string-keyed one stays a syntax error in the default es5 language mode.
  *
- * @option --language=es6
  * @test/compile-error
  */
 
-var k = "a";
-var o = { [k]: 1, get b() { return 7; } };
+var o = { "foo bar"() { return 4; } };
