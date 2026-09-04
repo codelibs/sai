@@ -1,0 +1,16 @@
+no flags          = ''
+g                 = 'g'
+i                 = 'i'
+m                 = 'm'
+gim               = 'gim'
+igm -> gim        = 'gim'
+mig -> gim        = 'gim'
+new RegExp('x','mg') = 'gm'
+own on instance   = true
+value             = 'gi'
+writable          = false
+enumerable        = false
+configurable      = true
+proto.flags       = ''
+after assignment  = 'gi' ''
+strict assignment = true

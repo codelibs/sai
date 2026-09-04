@@ -380,6 +380,41 @@ public final class NativeRegExp extends ScriptObject {
     }
 
     /**
+     * ES6 21.2.5.3 flags
+     *
+     * The flags of this regexp as a string, in the order the specification
+     * fixes: g, i, m, u, y. Sai has no u or y flag, so only the first three
+     * can ever appear.
+     *
+     * ES6 makes flags configurable, unlike source and global next door, but it
+     * still has no setter. NOT_WRITABLE is what makes an assignment to it take
+     * the "existing, non-writable property" path in ScriptObject.findSetMethod
+     * - silently ignored when sloppy, a TypeError when strict. Without it the
+     * set call site asks a getter-only AccessorProperty for a setter it does
+     * not have.
+     *
+     * @param self self reference
+     * @return the flags of this regexp
+     */
+    @Getter(attributes = Attribute.NOT_ENUMERABLE | Attribute.NOT_WRITABLE)
+    public static Object flags(final Object self) {
+        final RegExp regexp = checkRegExp(self).getRegExp();
+        final StringBuilder sb = new StringBuilder(3);
+
+        if (regexp.isGlobal()) {
+            sb.append('g');
+        }
+        if (regexp.isIgnoreCase()) {
+            sb.append('i');
+        }
+        if (regexp.isMultiline()) {
+            sb.append('m');
+        }
+
+        return sb.toString();
+    }
+
+    /**
      * Getter for non-standard RegExp.input property.
      * @param self self object
      * @return last regexp input
