@@ -33,6 +33,8 @@ import java.lang.invoke.MethodHandle;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -386,6 +388,9 @@ public abstract class ArrayBufferView extends ScriptObject {
 
     private static final Object MAP_CALLBACK_INVOKER = new Object();
     private static final Object FILTER_CALLBACK_INVOKER = new Object();
+    private static final Object FIND_CALLBACK_INVOKER = new Object();
+    private static final Object FIND_INDEX_CALLBACK_INVOKER = new Object();
+    private static final Object SORT_COMPARE_INVOKER = new Object();
 
     private static MethodHandle createIteratorCallbackInvoker(final Object key, final Class<?> rtype) {
         return Global.instance().getDynamicInvoker(key, new Callable<MethodHandle>() {
@@ -395,6 +400,25 @@ public abstract class ArrayBufferView extends ScriptObject {
                         Object.class);
             }
         });
+    }
+
+    private static MethodHandle getSortCompareInvoker() {
+        return Global.instance().getDynamicInvoker(SORT_COMPARE_INVOKER, new Callable<MethodHandle>() {
+            @Override
+            public MethodHandle call() {
+                return Bootstrap.createDynamicInvoker("dyn:call", double.class, Object.class, Object.class, Object.class, Object.class);
+            }
+        });
+    }
+
+    /**
+     * Store one element, always going through the {@code Object} overload of
+     * {@link ArrayData#set(int, Object, boolean)}. That is the only one that applies the
+     * ECMAScript conversion for every element type - the {@code double} overload narrows with
+     * a Java cast, which saturates instead of wrapping for {@code Uint32Array}.
+     */
+    private void setElement(final int index, final Object value) {
+        set(index, value, 0);
     }
 
     /**
@@ -509,7 +533,7 @@ public abstract class ArrayBufferView extends ScriptObject {
             @Override
             protected boolean forEach(final Object val, final double i) throws Throwable {
                 final Object mappedValue = mapInvoker.invokeExact(callbackfn, thisArg, val, i, self);
-                result.set((int) i, mappedValue, 0);
+                result.setElement((int) i, mappedValue);
                 return true;
             }
         }.apply();
@@ -545,10 +569,245 @@ public abstract class ArrayBufferView extends ScriptObject {
 
         final ArrayBufferView filtered = view.factory().construct(kept.size());
         for (int i = 0; i < kept.size(); i++) {
-            filtered.set(i, kept.get(i), 0);
+            filtered.setElement(i, kept.get(i));
         }
 
         return filtered;
+    }
+
+    /**
+     * ES6 22.2.3.13 %TypedArray%.prototype.indexOf ( searchElement [ , fromIndex ] )
+     *
+     * @param self          self reference
+     * @param searchElement element to search for
+     * @param fromIndex     index to start the search at
+     * @return index of the first match, or -1
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
+    public static double indexOf(final Object self, final Object searchElement, final Object fromIndex) {
+        return NativeArray.indexOf(validate(self), searchElement, fromIndex);
+    }
+
+    /**
+     * ES6 22.2.3.16 %TypedArray%.prototype.lastIndexOf ( searchElement [ , fromIndex ] )
+     *
+     * @param self self reference
+     * @param args element to search for and an optional index to start the search at
+     * @return index of the last match, or -1
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
+    public static double lastIndexOf(final Object self, final Object... args) {
+        return NativeArray.lastIndexOf(validate(self), args);
+    }
+
+    /**
+     * ES6 22.2.3.22 %TypedArray%.prototype.reverse ( )
+     *
+     * @param self self reference
+     * @return the receiver, reversed in place
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static Object reverse(final Object self) {
+        return NativeArray.reverse(validate(self));
+    }
+
+    /**
+     * ES6 22.2.3.23 %TypedArray%.prototype.slice ( start, end )
+     * <p>
+     * Unlike {@code subarray}, which returns a view onto the same buffer, this copies the
+     * elements into a new typed array of the receiver's type.
+     *
+     * @param self  self reference
+     * @param start start index, inclusive
+     * @param end   end index, exclusive
+     * @return a new typed array holding the sliced elements
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 2)
+    public static Object slice(final Object self, final Object start, final Object end) {
+        final ArrayBufferView view = validate(self);
+        final int len = view.elementLength();
+        final int from = NativeArrayBuffer.adjustIndex(JSType.toInt32(start), len);
+        final int to = NativeArrayBuffer.adjustIndex(end != ScriptRuntime.UNDEFINED ? JSType.toInt32(end) : len, len);
+        final int count = Math.max(to - from, 0);
+        final ArrayBufferView sliced = view.factory().construct(count);
+        final ArrayData data = view.getArray();
+
+        for (int i = 0; i < count; i++) {
+            sliced.setElement(i, data.getObject(from + i));
+        }
+
+        return sliced;
+    }
+
+    /**
+     * ES6 22.2.3.26 %TypedArray%.prototype.sort ( comparefn )
+     * <p>
+     * Note that without a comparator this sorts numerically, where
+     * {@code Array.prototype.sort} sorts by string. {@link Double#compare} already orders -0
+     * before +0 and NaN last, which is the order the spec asks for.
+     *
+     * @param self      self reference
+     * @param comparefn element comparison function
+     * @return the receiver, sorted in place
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static ScriptObject sort(final Object self, final Object comparefn) {
+        final ArrayBufferView view = validate(self);
+        final int len = view.elementLength();
+
+        if (len < 2) {
+            return view;
+        }
+
+        final Object cmp = comparefn == ScriptRuntime.UNDEFINED ? null : comparefn;
+        if (cmp != null && !Bootstrap.isCallable(cmp)) {
+            throw typeError("not.a.function", ScriptRuntime.safeToString(comparefn));
+        }
+
+        final ArrayData data = view.getArray();
+        final Double[] elements = new Double[len];
+        for (int i = 0; i < len; i++) {
+            elements[i] = data.getDouble(i);
+        }
+
+        if (cmp == null) {
+            Arrays.sort(elements);
+        } else {
+            final Object cmpThis = Bootstrap.isStrictCallable(cmp) ? ScriptRuntime.UNDEFINED : Global.instance();
+            try {
+                Arrays.sort(elements, new Comparator<Double>() {
+                    private final MethodHandle callCmp = getSortCompareInvoker();
+
+                    @Override
+                    public int compare(final Double x, final Double y) {
+                        try {
+                            final double order = (double) callCmp.invokeExact(cmp, cmpThis, (Object) x, (Object) y);
+                            return Double.isNaN(order) ? 0 : (int) Math.signum(order);
+                        } catch (final RuntimeException | Error e) {
+                            throw e;
+                        } catch (final Throwable t) {
+                            throw new RuntimeException(t);
+                        }
+                    }
+                });
+            } catch (final IllegalArgumentException iae) {
+                // An inconsistent comparison function makes the result implementation-defined,
+                // exactly as in Array.prototype.sort.
+            }
+        }
+
+        for (int i = 0; i < len; i++) {
+            view.setElement(i, elements[i]);
+        }
+
+        return view;
+    }
+
+    /**
+     * ES6 22.2.3.5 %TypedArray%.prototype.copyWithin ( target, start [ , end ] )
+     *
+     * @param self   self reference
+     * @param target index to copy to
+     * @param start  index to copy from, inclusive
+     * @param end    index to copy from, exclusive
+     * @return the receiver, modified in place
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 2)
+    public static Object copyWithin(final Object self, final Object target, final Object start, final Object end) {
+        final ArrayBufferView view = validate(self);
+        final int len = view.elementLength();
+        final int to = NativeArrayBuffer.adjustIndex(JSType.toInt32(target), len);
+        final int from = NativeArrayBuffer.adjustIndex(JSType.toInt32(start), len);
+        final int last = NativeArrayBuffer.adjustIndex(end != ScriptRuntime.UNDEFINED ? JSType.toInt32(end) : len, len);
+        final int count = Math.min(last - from, len - to);
+        final ArrayData data = view.getArray();
+
+        if (count > 0) {
+            // source and destination overlap, so walk backwards when copying to a higher index
+            if (from < to && to < from + count) {
+                for (int i = count - 1; i >= 0; i--) {
+                    view.setElement(to + i, data.getObject(from + i));
+                }
+            } else {
+                for (int i = 0; i < count; i++) {
+                    view.setElement(to + i, data.getObject(from + i));
+                }
+            }
+        }
+
+        return view;
+    }
+
+    /**
+     * ES6 22.2.3.8 %TypedArray%.prototype.fill ( value [ , start [ , end ] ] )
+     *
+     * @param self  self reference
+     * @param value value to store
+     * @param start index to fill from, inclusive
+     * @param end   index to fill to, exclusive
+     * @return the receiver, modified in place
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
+    public static Object fill(final Object self, final Object value, final Object start, final Object end) {
+        final ArrayBufferView view = validate(self);
+        final int len = view.elementLength();
+        final Double filler = JSType.toNumber(value);
+        final int from = NativeArrayBuffer.adjustIndex(JSType.toInt32(start), len);
+        final int to = NativeArrayBuffer.adjustIndex(end != ScriptRuntime.UNDEFINED ? JSType.toInt32(end) : len, len);
+
+        for (int i = from; i < to; i++) {
+            view.setElement(i, filler);
+        }
+
+        return view;
+    }
+
+    /**
+     * ES6 22.2.3.10 %TypedArray%.prototype.find ( predicate [ , thisArg ] )
+     *
+     * @param self      self reference
+     * @param predicate predicate applied to each element
+     * @param thisArg   this argument
+     * @return the first element the predicate accepts, or undefined
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
+    public static Object find(final Object self, final Object predicate, final Object thisArg) {
+        return new IteratorAction<Object>(validate(self), predicate, thisArg, ScriptRuntime.UNDEFINED) {
+            private final MethodHandle findInvoker = createIteratorCallbackInvoker(FIND_CALLBACK_INVOKER, boolean.class);
+
+            @Override
+            protected boolean forEach(final Object val, final double i) throws Throwable {
+                if ((boolean) findInvoker.invokeExact(callbackfn, thisArg, val, i, self)) {
+                    result = val;
+                    return false;
+                }
+                return true;
+            }
+        }.apply();
+    }
+
+    /**
+     * ES6 22.2.3.11 %TypedArray%.prototype.findIndex ( predicate [ , thisArg ] )
+     *
+     * @param self      self reference
+     * @param predicate predicate applied to each element
+     * @param thisArg   this argument
+     * @return the index of the first element the predicate accepts, or -1
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
+    public static double findIndex(final Object self, final Object predicate, final Object thisArg) {
+        return new IteratorAction<Double>(validate(self), predicate, thisArg, -1.0) {
+            private final MethodHandle findIndexInvoker = createIteratorCallbackInvoker(FIND_INDEX_CALLBACK_INVOKER, boolean.class);
+
+            @Override
+            protected boolean forEach(final Object val, final double i) throws Throwable {
+                if ((boolean) findIndexInvoker.invokeExact(callbackfn, thisArg, val, i, self)) {
+                    result = i;
+                    return false;
+                }
+                return true;
+            }
+        }.apply();
     }
 
     @Override
