@@ -360,11 +360,13 @@ public class Parser extends AbstractParser implements Loggable {
             k = -1;
             next();
 
-            // A method or a class constructor being re-parsed sits inside a class it
-            // cannot see from its own source. The original parse already checked that
-            // super was allowed here, and the binding it emits resolves through the
-            // scope the function closes over, so allow it again.
-            superUsable = programKind != ProgramKind.NORMAL;
+            // A function being re-parsed sits inside a class it cannot see from its own
+            // source. The original parse already checked that super was allowed here, and
+            // the binding it emits resolves through the scope the function closes over,
+            // so allow it again. An arrow is not a method or a constructor and so has no
+            // program kind of its own, but it is re-parsed the same way and borrows the
+            // super of the method around it, so being re-parsed at all is what counts.
+            superUsable = programKind != ProgramKind.NORMAL || reparsedFunction != null;
 
             // Begin parse.
             return program(scriptName, programKind);
@@ -2294,16 +2296,8 @@ public class Parser extends AbstractParser implements Loggable {
 
         switch (type) {
         case THIS:
-            final String name = type.getName();
             next();
-            if (lc.getCurrentFunction().getKind() == FunctionNode.Kind.ARROW) {
-                // An arrow function has no this of its own. Read the binding that the
-                // nearest enclosing non-arrow function declares instead.
-                markArrowThis();
-                return new IdentNode(primaryToken, finish, ARROW_THIS);
-            }
-            lc.setFlag(lc.getCurrentFunction(), FunctionNode.USES_THIS);
-            return new IdentNode(primaryToken, finish, name);
+            return thisFor(primaryToken);
         case IDENT:
             final IdentNode ident = getIdent();
             if (ident == null) {
@@ -2795,7 +2789,7 @@ public class Parser extends AbstractParser implements Loggable {
 
         next();
 
-        lc.setFlag(lc.getCurrentFunction(), FunctionNode.USES_THIS);
+        markThisUse();
 
         if (type == LPAREN) {
             return superCall(superLine, superToken, identifierFor(superToken, SUPERCLASS));
@@ -2814,7 +2808,7 @@ public class Parser extends AbstractParser implements Loggable {
     /** {@code callee.call(this, args...)}, with the argument list still to be read. */
     private Expression superCall(final int superLine, final long superToken, final Expression callee) {
         final List<Expression> arguments = new ArrayList<>();
-        arguments.add(new IdentNode(Token.recast(superToken, TokenType.THIS), finish, TokenType.THIS.getName()));
+        arguments.add(thisFor(Token.recast(superToken, TokenType.THIS)));
         arguments.addAll(argumentList());
 
         return new CallNode(superLine, superToken, finish, new AccessNode(Token.recast(superToken, TokenType.PERIOD), finish,
@@ -4430,6 +4424,35 @@ public class Parser extends AbstractParser implements Loggable {
                 return;
             }
         }
+    }
+
+    /**
+     * Record that an expression at this point reads {@code this}, against whichever
+     * function actually owns that binding. Inside an arrow that is not the arrow.
+     */
+    private void markThisUse() {
+        if (lc.getCurrentFunction().getKind() == FunctionNode.Kind.ARROW) {
+            markArrowThis();
+        } else {
+            lc.setFlag(lc.getCurrentFunction(), FunctionNode.USES_THIS);
+        }
+    }
+
+    /**
+     * The {@code this} an expression at this point reads. Every {@code this} the parser
+     * emits has to come from here rather than be built by hand, because inside an arrow
+     * the name is not "this" at all - it is the binding the nearest enclosing non-arrow
+     * function was made to declare.
+     *
+     * @param thisToken token to give the identifier.
+     * @return the identifier to read the receiver through.
+     */
+    private IdentNode thisFor(final long thisToken) {
+        final boolean arrow = lc.getCurrentFunction().getKind() == FunctionNode.Kind.ARROW;
+
+        markThisUse();
+
+        return new IdentNode(thisToken, finish, arrow ? ARROW_THIS : TokenType.THIS.getName());
     }
 
     /**
