@@ -63,3 +63,22 @@ print(sum(1));
 
 // Ordinary division is still division, not the start of a literal.
 print(10 / 2 / 1);
+
+// A body the lexer cannot tokenise as ordinary JavaScript. The lookahead walks token
+// types, so it reaches the body before the grammar has resolved the "/" - and a quote,
+// a template tick or a number prefix makes that speculative scan fail. The failure
+// belongs to the probe, not to the program, so it must not surface.
+print((function () { return /"/.source; })());
+print((function () { return /'/.source; })());
+print((function () { return /`/.source; })());
+print((function () { return /0x/.source; })());
+print((function () { return /\u1/.source; })());
+
+// The same through the destructuring-assignment lookahead, which starts at "{".
+var quoting = { escape: function (s) { return s.replace(/"/g, "&quot;"); } };
+print(quoting.escape('a"b'));
+
+// And through the for-of lookahead, which starts at "(".
+for (var m of ['x"y'.match(/"/)]) {
+    print(m[0]);
+}

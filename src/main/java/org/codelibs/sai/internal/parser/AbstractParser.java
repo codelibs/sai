@@ -161,7 +161,8 @@ public abstract class AbstractParser {
      *
      * This runs the probe and rewinds both the lexer and the token stream to where they
      * were, leaving the ambiguity for the real parse to resolve with the grammar
-     * context it actually has.
+     * context it actually has. A probe that fails to scan is answered with false for the
+     * same reason: the error is an artefact of reading ahead, not of the source.
      *
      * @param probe the lookahead to run.
      * @return whatever the probe returned.
@@ -174,6 +175,15 @@ public abstract class AbstractParser {
 
         try {
             return probe.getAsBoolean();
+        } catch (final ParserException e) {
+            // Rewinding is not enough on its own: the probe reads token types, so it
+            // walks into text the lexer cannot tokenise by itself - the body of a
+            // regular expression the stream has not been asked to reinterpret yet, where
+            // a quote or a number prefix is not a token at all. That failure belongs to
+            // the speculative scan, not to the program, so answering "no" and letting
+            // the real parse resolve the "/" with its grammar context is both safe and
+            // more accurate than reporting an error the source does not contain.
+            return false;
         } finally {
             while (stream.last() > last) {
                 stream.removeLast();
