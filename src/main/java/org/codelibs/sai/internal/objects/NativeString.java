@@ -1154,6 +1154,181 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
         return str.substring(start, end + 1);
     }
 
+    /**
+     * ECMA Annex B B.2.3.2.1 CreateHTML ( string, tag, attribute, value )
+     *
+     * The thirteen HTML methods below all reduce to this: wrap the string in a tag,
+     * optionally carrying one attribute. A double quote in the attribute value is
+     * escaped as {@code &quot;} so that it cannot break out of the attribute it sits in;
+     * nothing else is escaped, which is what the spec says even though it leaves the
+     * result far from safe to paste into a document.
+     *
+     * The tag and attribute names are spelled in lower case at the call sites, so no
+     * case conversion happens here and the Turkish locale cannot reach this code.
+     *
+     * @param self      this value, which must be coercible to a string
+     * @param tag       tag name
+     * @param attribute attribute name, or null for a tag that takes no attribute
+     * @param value     attribute value; ToString is applied to it, so a missing
+     *                  argument becomes the string "undefined", as the spec requires
+     * @return the string wrapped in the tag
+     */
+    private static String createHTML(final Object self, final String tag, final String attribute, final Object value) {
+        // RequireObjectCoercible and ToString on the receiver run before ToString on the value
+        final String str = checkObjectToString(self);
+        final StringBuilder sb = new StringBuilder().append('<').append(tag);
+
+        if (attribute != null) {
+            final String escaped = JSType.toString(value);
+            sb.append(' ').append(attribute).append("=\"");
+            for (int i = 0; i < escaped.length(); i++) {
+                final char ch = escaped.charAt(i);
+                if (ch == '"') {
+                    sb.append("&quot;");
+                } else {
+                    sb.append(ch);
+                }
+            }
+            sb.append('"');
+        }
+
+        return sb.append('>').append(str).append("</").append(tag).append('>').toString();
+    }
+
+    /**
+     * ECMA Annex B B.2.3.2 String.prototype.anchor ( name )
+     * @param self self reference
+     * @param name value of the name attribute
+     * @return the string wrapped in an anchor tag
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static String anchor(final Object self, final Object name) {
+        return createHTML(self, "a", "name", name);
+    }
+
+    /**
+     * ECMA Annex B B.2.3.3 String.prototype.big ( )
+     * @param self self reference
+     * @return the string wrapped in a big tag
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static String big(final Object self) {
+        return createHTML(self, "big", null, UNDEFINED);
+    }
+
+    /**
+     * ECMA Annex B B.2.3.4 String.prototype.blink ( )
+     * @param self self reference
+     * @return the string wrapped in a blink tag
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static String blink(final Object self) {
+        return createHTML(self, "blink", null, UNDEFINED);
+    }
+
+    /**
+     * ECMA Annex B B.2.3.5 String.prototype.bold ( )
+     * @param self self reference
+     * @return the string wrapped in a b tag
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static String bold(final Object self) {
+        return createHTML(self, "b", null, UNDEFINED);
+    }
+
+    /**
+     * ECMA Annex B B.2.3.6 String.prototype.fixed ( )
+     * @param self self reference
+     * @return the string wrapped in a tt tag
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static String fixed(final Object self) {
+        return createHTML(self, "tt", null, UNDEFINED);
+    }
+
+    /**
+     * ECMA Annex B B.2.3.7 String.prototype.fontcolor ( color )
+     * @param self  self reference
+     * @param color value of the color attribute
+     * @return the string wrapped in a font tag
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static String fontcolor(final Object self, final Object color) {
+        return createHTML(self, "font", "color", color);
+    }
+
+    /**
+     * ECMA Annex B B.2.3.8 String.prototype.fontsize ( size )
+     * @param self self reference
+     * @param size value of the size attribute
+     * @return the string wrapped in a font tag
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static String fontsize(final Object self, final Object size) {
+        return createHTML(self, "font", "size", size);
+    }
+
+    /**
+     * ECMA Annex B B.2.3.9 String.prototype.italics ( )
+     * @param self self reference
+     * @return the string wrapped in an i tag
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static String italics(final Object self) {
+        return createHTML(self, "i", null, UNDEFINED);
+    }
+
+    /**
+     * ECMA Annex B B.2.3.10 String.prototype.link ( url )
+     * @param self self reference
+     * @param url  value of the href attribute
+     * @return the string wrapped in an anchor tag
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static String link(final Object self, final Object url) {
+        return createHTML(self, "a", "href", url);
+    }
+
+    /**
+     * ECMA Annex B B.2.3.11 String.prototype.small ( )
+     * @param self self reference
+     * @return the string wrapped in a small tag
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static String small(final Object self) {
+        return createHTML(self, "small", null, UNDEFINED);
+    }
+
+    /**
+     * ECMA Annex B B.2.3.12 String.prototype.strike ( )
+     * @param self self reference
+     * @return the string wrapped in a strike tag
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static String strike(final Object self) {
+        return createHTML(self, "strike", null, UNDEFINED);
+    }
+
+    /**
+     * ECMA Annex B B.2.3.13 String.prototype.sub ( )
+     * @param self self reference
+     * @return the string wrapped in a sub tag
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static String sub(final Object self) {
+        return createHTML(self, "sub", null, UNDEFINED);
+    }
+
+    /**
+     * ECMA Annex B B.2.3.14 String.prototype.sup ( )
+     * @param self self reference
+     * @return the string wrapped in a sup tag
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static String sup(final Object self) {
+        return createHTML(self, "sup", null, UNDEFINED);
+    }
+
     private static ScriptObject newObj(final CharSequence str) {
         return new NativeString(str);
     }
