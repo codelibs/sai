@@ -1,0 +1,43 @@
+anchor function arity=1 enumerable=false
+big function arity=0 enumerable=false
+blink function arity=0 enumerable=false
+bold function arity=0 enumerable=false
+fixed function arity=0 enumerable=false
+fontcolor function arity=1 enumerable=false
+fontsize function arity=1 enumerable=false
+italics function arity=0 enumerable=false
+link function arity=1 enumerable=false
+small function arity=0 enumerable=false
+strike function arity=0 enumerable=false
+sub function arity=0 enumerable=false
+sup function arity=0 enumerable=false
+<a name="bar">foo</a>
+<big>foo</big>
+<blink>foo</blink>
+<b>foo</b>
+<tt>foo</tt>
+<font color="red">foo</font>
+<font size="3">foo</font>
+<i>foo</i>
+<a href="http://example.com/">foo</a>
+<small>foo</small>
+<strike>foo</strike>
+<sub>foo</sub>
+<sup>foo</sup>
+all tags lower case
+<a name="&quot;bar&quot;">foo</a>
+<a href="a&quot;b">foo</a>
+<font color="&quot;">foo</font>
+<font size="&quot;">foo</font>
+all quotes escaped
+<b><b></b>
+<a name="a&b<c>">foo</a>
+[<big></big>]
+[<a name="x"></a>]
+<a name="undefined">foo</a>
+<font size="undefined">foo</font>
+<b>5</b>
+<a name="1">true</a>
+<big>wrapped</big>
+null and undefined receivers all threw TypeError
+receiver checked first: true
