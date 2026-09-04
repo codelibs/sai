@@ -1,0 +1,14 @@
+toString
+toString
+valueOf
+valueOf only
+12 3
+null|undefined|true|0.5|0
+1,2|[object Object]
+abc
+java
+toString
+outer inner toString end
+from toString
+a|b/object
+toString toString

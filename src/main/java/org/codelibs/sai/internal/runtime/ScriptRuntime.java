@@ -759,6 +759,23 @@ public final class ScriptRuntime {
     }
 
     /**
+     * Convert the value of an ES6 template substitution to a string.
+     *
+     * A template is lowered to a concatenation, and "+" converts with no hint, which
+     * asks an object for its valueOf first. ES6 says a substitution goes through
+     * ToString, which asks for toString first. Doing it with a call to the String
+     * constructor would read String out of the scope the template is written in, so a
+     * local of that name would break every template below it.
+     *
+     * @param value the value of the substitution
+     *
+     * @return the string to concatenate
+     */
+    public static Object TO_STRING(final Object value) {
+        return JSType.toString(value);
+    }
+
+    /**
      * Reject a call of an ES6 class constructor that did not come from new.
      *
      * A class body is strict code, so a call with no receiver leaves this undefined,

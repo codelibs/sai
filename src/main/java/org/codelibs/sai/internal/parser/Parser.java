@@ -3875,6 +3875,10 @@ public class Parser extends AbstractParser implements Loggable {
      * empty, so that every substitution is concatenated rather than added:
      * {@code `${1}${2}`} is "12", not 3.
      *
+     * Each substitution is converted first. "+" would convert it too, but with no hint,
+     * which asks an object for its valueOf; ES6 says a substitution goes through
+     * ToString, which asks for toString.
+     *
      * @return Expression node.
      */
     private Expression templateLiteral() {
@@ -3891,7 +3895,8 @@ public class Parser extends AbstractParser implements Loggable {
 
         try {
             while (true) {
-                concat = new BinaryNode(Token.recast(templateToken, TokenType.ADD), concat, expression());
+                concat = new BinaryNode(Token.recast(templateToken, TokenType.ADD), concat,
+                        new RuntimeNode(templateToken, finish, RuntimeNode.Request.TO_STRING, expression()));
 
                 if (type != TEMPLATE_MIDDLE && type != TEMPLATE_TAIL) {
                     throw error(AbstractParser.message("expected.literal", "template"), token);

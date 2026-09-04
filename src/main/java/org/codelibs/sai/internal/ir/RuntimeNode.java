@@ -95,6 +95,8 @@ public class RuntimeNode extends Expression {
         DEFINE_METHOD,
         /** Define a non-enumerable accessor, for an ES6 class body */
         DEFINE_ACCESSOR,
+        /** Convert a value to a string, for an ES6 template substitution */
+        TO_STRING,
         /** Reject a call of an ES6 class constructor that did not come from new */
         REQUIRE_NEW;
 
