@@ -398,12 +398,35 @@ public class Parser extends AbstractParser implements Loggable {
         try {
             stream = new TokenStream();
             lexer = new Lexer(source, stream, scripting && !env._no_syntax_extensions, env._es6);
+            final int functionLine = line;
 
             // Set up first token (skips opening EOL.)
             k = -1;
             next();
 
-            return formalParameterList(TokenType.EOF, null);
+            // A default value, a pattern and a rest binding are all read only when
+            // formalParameterList is given somewhere to put the setup code the body would
+            // run, since that is what applies them. There is no body to check here and
+            // the setups are discarded, but withholding the collector would reject the
+            // very syntax this is meant to accept - the function itself is then built by
+            // evaluating a function expression, which has always understood these forms.
+            //
+            // Reading them needs a function on the stack: they are expressions, and the
+            // expression parser asks the lexical context which function it is in. Open
+            // the same throwaway program node parseFunctionBody opens.
+            final long functionToken = Token.toDesc(FUNCTION, 0, source.getLength());
+            FunctionNode function = newFunctionNode(functionToken,
+                    new IdentNode(functionToken, Token.descPosition(functionToken), PROGRAM.symbolName()),
+                    new ArrayList<IdentNode>(), FunctionNode.Kind.NORMAL, functionLine);
+
+            final Parameters parameters = new Parameters();
+            formalParameterList(TokenType.EOF, parameters);
+            expect(TokenType.EOF);
+
+            function.setFinish(source.getLength() - 1);
+            restoreFunctionNode(function, token);
+
+            return parameters.list;
         } catch (final Exception e) {
             handleParseException(e);
             return null;
