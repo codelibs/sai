@@ -1,0 +1,35 @@
+all methods present on all 9 types
+own props of Int8Array: BYTES_PER_ELEMENT,from,length,name,of,prototype
+---- keys/values/entries ----
+keys: 0,1,2
+values: 10,20,30
+entries: [0,10] [1,20] [2,30]
+an entry is an Array: true 2
+Float64Array values: 0.5,1.5
+empty: 0
+first step: 1 true
+stays exhausted: true undefined
+iterators are independent: true
+---- of ----
+true 3 1,2,3
+no arguments: 0
+Int8Array wraps: -56
+Uint8ClampedArray saturates: 255,0
+Uint32Array keeps big values: 4294967295
+Float64Array keeps the fraction: 0.5,1.5
+Float32Array rounds: 0.10000000149011612
+---- from ----
+array: 1,2,3 true
+array-like: 7,8,9
+string: 1,2,3
+arguments: 4,5,6
+another typed array: 1,2
+holes read as undefined: NaN,NaN
+no length: 0
+map function: 10,21,32
+map thisArg: 5
+Uint8ClampedArray saturates: 255,0
+non-callable map function: true
+checked before the source is read: true
+---- receiver validation ----
+all methods reject bad receivers with TypeError

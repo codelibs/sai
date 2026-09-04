@@ -165,7 +165,7 @@ public abstract class ArrayBufferView extends ScriptObject {
         return elementLength();
     }
 
-    private int elementLength() {
+    int elementLength() {
         return ((TypedArrayData<?>) getArray()).getElementLength();
     }
 
@@ -391,6 +391,7 @@ public abstract class ArrayBufferView extends ScriptObject {
     private static final Object FIND_CALLBACK_INVOKER = new Object();
     private static final Object FIND_INDEX_CALLBACK_INVOKER = new Object();
     private static final Object SORT_COMPARE_INVOKER = new Object();
+    private static final Object FROM_CALLBACK_INVOKER = new Object();
 
     private static MethodHandle createIteratorCallbackInvoker(final Object key, final Class<?> rtype) {
         return Global.instance().getDynamicInvoker(key, new Callable<MethodHandle>() {
@@ -398,6 +399,16 @@ public abstract class ArrayBufferView extends ScriptObject {
             public MethodHandle call() {
                 return Bootstrap.createDynamicInvoker("dyn:call", rtype, Object.class, Object.class, Object.class, double.class,
                         Object.class);
+            }
+        });
+    }
+
+    private static MethodHandle createFromCallbackInvoker() {
+        return Global.instance().getDynamicInvoker(FROM_CALLBACK_INVOKER, new Callable<MethodHandle>() {
+            @Override
+            public MethodHandle call() {
+                // %TypedArray%.from's map function is called with (element, index) only.
+                return Bootstrap.createDynamicInvoker("dyn:call", Object.class, Object.class, Object.class, Object.class, double.class);
             }
         });
     }
@@ -808,6 +819,149 @@ public abstract class ArrayBufferView extends ScriptObject {
                 return true;
             }
         }.apply();
+    }
+
+    /**
+     * ES6 22.2.3.15 %TypedArray%.prototype.keys ( )
+     *
+     * @param self self reference
+     * @return an object whose next() walks the indices
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static Object keys(final Object self) {
+        return TypedArrayIterator.newIterator(validate(self), TypedArrayIterator.Kind.KEYS);
+    }
+
+    /**
+     * ES6 22.2.3.29 %TypedArray%.prototype.values ( )
+     *
+     * @param self self reference
+     * @return an object whose next() walks the elements
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static Object values(final Object self) {
+        return TypedArrayIterator.newIterator(validate(self), TypedArrayIterator.Kind.VALUES);
+    }
+
+    /**
+     * ES6 22.2.3.6 %TypedArray%.prototype.entries ( )
+     *
+     * @param self self reference
+     * @return an object whose next() walks [index, element] pairs
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE)
+    public static Object entries(final Object self) {
+        return TypedArrayIterator.newIterator(validate(self), TypedArrayIterator.Kind.ENTRIES);
+    }
+
+    /**
+     * Inheritable implementation of ES6 22.2.2.2 %TypedArray%.of ( ...items ).
+     *
+     * @param factory factory for the concrete type the method was called on
+     * @param items   the elements
+     * @return a new typed array holding the elements
+     */
+    protected static ArrayBufferView ofImpl(final Factory factory, final Object[] items) {
+        final Object[] elements = items == null ? ScriptRuntime.EMPTY_ARRAY : items;
+        final ArrayBufferView result = factory.construct(elements.length);
+
+        for (int i = 0; i < elements.length; i++) {
+            result.setElement(i, elements[i]);
+        }
+
+        return result;
+    }
+
+    /**
+     * Inheritable implementation of ES6 22.2.2.1 %TypedArray%.from ( source [ , mapfn [ , thisArg ] ] ).
+     * <p>
+     * ES6 reads the source through the iterator protocol, which this engine does not have.
+     * Elements are read by index instead, the same approximation for-of and spread make: an
+     * array, a string, the arguments object and any object with a length and indexed
+     * properties all work, and so do a Java array, List or Iterable, but an object that is
+     * only iterable does not.
+     *
+     * @param factory factory for the concrete type the method was called on
+     * @param args    source, and optionally a map function and its this argument
+     * @return a new typed array holding the elements
+     */
+    protected static ArrayBufferView fromImpl(final Factory factory, final Object[] args) {
+        final Object source = args.length > 0 ? args[0] : ScriptRuntime.UNDEFINED;
+        final Object mapfn = args.length > 1 ? args[1] : ScriptRuntime.UNDEFINED;
+        final Object thisArg = args.length > 2 ? args[2] : ScriptRuntime.UNDEFINED;
+        final boolean mapping = mapfn != ScriptRuntime.UNDEFINED;
+
+        MethodHandle invoker = null;
+        Object callbackThis = thisArg;
+
+        if (mapping) {
+            // A mapfn that is present but not callable is a TypeError even when the source
+            // turns out to be empty, so this has to happen before anything is read.
+            if (!Bootstrap.isCallable(mapfn)) {
+                throw typeError("not.a.function", ScriptRuntime.safeToString(mapfn));
+            }
+            callbackThis = thisArg == ScriptRuntime.UNDEFINED && !Bootstrap.isStrictCallable(mapfn) ? Global.instance() : thisArg;
+            invoker = createFromCallbackInvoker();
+        }
+
+        final Object[] values = readArrayLike(source);
+        final ArrayBufferView result = factory.construct(values.length);
+
+        for (int i = 0; i < values.length; i++) {
+            Object value = values[i];
+            if (mapping) {
+                try {
+                    value = invoker.invokeExact(mapfn, callbackThis, value, (double) i);
+                } catch (final RuntimeException | Error e) {
+                    throw e;
+                } catch (final Throwable t) {
+                    throw new RuntimeException(t);
+                }
+            }
+            result.setElement(i, value);
+        }
+
+        return result;
+    }
+
+    /**
+     * Read an array-like value into a Java array. Holes are read as undefined rather than
+     * skipped, so {@code Int8Array.from({length: 3})} has three elements.
+     */
+    private static Object[] readArrayLike(final Object source) {
+        final Object obj = Global.toObject(source);
+
+        if (obj instanceof ScriptObject) {
+            final ScriptObject sobj = (ScriptObject) obj;
+            final Object[] values = new Object[toArrayLikeLength(sobj.getLength())];
+
+            for (int i = 0; i < values.length; i++) {
+                values[i] = sobj.get(i);
+            }
+
+            return values;
+        }
+
+        // A Java array, List or Iterable, or a JSObject. None of them carries a JavaScript
+        // length, so hand them to the reader ES6 spread already uses.
+        return ((ScriptObject) ScriptRuntime.TO_ARRAY(obj, 0)).getArray().asObjectArray();
+    }
+
+    /**
+     * ES6 ToLength, further clamped to what a Java array can hold.
+     */
+    private static int toArrayLikeLength(final Object length) {
+        final double num = JSType.toNumber(length);
+
+        if (Double.isNaN(num) || num <= 0) {
+            return 0;
+        }
+
+        if (num > Integer.MAX_VALUE) {
+            throw rangeError("inappropriate.array.buffer.length", JSType.toString(length));
+        }
+
+        return (int) num;
     }
 
     @Override

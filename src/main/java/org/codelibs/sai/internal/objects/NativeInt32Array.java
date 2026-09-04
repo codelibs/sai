@@ -191,6 +191,30 @@ public final class NativeInt32Array extends ArrayBufferView {
     }
 
     /**
+     * ES6 22.2.2.2 %TypedArray%.of ( ...items )
+     *
+     * @param self  self reference
+     * @param items the elements
+     * @return a new Int32Array holding the elements
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 0, where = Where.CONSTRUCTOR)
+    public static NativeInt32Array of(final Object self, final Object... items) {
+        return (NativeInt32Array) ArrayBufferView.ofImpl(FACTORY, items);
+    }
+
+    /**
+     * ES6 22.2.2.1 %TypedArray%.from ( source [ , mapfn [ , thisArg ] ] )
+     *
+     * @param self self reference
+     * @param args source, and optionally a map function and its this argument
+     * @return a new Int32Array holding the elements
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1, where = Where.CONSTRUCTOR)
+    public static NativeInt32Array from(final Object self, final Object... args) {
+        return (NativeInt32Array) ArrayBufferView.fromImpl(FACTORY, args);
+    }
+
+    /**
      * Set values
      * @param self   self reference
      * @param array  multiple values of array's type to set
