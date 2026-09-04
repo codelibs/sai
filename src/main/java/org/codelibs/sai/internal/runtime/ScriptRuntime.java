@@ -707,6 +707,58 @@ public final class ScriptRuntime {
     }
 
     /**
+     * Define a method of an ES6 class body on the class or on its prototype.
+     *
+     * A class member is not enumerable, which a plain assignment cannot express, and
+     * doing it with a call to Object.defineProperty would read Object out of the scope
+     * the class happens to be written in - a local named Object then breaks the class.
+     *
+     * A definition that cannot be made is dropped rather than thrown, which is what the
+     * assignment this replaced did. It only arises for a static member named after one
+     * of a function's own non-configurable properties - "name", "length", "prototype",
+     * "caller" or "arguments" - which ES6 allows and this engine has no way to express.
+     *
+     * @param target the object to define the method on
+     * @param key    the method name
+     * @param value  the method
+     *
+     * @return the method
+     */
+    public static Object DEFINE_METHOD(final Object target, final Object key, final Object value) {
+        final Global global = Context.getGlobal();
+
+        Global.checkObject(target).defineOwnProperty(JSType.toString(key),
+                global.newDataDescriptor(value, true, false, true), false);
+
+        return value;
+    }
+
+    /**
+     * Define a getter or a setter of an ES6 class body on the class or on its prototype.
+     *
+     * One half of the pair is defined at a time, which is correct for a get/set pair as
+     * well: the descriptor names only the half it carries, so a setter defined later
+     * keeps the getter beside it.
+     *
+     * @param target   the object to define the accessor on
+     * @param key      the property name
+     * @param accessor the accessor function
+     * @param isGetter true for a getter, false for a setter
+     *
+     * @return the accessor function
+     */
+    public static Object DEFINE_ACCESSOR(final Object target, final Object key, final Object accessor,
+            final Object isGetter) {
+        final Global global = Context.getGlobal();
+        final boolean getter = JSType.toBoolean(isGetter);
+
+        Global.checkObject(target).defineOwnProperty(JSType.toString(key),
+                global.newAccessorDescriptor(getter ? accessor : null, getter ? null : accessor, true, false), false);
+
+        return accessor;
+    }
+
+    /**
      * ECMA 11.4.3 The typeof Operator - generic implementation
      *
      * @param object   the object from which to retrieve property to type check

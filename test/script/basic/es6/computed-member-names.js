@@ -110,10 +110,10 @@ var instance = new Accessors();
 instance.method = "given";
 print(instance.method, instance.taken, Accessors.smethod);
 
-// A class accessor is defined rather than assigned, so it is not enumerable; a
-// class method is assigned and so is enumerable, as it has been all along. What
-// the key was written as makes no difference either way.
-print(Object.keys(Accessors.prototype).join(","), Object.keys(Computed.prototype).join(","));
+// No member of a class body is enumerable, accessor or method. What the key was
+// written as makes no difference either way.
+print("[" + Object.keys(Accessors.prototype).join(",") + "]",
+      "[" + Object.keys(Computed.prototype).join(",") + "]");
 
 // A key written as "constructor" is an ordinary member, so it replaces the
 // constructor property rather than becoming the constructor.

@@ -1,0 +1,23 @@
+false
+false
+false
+0
+accessor,constructor,method
+own
+true,true,false
+function,function,true,false
+get,written
+replaced
+true
+local get
+local method
+true
+ReferenceError
+SyntaxError
+SyntaxError
+SyntaxError
+derived/base
+shared
+true
+false
+2
