@@ -1900,6 +1900,24 @@ public final class Global extends Scope {
     }
 
     /**
+     * Makes a prototype's Symbol.iterator the method it already carries under a
+     * name, which is what ES6 asks of every one of these: Array.prototype's is its
+     * values, Map.prototype's its entries, Set.prototype's its values.
+     *
+     * <p>Installed from Java because saigen writes an annotated property's key into
+     * the generated class as a constant pool entry, and a symbol is not one.
+     *
+     * @param prototype the prototype to add the symbol to
+     * @param methodName the method it should name
+     */
+    private static void installIterator(final ScriptObject prototype, final String methodName) {
+        final Object method = prototype.get(methodName);
+        if (method instanceof ScriptFunction) {
+            prototype.addOwnProperty(NativeSymbol.iterator, Attribute.NOT_ENUMERABLE, method);
+        }
+    }
+
+    /**
      * ECMA 20.2.1.9 and 24.3.3 give the two namespace objects a Symbol.toStringTag,
      * so that Object.prototype.toString names them. The tag goes on when the object
      * is built rather than when a script first reaches for Symbol: the well known
@@ -1924,6 +1942,7 @@ public final class Global extends Scope {
     private synchronized ScriptFunction getBuiltinMap() {
         if (this.builtinMap == null) {
             this.builtinMap = initConstructorAndSwitchPoint("Map", ScriptFunction.class);
+            installIterator(ScriptFunction.getPrototype(this.builtinMap), "entries");
         }
         return this.builtinMap;
     }
@@ -1935,6 +1954,7 @@ public final class Global extends Scope {
     private synchronized ScriptFunction getBuiltinSet() {
         if (this.builtinSet == null) {
             this.builtinSet = initConstructorAndSwitchPoint("Set", ScriptFunction.class);
+            installIterator(ScriptFunction.getPrototype(this.builtinSet), "values");
         }
         return this.builtinSet;
     }
@@ -2607,6 +2627,7 @@ public final class Global extends Scope {
 
         // built-in constructors
         this.builtinArray = initConstructorAndSwitchPoint("Array", ScriptFunction.class);
+        installIterator(getArrayPrototype(), "values");
         this.builtinBoolean = initConstructorAndSwitchPoint("Boolean", ScriptFunction.class);
         // ES6 20.1.2.12 and 20.1.2.13 want Number.parseInt and Number.parseFloat to be the very
         // same function objects as the global ones - the identity is observable and kangax tests
@@ -2619,6 +2640,8 @@ public final class Global extends Scope {
         tagBuiltinProperties("Number", this.builtinNumber);
 
         this.builtinString = initConstructorAndSwitchPoint("String", ScriptFunction.class);
+        getStringPrototype().addOwnProperty(NativeSymbol.iterator, Attribute.NOT_ENUMERABLE,
+                ScriptFunction.createBuiltin("[Symbol.iterator]", NativeString.ITERATOR));
         this.builtinMath = initConstructorAndSwitchPoint("Math", ScriptObject.class);
         tagNamespace(this.builtinMath, "Math");
 

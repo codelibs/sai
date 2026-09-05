@@ -1,0 +1,27 @@
+Array.prototype: true
+Map.prototype: true
+Set.prototype: true
+String.prototype: function
+for..of: 123
+for..of an instance: 45
+spread in an array literal: a,b,c,d
+spread in a call: 6
+destructuring declaration: 1,2,true
+destructuring assignment: 3,4,true
+destructuring a parameter: 5,6,true
+Array.from: 1,2,3
+Array.from an instance: 1,2
+Array.from mapping: foo-0,bar-1
+new Set from an iterable: 2
+new Map from an iterable: v
+for..of a Map: a1b2
+spread a Set: 1,2,3
+spread a Map: k:v
+Array.from a Set: 1,2
+spread a string: 3
+the string iterator: a,2,b,true
+an array: 123
+an array spread: 1,2,3
+an array-like for Array.from: a,b
+a plain object is not iterable: 0
+read ahead of the loop: 4

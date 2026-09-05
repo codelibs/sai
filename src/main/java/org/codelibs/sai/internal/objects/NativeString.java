@@ -1505,6 +1505,24 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
         return new NativeString(str);
     }
 
+    /** The handle Global installs under Symbol.iterator on String.prototype. */
+    static final MethodHandle ITERATOR = findOwnMH("iterator", MethodType.methodType(Object.class, Object.class));
+
+    /**
+     * ECMA 21.1.3.27 String.prototype [ @@iterator ] ( )
+     *
+     * <p>Installed from Global under the symbol key, since saigen cannot write one
+     * into a generated class. It walks the string by code point, as for..of and the
+     * spread operator already do, so a character above the basic plane is one step.
+     *
+     * @param self self reference
+     * @return an iterator over the string's code points
+     */
+    public static Object iterator(final Object self) {
+        final String str = checkObjectToString(self);
+        return ArrayIterator.newIterator(new NativeArray(ScriptRuntime.toCodePoints(str)), ArrayIterator.Kind.VALUES);
+    }
+
     /**
      * ECMA 15.5.2.1 new String ( [ value ] )
      *

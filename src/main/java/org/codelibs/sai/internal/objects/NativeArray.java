@@ -770,6 +770,10 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
      */
     @SpecializedFunction(linkLogic = ConcatLinkLogic.class)
     public static NativeArray concat(final Object self, final int arg) {
+        if (hasConcatSpreadable(self)) {
+            return concat(self, new Object[] { arg });
+        }
+
         final ContinuousArrayData newData = getContinuousArrayDataCCE(self, Integer.class).copy(); //get at least an integer data copy of this data
         newData.fastPush(arg); //add an integer to its end
         return new NativeArray(newData);
@@ -784,6 +788,10 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
      */
     @SpecializedFunction(linkLogic = ConcatLinkLogic.class)
     public static NativeArray concat(final Object self, final long arg) {
+        if (hasConcatSpreadable(self)) {
+            return concat(self, new Object[] { arg });
+        }
+
         final ContinuousArrayData newData = getContinuousArrayDataCCE(self, Long.class).copy(); //get at least a long array data copy of this data
         newData.fastPush(arg); //add a long at the end
         return new NativeArray(newData);
@@ -798,6 +806,10 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
      */
     @SpecializedFunction(linkLogic = ConcatLinkLogic.class)
     public static NativeArray concat(final Object self, final double arg) {
+        if (hasConcatSpreadable(self)) {
+            return concat(self, new Object[] { arg });
+        }
+
         final ContinuousArrayData newData = getContinuousArrayDataCCE(self, Double.class).copy(); //get at least a number array data copy of this data
         newData.fastPush(arg); //add a double at the end
         return new NativeArray(newData);
@@ -812,6 +824,10 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
      */
     @SpecializedFunction(linkLogic = ConcatLinkLogic.class)
     public static NativeArray concat(final Object self, final Object arg) {
+        if (hasConcatSpreadable(self) || hasConcatSpreadable(arg)) {
+            return concat(self, new Object[] { arg });
+        }
+
         //arg is [NativeArray] of same type.
         final ContinuousArrayData selfData = getContinuousArrayDataCCE(self);
         final ContinuousArrayData newData;
@@ -854,6 +870,16 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
         }
 
         return new NativeArray(list.toArray());
+    }
+
+    /**
+     * Whether a value carries Symbol.isConcatSpreadable at all, either way. The
+     * specialized concats below cannot honour it, so they hand back to the general
+     * one when they see it.
+     */
+    private static boolean hasConcatSpreadable(final Object value) {
+        return value instanceof ScriptObject
+                && ScriptRuntime.findSymbolValue((ScriptObject) value, NativeSymbol.isConcatSpreadable) != ScriptRuntime.UNDEFINED;
     }
 
     private static void concatToList(final ArrayList<Object> list, final Object obj) {
@@ -1994,7 +2020,9 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
      * undefined rather than skipped, so Array.from({length: 3}) has three elements.
      */
     private static Object[] readArrayLike(final Object items) {
-        final Object obj = Global.toObject(items);
+        // ES6 22.1.2.1 step 6: something carrying the iteration protocol is read
+        // through it, and only what does not falls back to the length based walk.
+        final Object obj = ScriptRuntime.TO_ITERABLE(Global.toObject(items));
 
         if (obj instanceof ScriptObject) {
             final ScriptObject sobj = (ScriptObject) obj;
