@@ -215,6 +215,9 @@ public final class ScriptRuntime {
         case UNDEFINED:
             className = "Undefined";
             break;
+        case SYMBOL:
+            className = "Symbol";
+            break;
         case OBJECT:
             if (self instanceof ScriptObject) {
                 className = ((ScriptObject) self).getClassName();

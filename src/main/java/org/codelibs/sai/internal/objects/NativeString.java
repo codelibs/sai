@@ -56,6 +56,7 @@ import org.codelibs.sai.internal.objects.annotations.SpecializedFunction;
 import org.codelibs.sai.internal.objects.annotations.SpecializedFunction.LinkLogic;
 import org.codelibs.sai.internal.objects.annotations.Where;
 import org.codelibs.sai.internal.runtime.ConsString;
+import org.codelibs.sai.internal.runtime.JSSymbol;
 import org.codelibs.sai.internal.runtime.JSType;
 import org.codelibs.sai.internal.runtime.OptimisticBuiltins;
 import org.codelibs.sai.internal.runtime.PropertyMap;
@@ -327,7 +328,7 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
     }
 
     @Override
-    public Object getOwnPropertyDescriptor(final String key) {
+    public Object getOwnPropertyDescriptor(final Object key) {
         final int index = ArrayIndex.getArrayIndex(key);
         if (index >= 0 && index < value.length()) {
             final Global global = Global.instance();
@@ -1517,6 +1518,11 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
      */
     @Constructor(arity = 1)
     public static Object constructor(final boolean newObj, final Object self, final Object... args) {
+        if (!newObj && args.length > 0 && args[0] instanceof JSSymbol) {
+            // ES6 21.1.1.1: String() is the one place a symbol may be written out,
+            // and it is written as 19.4.3.3 SymbolDescriptiveString describes it.
+            return args[0].toString();
+        }
         final CharSequence str = args.length > 0 ? JSType.toCharSequence(args[0]) : "";
         return newObj ? newObj(str) : str.toString();
     }
@@ -1549,6 +1555,10 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
      */
     @SpecializedFunction(isConstructor = true)
     public static Object constructor(final boolean newObj, final Object self, final Object arg) {
+        if (!newObj && arg instanceof JSSymbol) {
+            // ES6 21.1.1.1, as in the general constructor above.
+            return arg.toString();
+        }
         final CharSequence str = JSType.toCharSequence(arg);
         return newObj ? newObj(str) : str.toString();
     }

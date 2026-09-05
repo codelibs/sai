@@ -263,7 +263,7 @@ public final class NativeObject {
     @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
     public static Object getOwnPropertyDescriptor(final Object self, final Object obj, final Object prop) {
         if (obj instanceof ScriptObject) {
-            final String key = JSType.toString(prop);
+            final Object key = JSType.toPropertyKey(prop);
             final ScriptObject sobj = (ScriptObject) obj;
 
             return sobj.getOwnPropertyDescriptor(key);
@@ -342,7 +342,7 @@ public final class NativeObject {
     @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
     public static ScriptObject defineProperty(final Object self, final Object obj, final Object prop, final Object attr) {
         final ScriptObject sobj = Global.checkObject(obj);
-        sobj.defineOwnProperty(JSType.toString(prop), attr, true);
+        sobj.defineOwnProperty(JSType.toPropertyKey(prop), attr, true);
         return sobj;
     }
 

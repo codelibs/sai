@@ -40,6 +40,7 @@ import org.codelibs.sai.internal.dynalink.linker.TypeBasedGuardingDynamicLinker;
 import org.codelibs.sai.internal.dynalink.support.TypeUtilities;
 import org.codelibs.sai.internal.objects.Global;
 import org.codelibs.sai.internal.runtime.ConsString;
+import org.codelibs.sai.internal.runtime.JSSymbol;
 import org.codelibs.sai.internal.runtime.JSType;
 import org.codelibs.sai.internal.runtime.ScriptRuntime;
 
@@ -54,7 +55,10 @@ final class SaiPrimitiveLinker implements TypeBasedGuardingDynamicLinker, Guardi
 
     @Override
     public boolean canLinkType(final Class<?> type) {
-        return canLinkTypeStatic(type);
+        // A symbol is linked here so that a property read on one reaches
+        // Symbol.prototype, but it takes no part in the conversions below: there is
+        // no implicit conversion from a symbol to anything.
+        return canLinkTypeStatic(type) || type == JSSymbol.class;
     }
 
     private static boolean canLinkTypeStatic(final Class<?> type) {

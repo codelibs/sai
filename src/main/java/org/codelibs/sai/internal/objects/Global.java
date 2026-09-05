@@ -66,6 +66,7 @@ import org.codelibs.sai.internal.runtime.ECMAErrors;
 import org.codelibs.sai.internal.runtime.FindProperty;
 import org.codelibs.sai.internal.runtime.GlobalConstants;
 import org.codelibs.sai.internal.runtime.GlobalFunctions;
+import org.codelibs.sai.internal.runtime.JSSymbol;
 import org.codelibs.sai.internal.runtime.JSType;
 import org.codelibs.sai.internal.runtime.NativeJavaPackage;
 import org.codelibs.sai.internal.runtime.PropertyDescriptor;
@@ -878,6 +879,33 @@ public final class Global extends Scope {
 
     private volatile Object reflect = LAZY_SENTINEL;
 
+    /**
+     * Getter for the Symbol property.
+     * @param self self reference
+     * @return the value of the Symbol property
+     */
+    @Getter(name = "Symbol", attributes = Attribute.NOT_ENUMERABLE)
+    public static Object getSymbol(final Object self) {
+        final Global global = Global.instanceFrom(self);
+        if (global.symbol == LAZY_SENTINEL) {
+            global.symbol = global.getBuiltinSymbol();
+        }
+        return global.symbol;
+    }
+
+    /**
+     * Setter for the Symbol property.
+     * @param self self reference
+     * @param value value of the Symbol property
+     */
+    @Setter(name = "Symbol", attributes = Attribute.NOT_ENUMERABLE)
+    public static void setSymbol(final Object self, final Object value) {
+        final Global global = Global.instanceFrom(self);
+        global.symbol = value;
+    }
+
+    private volatile Object symbol = LAZY_SENTINEL;
+
     /** Sai extension: Java access - global.Packages */
     @Property(name = "Packages", attributes = Attribute.NOT_ENUMERABLE)
     public volatile Object packages;
@@ -1031,6 +1059,7 @@ public final class Global extends Scope {
     private ScriptFunction builtinWeakMap;
     private ScriptFunction builtinWeakSet;
     private ScriptObject builtinReflect;
+    private ScriptFunction builtinSymbol;
     private ScriptFunction builtinDataView;
     private ScriptFunction builtinInt8Array;
     private ScriptFunction builtinUint8Array;
@@ -1250,6 +1279,8 @@ public final class Global extends Scope {
             return new NativeNumber(((Number) obj).doubleValue(), this);
         } else if (isString(obj)) {
             return new NativeString((CharSequence) obj, this);
+        } else if (obj instanceof JSSymbol) {
+            return new NativeSymbol((JSSymbol) obj, this);
         } else if (obj instanceof Object[]) { // extension
             return new NativeArray(ArrayData.allocate((Object[]) obj), this);
         } else if (obj instanceof double[]) { // extension
@@ -1279,6 +1310,8 @@ public final class Global extends Scope {
             return NativeNumber.lookupPrimitive(request, self);
         } else if (self instanceof Boolean) {
             return NativeBoolean.lookupPrimitive(request, self);
+        } else if (self instanceof JSSymbol) {
+            return NativeSymbol.lookupPrimitive(request, self);
         }
         throw new IllegalArgumentException("Unsupported primitive: " + self);
     }
@@ -1856,6 +1889,18 @@ public final class Global extends Scope {
 
     ScriptObject getWeakSetPrototype() {
         return ScriptFunction.getPrototype(getBuiltinWeakSet());
+    }
+
+    private synchronized ScriptFunction getBuiltinSymbol() {
+        if (this.builtinSymbol == null) {
+            this.builtinSymbol = initConstructorAndSwitchPoint("Symbol", ScriptFunction.class);
+            NativeSymbol.installWellKnownSymbols(this.builtinSymbol);
+        }
+        return this.builtinSymbol;
+    }
+
+    ScriptObject getSymbolPrototype() {
+        return ScriptFunction.getPrototype(getBuiltinSymbol());
     }
 
     private synchronized ScriptObject getBuiltinReflect() {
@@ -2439,7 +2484,7 @@ public final class Global extends Scope {
     }
 
     @Override
-    protected FindProperty findProperty(final String key, final boolean deep, final ScriptObject start) {
+    protected FindProperty findProperty(final Object key, final boolean deep, final ScriptObject start) {
         if (lexicalScope != null && start != this && start.isScope()) {
             final FindProperty find = lexicalScope.findProperty(key, false);
             if (find != null) {
