@@ -135,8 +135,12 @@ public final class NativeJavaImporter extends ScriptObject {
 
     @Override
     protected Object invokeNoSuchProperty(final Object name, final boolean isScope, final int programPoint) {
-        // A Java package or an importer only ever answers to a name.
-        final Object retval = createProperty(String.valueOf(name));
+        // A Java package or an importer only ever answers to a name; anything else,
+        // a symbol in particular, names no class and no package.
+        if (!(name instanceof String)) {
+            return ScriptRuntime.UNDEFINED;
+        }
+        final Object retval = createProperty((String) name);
         if (isValid(programPoint)) {
             throw new UnwarrantedOptimismException(retval, programPoint);
         }

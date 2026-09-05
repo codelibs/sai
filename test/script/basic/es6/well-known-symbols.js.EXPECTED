@@ -1,0 +1,22 @@
+getOwnPropertySymbols: 2,true,true
+names are unaffected: name
+none to find: 0
+a primitive has none: 0
+toStringTag: [object Custom]
+only a string is a tag: [object Object]
+without one: [object Object]
+inherited tags: [object Tagged] [object Tagged] [object Tagged] [object Tagged] [object Tagged] [object Tagged] [object Tagged] [object Tagged]
+removed again: [object Array]
+namespace tags: Math,JSON
+a Java package is undisturbed: [object JavaPackage]
+number hint: true
+string hint: false
+value used: 14
+hints seen: number,string,number
+valueOf still used: 42
+toString still used: ts
+an array told not to spread: true
+an object told to spread: x,y
+a getter is read while spreading: true
+concat unchanged: 1,2,3,4,5
+an object is still one element: 1

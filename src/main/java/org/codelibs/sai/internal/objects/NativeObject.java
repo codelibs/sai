@@ -289,6 +289,26 @@ public final class NativeObject {
      * @param obj  object to query for property names
      * @return array of property names
      */
+    /**
+     * ECMA 19.1.2.8 Object.getOwnPropertySymbols ( O )
+     *
+     * <p>The symbol keyed counterpart of getOwnPropertyNames: between them they list
+     * every own key an object has.
+     *
+     * @param self self reference
+     * @param obj  the object to list
+     * @return an array of the object's own symbol keys
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
+    public static ScriptObject getOwnPropertySymbols(final Object self, final Object obj) {
+        if (obj instanceof ScriptObject) {
+            return new NativeArray(((ScriptObject) obj).getOwnSymbols());
+        }
+        // A primitive has no symbol keyed properties, and neither has anything the
+        // engine cannot see into, so an empty array is the whole answer.
+        return new NativeArray(ScriptRuntime.EMPTY_ARRAY);
+    }
+
     @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
     public static ScriptObject getOwnPropertyNames(final Object self, final Object obj) {
         if (obj instanceof ScriptObject) {

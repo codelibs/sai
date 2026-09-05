@@ -1335,6 +1335,28 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
      * @param all True if to include non-enumerable keys.
      * @return Array of keys.
      */
+    /**
+     * Return an array of the own symbol keys of the object. A symbol keyed property
+     * is left out of every other listing, so this is the only way to reach one.
+     *
+     * @return Array of symbol keys.
+     */
+    public final Object[] getOwnSymbols() {
+        final List<Object> symbols = new ArrayList<>();
+        for (final Property property : getMap().getProperties()) {
+            if (property.getKey() instanceof JSSymbol) {
+                symbols.add(property.getKey());
+            }
+        }
+        return symbols.toArray();
+    }
+
+    /**
+     * Return an array of own property keys associated with the object.
+     *
+     * @param all True if to include non-enumerable keys.
+     * @return Array of keys.
+     */
     public final String[] getOwnKeys(final boolean all) {
         return getOwnKeys(all, null);
     }
@@ -3253,7 +3275,9 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
 
     @Override
     public boolean has(final Object key) {
-        final Object primitiveKey = JSType.toPrimitive(key);
+        // ES6 7.1.14 ToPropertyKey asks for a string, as get, set and delete above
+        // already do; only this one was converting with no hint at all.
+        final Object primitiveKey = JSType.toPrimitive(key, String.class);
         final int index = getArrayIndex(primitiveKey);
         return isValidArrayIndex(index) ? hasArrayProperty(index)
                 : hasProperty(JSType.toPropertyKeyFromPrimitive(primitiveKey), true);

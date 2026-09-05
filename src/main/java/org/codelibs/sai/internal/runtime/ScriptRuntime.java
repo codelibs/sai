@@ -57,6 +57,7 @@ import org.codelibs.sai.internal.codegen.CompilerConstants.Call;
 import org.codelibs.sai.internal.dynalink.beans.StaticClass;
 import org.codelibs.sai.internal.ir.debug.JSONWriter;
 import org.codelibs.sai.internal.objects.Global;
+import org.codelibs.sai.internal.objects.NativeSymbol;
 import org.codelibs.sai.internal.objects.NativeFunction;
 import org.codelibs.sai.internal.objects.NativeObject;
 import org.codelibs.sai.internal.parser.Lexer;
@@ -191,6 +192,21 @@ public final class ScriptRuntime {
      * @return string representation as object
      */
     public static String builtinObjectToString(final Object self) {
+        // ES6 19.1.3.6 step 15: a Symbol.toStringTag on the value, its prototype or
+        // anywhere above, names the tag, and only a string may. Step 1 wraps a
+        // primitive first, so that a tag put on String.prototype is seen from a
+        // string too.
+        if (self != null && self != UNDEFINED) {
+            final Object obj = self instanceof ScriptObject ? self
+                    : JSType.isPrimitive(self) ? Global.toObject(self) : self;
+            if (obj instanceof ScriptObject) {
+                final Object tag = findSymbolValue((ScriptObject) obj, NativeSymbol.toStringTag);
+                if (JSType.isString(tag)) {
+                    return "[object " + tag + ']';
+                }
+            }
+        }
+
         String className;
         // Spec tells us to convert primitives by ToObject..
         // But we don't need to -- all we need is the right class name
@@ -900,6 +916,23 @@ public final class ScriptRuntime {
         }
 
         return JSType.of(obj).typeName();
+    }
+
+    /**
+     * Reads a well known symbol off an object without going through a plain get.
+     *
+     * <p>A get for a property that is not there runs the object's no such property
+     * hook, and for a Java package that hook makes the name up rather than saying
+     * no, so asking one whether it carries a tag would invent a class. Looking the
+     * property up directly asks the question without answering it.
+     *
+     * @param sobj  the object to look on, and above
+     * @param symbol the well known symbol to look for
+     * @return the value, or undefined
+     */
+    public static Object findSymbolValue(final ScriptObject sobj, final Object symbol) {
+        final FindProperty find = sobj.findProperty(symbol, true);
+        return find == null ? UNDEFINED : find.getObjectValue();
     }
 
     /**

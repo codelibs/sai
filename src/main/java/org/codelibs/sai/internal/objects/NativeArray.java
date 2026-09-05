@@ -857,6 +857,21 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
     }
 
     private static void concatToList(final ArrayList<Object> list, final Object obj) {
+        // ES6 22.1.3.1.1 IsConcatSpreadable: when the value carries
+        // Symbol.isConcatSpreadable it decides on its own, both ways, and being an
+        // array no longer does. Anything else falls through to the older rule below.
+        if (obj instanceof ScriptObject) {
+            final Object spreadable = ScriptRuntime.findSymbolValue((ScriptObject) obj, NativeSymbol.isConcatSpreadable);
+            if (spreadable != ScriptRuntime.UNDEFINED) {
+                if (JSType.toBoolean(spreadable)) {
+                    spreadToList(list, (ScriptObject) obj);
+                } else {
+                    list.add(obj);
+                }
+                return;
+            }
+        }
+
         final boolean isScriptArray = isArray(obj);
         final boolean isScriptObject = isScriptArray || obj instanceof ScriptObject;
         if (isScriptArray || obj instanceof Iterable || (obj != null && obj.getClass().isArray())) {
@@ -881,6 +896,17 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
         } else {
             // single element, add it
             list.add(obj);
+        }
+    }
+
+    /**
+     * Copies the elements of an object that has said it is spreadable, reading each
+     * index in turn so that a getter among them runs, and throws, where it would.
+     */
+    private static void spreadToList(final ArrayList<Object> list, final ScriptObject sobj) {
+        final long length = JSType.toUint32(sobj.getLength());
+        for (long i = 0; i < length; i++) {
+            list.add(sobj.has(i) ? sobj.get(i) : ScriptRuntime.EMPTY);
         }
     }
 
