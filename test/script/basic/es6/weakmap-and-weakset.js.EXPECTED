@@ -1,0 +1,33 @@
+WeakMap without new: true
+WeakMap(null) and WeakMap(undefined): built
+constructor goes through prototype.set: 2
+built from pairs: 1,2
+set returns this: true
+has: true
+get: 123
+delete: true,false
+has after delete: false
+frozen object as key: 42
+function as key: f
+null value: true,true
+null value deletes: true
+primitive key rejected: true
+primitive lookups miss quietly: false,undefined,false
+no size: false
+no clear: false
+no iterators: false,false
+prototype is not an instance: true
+class name: [object WeakMap]
+WeakSet without new: true
+WeakSet(null): built
+constructor goes through prototype.add: 2
+built from values: true,true
+add returns this: true
+added twice, held once: true,false
+delete: true,false
+primitive member rejected: true
+primitive lookups miss quietly: false,false
+no size: false
+no clear: false
+WeakSet prototype is not an instance: true
+class name: [object WeakSet]

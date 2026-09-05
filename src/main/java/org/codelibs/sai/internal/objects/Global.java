@@ -797,6 +797,60 @@ public final class Global extends Scope {
 
     private volatile Object setCtor = LAZY_SENTINEL;
 
+    /**
+     * Getter for the WeakMap property.
+     * @param self self reference
+     * @return the value of the WeakMap property
+     */
+    @Getter(name = "WeakMap", attributes = Attribute.NOT_ENUMERABLE)
+    public static Object getWeakMap(final Object self) {
+        final Global global = Global.instanceFrom(self);
+        if (global.weakMap == LAZY_SENTINEL) {
+            global.weakMap = global.getBuiltinWeakMap();
+        }
+        return global.weakMap;
+    }
+
+    /**
+     * Setter for the WeakMap property.
+     * @param self self reference
+     * @param value value of the WeakMap property
+     */
+    @Setter(name = "WeakMap", attributes = Attribute.NOT_ENUMERABLE)
+    public static void setWeakMap(final Object self, final Object value) {
+        final Global global = Global.instanceFrom(self);
+        global.weakMap = value;
+    }
+
+    private volatile Object weakMap = LAZY_SENTINEL;
+
+    /**
+     * Getter for the WeakSet property.
+     * @param self self reference
+     * @return the value of the WeakSet property
+     */
+    @Getter(name = "WeakSet", attributes = Attribute.NOT_ENUMERABLE)
+    public static Object getWeakSet(final Object self) {
+        final Global global = Global.instanceFrom(self);
+        if (global.weakSet == LAZY_SENTINEL) {
+            global.weakSet = global.getBuiltinWeakSet();
+        }
+        return global.weakSet;
+    }
+
+    /**
+     * Setter for the WeakSet property.
+     * @param self self reference
+     * @param value value of the WeakSet property
+     */
+    @Setter(name = "WeakSet", attributes = Attribute.NOT_ENUMERABLE)
+    public static void setWeakSet(final Object self, final Object value) {
+        final Global global = Global.instanceFrom(self);
+        global.weakSet = value;
+    }
+
+    private volatile Object weakSet = LAZY_SENTINEL;
+
     /** Sai extension: Java access - global.Packages */
     @Property(name = "Packages", attributes = Attribute.NOT_ENUMERABLE)
     public volatile Object packages;
@@ -947,6 +1001,8 @@ public final class Global extends Scope {
     private ScriptFunction builtinArrayBuffer;
     private ScriptFunction builtinMap;
     private ScriptFunction builtinSet;
+    private ScriptFunction builtinWeakMap;
+    private ScriptFunction builtinWeakSet;
     private ScriptFunction builtinDataView;
     private ScriptFunction builtinInt8Array;
     private ScriptFunction builtinUint8Array;
@@ -1750,6 +1806,28 @@ public final class Global extends Scope {
 
     ScriptObject getJSAdapterPrototype() {
         return ScriptFunction.getPrototype(getBuiltinJSAdapter());
+    }
+
+    private synchronized ScriptFunction getBuiltinWeakMap() {
+        if (this.builtinWeakMap == null) {
+            this.builtinWeakMap = initConstructorAndSwitchPoint("WeakMap", ScriptFunction.class);
+        }
+        return this.builtinWeakMap;
+    }
+
+    ScriptObject getWeakMapPrototype() {
+        return ScriptFunction.getPrototype(getBuiltinWeakMap());
+    }
+
+    private synchronized ScriptFunction getBuiltinWeakSet() {
+        if (this.builtinWeakSet == null) {
+            this.builtinWeakSet = initConstructorAndSwitchPoint("WeakSet", ScriptFunction.class);
+        }
+        return this.builtinWeakSet;
+    }
+
+    ScriptObject getWeakSetPrototype() {
+        return ScriptFunction.getPrototype(getBuiltinWeakSet());
     }
 
     private synchronized ScriptFunction getBuiltinMap() {
