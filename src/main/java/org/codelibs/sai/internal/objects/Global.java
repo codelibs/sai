@@ -2380,11 +2380,11 @@ public final class Global extends Scope {
                 // ES6 15.1.8 steps 6. and 7.
                 final org.codelibs.sai.internal.runtime.Property globalProperty = ownMap.findProperty(property.getKey());
                 if (globalProperty != null && !globalProperty.isConfigurable() && property.isLexicalBinding()) {
-                    throw ECMAErrors.syntaxError("redeclare.variable", property.getKey());
+                    throw ECMAErrors.syntaxError("redeclare.variable", String.valueOf(property.getKey()));
                 }
                 final org.codelibs.sai.internal.runtime.Property lexicalProperty = lexicalMap.findProperty(property.getKey());
                 if (lexicalProperty != null && !property.isConfigurable()) {
-                    throw ECMAErrors.syntaxError("redeclare.variable", property.getKey());
+                    throw ECMAErrors.syntaxError("redeclare.variable", String.valueOf(property.getKey()));
                 }
             }
         }

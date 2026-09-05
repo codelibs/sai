@@ -313,11 +313,11 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
     protected PropertyMap addBoundProperty(final PropertyMap propMap, final ScriptObject source, final Property property,
             final boolean extensible) {
         PropertyMap newMap = propMap;
-        final String key = property.getKey();
+        final Object key = property.getKey();
         final Property oldProp = newMap.findProperty(key);
         if (oldProp == null) {
             if (!extensible) {
-                throw typeError("object.non.extensible", key, ScriptRuntime.safeToString(this));
+                throw typeError("object.non.extensible", String.valueOf(key), ScriptRuntime.safeToString(this));
             }
 
             if (property instanceof UserAccessorProperty) {
@@ -334,7 +334,7 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
             // step 5 processing each function declaration.
             if (property.isFunctionDeclaration() && !oldProp.isConfigurable()) {
                 if (oldProp instanceof UserAccessorProperty || !(oldProp.isWritable() && oldProp.isEnumerable())) {
-                    throw typeError("cant.redefine.property", key, ScriptRuntime.safeToString(this));
+                    throw typeError("cant.redefine.property", String.valueOf(key), ScriptRuntime.safeToString(this));
                 }
             }
         }
@@ -352,11 +352,11 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
         final boolean extensible = newMap.isExtensible();
 
         for (final AccessorProperty property : properties) {
-            final String key = property.getKey();
+            final Object key = property.getKey();
 
             if (newMap.findProperty(key) == null) {
                 if (!extensible) {
-                    throw typeError("object.non.extensible", key, ScriptRuntime.safeToString(this));
+                    throw typeError("object.non.extensible", String.valueOf(key), ScriptRuntime.safeToString(this));
                 }
                 newMap = newMap.addPropertyBind(property, source);
             }
@@ -514,10 +514,15 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
      * Invalidate any existing global constant method handles that may exist for {@code key}.
      * @param key the property name
      */
-    protected void invalidateGlobalConstant(final String key) {
+    protected void invalidateGlobalConstant(final Object key) {
+        // A global constant is reached by name, so a key that is not one cannot have
+        // one to invalidate.
+        if (!(key instanceof String)) {
+            return;
+        }
         final GlobalConstants globalConstants = getGlobalConstants();
         if (globalConstants != null) {
-            globalConstants.delete(key);
+            globalConstants.delete((String) key);
         }
     }
 
@@ -1367,8 +1372,14 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
         }
 
         for (final Property property : selfMap.getProperties()) {
+            final Object propertyKey = property.getKey();
+            if (!(propertyKey instanceof String)) {
+                // Every enumeration built on top of this one lists an object's names.
+                // A key that is not a name belongs to none of them.
+                continue;
+            }
+            final String key = (String) propertyKey;
             final boolean enumerable = property.isEnumerable();
-            final String key = property.getKey();
             if (all) {
                 addOwnKey(keys, indexKeys, key);
             } else if (enumerable) {
@@ -3049,7 +3060,7 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
 
         } else if (!isExtensible()) {
             if (isStrictFlag(callSiteFlags)) {
-                throw typeError("object.non.extensible", key, ScriptRuntime.safeToString(this));
+                throw typeError("object.non.extensible", String.valueOf(key), ScriptRuntime.safeToString(this));
             }
         } else {
             ScriptObject sobj = this;
@@ -3398,7 +3409,7 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
      * @param setter setter function for the property
      * @return the newly created UserAccessorProperty
      */
-    protected final UserAccessorProperty newUserAccessors(final String key, final int propertyFlags, final ScriptFunction getter,
+    protected final UserAccessorProperty newUserAccessors(final Object key, final int propertyFlags, final ScriptFunction getter,
             final ScriptFunction setter) {
         final UserAccessorProperty uc = getMap().newUserAccessors(key, propertyFlags);
         //property.getSetter(Object.class, getMap());

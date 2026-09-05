@@ -172,7 +172,8 @@ public final class SpillObjectCreator extends ObjectCreator<Expression> {
             } else {
                 method.dup();
                 loadTuple(method, tuple, false);
-                method.dynamicSet(property.getKey(), codegen.getCallSiteFlags(), false);
+                // A spill object is built from an object literal, whose keys are all names.
+                method.dynamicSet((String) property.getKey(), codegen.getCallSiteFlags(), false);
             }
         }
     }

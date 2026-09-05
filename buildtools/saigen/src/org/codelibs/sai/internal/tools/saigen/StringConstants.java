@@ -100,8 +100,10 @@ public interface StringConstants {
     // AccessorProperty
     static final String ACCESSORPROPERTY_TYPE = TYPE_ACCESSORPROPERTY.getInternalName();
     static final String ACCESSORPROPERTY_CREATE = "create";
+    // The key is an Object rather than a String: a property key is a name or,
+    // since ES6, a symbol, and the descriptor emitted here has to match.
     static final String ACCESSORPROPERTY_CREATE_DESC =
-        Type.getMethodDescriptor(TYPE_ACCESSORPROPERTY, TYPE_STRING, Type.INT_TYPE, TYPE_METHODHANDLE, TYPE_METHODHANDLE);
+        Type.getMethodDescriptor(TYPE_ACCESSORPROPERTY, TYPE_OBJECT, Type.INT_TYPE, TYPE_METHODHANDLE, TYPE_METHODHANDLE);
 
     // PropertyMap
     static final String PROPERTYMAP_TYPE = TYPE_PROPERTYMAP.getInternalName();
