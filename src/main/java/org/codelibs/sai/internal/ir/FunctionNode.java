@@ -258,6 +258,14 @@ public final class FunctionNode extends LexicalContextExpression implements Flag
      */
     public static final int USES_ARROW_ARGUMENTS = 1 << 30;
 
+    /**
+     * Does this function have a parameter list that is anything other than a plain
+     * list of names? ES6 9.2.12 gives such a function an unmapped arguments object,
+     * so that assigning to a parameter with a default no longer writes through to
+     * arguments.
+     */
+    public static final int HAS_NON_SIMPLE_PARAMETERS = 1 << 31;
+
     /** extension callsite flags mask */
     public static final int EXTENSION_CALLSITE_FLAGS = IS_PRINT_PARSE | IS_PRINT_LOWER_PARSE | IS_PRINT_AST | IS_PRINT_LOWER_AST
             | IS_PRINT_SYMBOLS | IS_PROFILE | IS_TRACE_ENTEREXIT | IS_TRACE_MISSES | IS_TRACE_VALUES;

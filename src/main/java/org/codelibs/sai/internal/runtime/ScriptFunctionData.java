@@ -100,6 +100,8 @@ public abstract class ScriptFunctionData implements Serializable {
     public static final int IS_CLASS_CONSTRUCTOR = 1 << 8;
     /** Is this an ES6 arrow function? */
     public static final int IS_ARROW = 1 << 9;
+    /** Does this function have a parameter list that is not a plain list of names? */
+    public static final int HAS_NON_SIMPLE_PARAMETERS = 1 << 10;
 
     /** Flag for strict or built-in functions */
     public static final int IS_STRICT_OR_BUILTIN = IS_STRICT | IS_BUILTIN;
@@ -172,6 +174,16 @@ public abstract class ScriptFunctionData implements Serializable {
      */
     public final boolean isStrict() {
         return (flags & IS_STRICT) != 0;
+    }
+
+    /**
+     * Does this function have a parameter list that is anything other than a plain
+     * list of names, so that ES6 9.2.12 asks for an unmapped arguments object?
+     *
+     * @return true if a parameter has a default, is a pattern, or is a rest parameter
+     */
+    public final boolean hasNonSimpleParameters() {
+        return (flags & HAS_NON_SIMPLE_PARAMETERS) != 0;
     }
 
     /**

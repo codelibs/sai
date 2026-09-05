@@ -381,6 +381,9 @@ public final class RecompilableScriptFunctionData extends ScriptFunctionData imp
         if (functionNode.isStrict()) {
             flags |= IS_STRICT;
         }
+        if (functionNode.getFlag(FunctionNode.HAS_NON_SIMPLE_PARAMETERS)) {
+            flags |= HAS_NON_SIMPLE_PARAMETERS;
+        }
         if (functionNode.needsCallee()) {
             flags |= NEEDS_CALLEE;
         }

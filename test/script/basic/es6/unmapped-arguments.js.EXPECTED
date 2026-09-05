@@ -1,0 +1,12 @@
+plain, parameter to arguments: written
+plain, arguments to parameter: written
+default, parameter to arguments: passed
+default, arguments to parameter: passed
+rest, parameter to arguments: passed
+pattern, parameter to arguments: passed
+length is the count passed: 1
+defaults still apply: 1,2
+rest still collects: b,c
+arguments is still array-like: p,q
+strict: passed
+assigning to a defaulted parameter: true
