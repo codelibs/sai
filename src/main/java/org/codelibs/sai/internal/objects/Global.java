@@ -1835,6 +1835,16 @@ public final class Global extends Scope {
         return builtinArray;
     }
 
+    /**
+     * The RegExp constructor this Global was built with, whatever the global name
+     * RegExp now points at.
+     *
+     * @return the built-in RegExp constructor
+     */
+    ScriptFunction getRegExpConstructor() {
+        return getBuiltinRegExp();
+    }
+
     ScriptObject getBooleanPrototype() {
         return ScriptFunction.getPrototype(builtinBoolean);
     }
@@ -1937,6 +1947,21 @@ public final class Global extends Scope {
         if (method instanceof ScriptFunction) {
             prototype.addOwnProperty(NativeSymbol.iterator, Attribute.NOT_ENUMERABLE, method);
         }
+    }
+
+    /**
+     * Adds a method under a well known symbol, named the way ES6 names one: the
+     * symbol's description in brackets.
+     *
+     * @param object the object to add the method to
+     * @param symbol the symbol to key it on
+     * @param name   the symbol's description
+     * @param method the method
+     */
+    private static void installSymbolMethod(final ScriptObject object, final JSSymbol symbol, final String name,
+            final MethodHandle method) {
+        object.addOwnProperty(symbol, Attribute.NOT_ENUMERABLE,
+                ScriptFunction.createBuiltin("[Symbol." + name + "]", method));
     }
 
     /**
@@ -2342,6 +2367,14 @@ public final class Global extends Scope {
             // RegExp.prototype should behave like a RegExp object. So copy the
             // properties.
             regExpProto.addBoundProperties(DEFAULT_REGEXP);
+            // ES6 21.2.5.6, .8, .9 and .11: the four operations String.prototype hands
+            // to a regular expression. Installed from Java because saigen writes an
+            // annotated property's key into the generated class as a constant pool
+            // entry, and a symbol is not one.
+            installSymbolMethod(regExpProto, NativeSymbol.match, "match", NativeRegExp.SYMBOL_MATCH);
+            installSymbolMethod(regExpProto, NativeSymbol.replace, "replace", NativeRegExp.SYMBOL_REPLACE);
+            installSymbolMethod(regExpProto, NativeSymbol.search, "search", NativeRegExp.SYMBOL_SEARCH);
+            installSymbolMethod(regExpProto, NativeSymbol.split, "split", NativeRegExp.SYMBOL_SPLIT);
         }
         return builtinRegExp;
     }

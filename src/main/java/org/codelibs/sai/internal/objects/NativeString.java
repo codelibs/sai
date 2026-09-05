@@ -60,6 +60,7 @@ import org.codelibs.sai.internal.runtime.JSSymbol;
 import org.codelibs.sai.internal.runtime.JSType;
 import org.codelibs.sai.internal.runtime.OptimisticBuiltins;
 import org.codelibs.sai.internal.runtime.PropertyMap;
+import org.codelibs.sai.internal.runtime.ScriptFunction;
 import org.codelibs.sai.internal.runtime.ScriptObject;
 import org.codelibs.sai.internal.runtime.ScriptRuntime;
 import org.codelibs.sai.internal.runtime.arrays.ArrayIndex;
@@ -756,43 +757,17 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
      * @return array of regexp matches
      */
     @Function(attributes = Attribute.NOT_ENUMERABLE)
-    public static ScriptObject match(final Object self, final Object regexp) {
+    public static Object match(final Object self, final Object regexp) {
+        final Object own = symbolMethod(regexp, NativeSymbol.match);
+
+        if (own != null) {
+            return ScriptRuntime.apply((ScriptFunction) own, regexp, self);
+        }
 
         final String str = checkObjectToString(self);
+        final NativeRegExp nativeRegExp = regexp == UNDEFINED ? new NativeRegExp("") : Global.toRegExp(regexp);
 
-        NativeRegExp nativeRegExp;
-        if (regexp == UNDEFINED) {
-            nativeRegExp = new NativeRegExp("");
-        } else {
-            nativeRegExp = Global.toRegExp(regexp);
-        }
-
-        if (!nativeRegExp.getGlobal()) {
-            return nativeRegExp.exec(str);
-        }
-
-        nativeRegExp.setLastIndex(0);
-
-        int previousLastIndex = 0;
-        final List<Object> matches = new ArrayList<>();
-
-        Object result;
-        while ((result = nativeRegExp.exec(str)) != null) {
-            final int thisIndex = nativeRegExp.getLastIndex();
-            if (thisIndex == previousLastIndex) {
-                nativeRegExp.setLastIndex(thisIndex + 1);
-                previousLastIndex = thisIndex + 1;
-            } else {
-                previousLastIndex = thisIndex;
-            }
-            matches.add(((ScriptObject) result).get(0));
-        }
-
-        if (matches.isEmpty()) {
-            return null;
-        }
-
-        return new NativeArray(matches.toArray());
+        return NativeRegExp.symbolMatch(nativeRegExp, str);
     }
 
     /**
@@ -804,16 +779,16 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
      * @throws Throwable if replacement fails
      */
     @Function(attributes = Attribute.NOT_ENUMERABLE)
-    public static String replace(final Object self, final Object string, final Object replacement) throws Throwable {
+    public static Object replace(final Object self, final Object string, final Object replacement) throws Throwable {
+        final Object own = symbolMethod(string, NativeSymbol.replace);
+
+        if (own != null) {
+            return ScriptRuntime.apply((ScriptFunction) own, string, self, replacement);
+        }
 
         final String str = checkObjectToString(self);
-
-        final NativeRegExp nativeRegExp;
-        if (string instanceof NativeRegExp) {
-            nativeRegExp = (NativeRegExp) string;
-        } else {
-            nativeRegExp = NativeRegExp.flatRegExp(JSType.toString(string));
-        }
+        final NativeRegExp nativeRegExp = string instanceof NativeRegExp ? (NativeRegExp) string
+                : NativeRegExp.flatRegExp(JSType.toString(string));
 
         if (Bootstrap.isCallable(replacement)) {
             return nativeRegExp.replace(str, "", replacement);
@@ -830,12 +805,16 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
      * @return offset where match occurred
      */
     @Function(attributes = Attribute.NOT_ENUMERABLE)
-    public static int search(final Object self, final Object string) {
+    public static Object search(final Object self, final Object string) {
+        final Object own = symbolMethod(string, NativeSymbol.search);
+
+        if (own != null) {
+            return ScriptRuntime.apply((ScriptFunction) own, string, self);
+        }
 
         final String str = checkObjectToString(self);
-        final NativeRegExp nativeRegExp = Global.toRegExp(string == UNDEFINED ? "" : string);
 
-        return nativeRegExp.search(str);
+        return Global.toRegExp(string == UNDEFINED ? "" : string).search(str);
     }
 
     /**
@@ -925,7 +904,13 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
      * @return array object in which splits have been placed
      */
     @Function(attributes = Attribute.NOT_ENUMERABLE)
-    public static ScriptObject split(final Object self, final Object separator, final Object limit) {
+    public static Object split(final Object self, final Object separator, final Object limit) {
+        final Object own = symbolMethod(separator, NativeSymbol.split);
+
+        if (own != null) {
+            return ScriptRuntime.apply((ScriptFunction) own, separator, self, limit);
+        }
+
         final String str = checkObjectToString(self);
         final long lim = limit == UNDEFINED ? JSType.MAX_UINT : JSType.toUint32(limit);
 
@@ -1299,11 +1284,27 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
     }
 
     /**
-     * ECMA6 7.2.8 IsRegExp. Sai has no Symbol.match, so a value is a regular expression
-     * exactly when it is an object carrying the RegExp [[Class]].
+     * ES6 7.3.9 GetMethod under a well known symbol, for the four methods that hand
+     * their work to whatever the argument says it should be done by. Answers null
+     * when the argument says nothing, which includes its being null or undefined,
+     * and raises a TypeError when it names something that cannot be called.
      */
-    private static boolean isRegExp(final Object obj) {
-        return obj instanceof ScriptObject && "RegExp".equals(((ScriptObject) obj).getClassName());
+    private static Object symbolMethod(final Object value, final JSSymbol symbol) {
+        if (!(value instanceof ScriptObject)) {
+            return null;
+        }
+
+        final Object method = ScriptRuntime.findSymbolValue((ScriptObject) value, symbol);
+
+        if (method == UNDEFINED || method == null) {
+            return null;
+        }
+
+        if (!(method instanceof ScriptFunction)) {
+            throw typeError("not.a.function", ScriptRuntime.safeToString(method));
+        }
+
+        return method;
     }
 
     /**
@@ -1311,7 +1312,7 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
      * it is converted, otherwise /a/ would silently be searched for as the string "/a/".
      */
     private static String checkSearchString(final Object search, final String method) {
-        if (isRegExp(search)) {
+        if (NativeRegExp.isRegExp(search)) {
             throw typeError("regexp.string.method.argument", method);
         }
         return JSType.toString(search);
