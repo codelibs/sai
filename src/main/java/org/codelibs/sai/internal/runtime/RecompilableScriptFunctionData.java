@@ -367,6 +367,15 @@ public final class RecompilableScriptFunctionData extends ScriptFunctionData imp
         // An arrow function is not a constructor: ES6 gives it no [[Construct]], and no
         // prototype property for one to build instances from.
         int flags = functionNode.getKind() == FunctionNode.Kind.ARROW ? IS_ARROW : IS_CONSTRUCTOR;
+        // ES6 13.3 says the same of an accessor. ES5 gave a getter or a setter a
+        // [[Construct]] like any other function expression, so dropping it changes an
+        // existing operation and waits for --language=es6, the way the inferred name
+        // below does.
+        if (Context.isES6()
+                && (functionNode.getKind() == FunctionNode.Kind.GETTER
+                        || functionNode.getKind() == FunctionNode.Kind.SETTER)) {
+            flags &= ~IS_CONSTRUCTOR;
+        }
         if (functionNode.isStrict()) {
             flags |= IS_STRICT;
         }

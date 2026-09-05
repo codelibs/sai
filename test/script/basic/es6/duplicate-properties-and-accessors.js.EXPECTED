@@ -1,0 +1,7 @@
+duplicate data property wins last: 2
+data and accessor clash: true
+get is a constructor: false
+set is a constructor: false
+get has own prototype: false
+ordinary still constructs: true
+accessor still reads: 42

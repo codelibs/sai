@@ -2886,8 +2886,10 @@ public class Parser extends AbstractParser implements Loggable {
                 final FunctionNode prevGetter = existingProperty.getGetter();
                 final FunctionNode prevSetter = existingProperty.getSetter();
 
-                // ECMA 11.1.5 strict mode restrictions
-                if (isStrictMode && value != null && prevValue != null) {
+                // ECMA 11.1.5 strict mode restrictions. ES6 dropped this one for a repeated
+                // data property -- the last one simply wins, as it always has outside
+                // strict mode -- while leaving the data/accessor clashes below in force.
+                if (!isES6() && isStrictMode && value != null && prevValue != null) {
                     throw error(AbstractParser.message("property.redefinition", key), property.getToken());
                 }
 
