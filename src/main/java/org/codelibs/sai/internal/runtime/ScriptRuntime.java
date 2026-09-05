@@ -57,6 +57,7 @@ import org.codelibs.sai.internal.codegen.CompilerConstants.Call;
 import org.codelibs.sai.internal.dynalink.beans.StaticClass;
 import org.codelibs.sai.internal.ir.debug.JSONWriter;
 import org.codelibs.sai.internal.objects.Global;
+import org.codelibs.sai.internal.objects.NativeArray;
 import org.codelibs.sai.internal.objects.NativeSymbol;
 import org.codelibs.sai.internal.objects.NativeFunction;
 import org.codelibs.sai.internal.objects.NativeObject;
@@ -685,7 +686,68 @@ public final class ScriptRuntime {
             return Global.allocate(toCodePoints(object.toString()));
         }
 
-        return object;
+        // An array is the shape the walk below expects anyway, and the common one, so
+        // it is left alone rather than driven through its own iterator.
+        if (object instanceof NativeArray || !(object instanceof ScriptObject)) {
+            return object;
+        }
+
+        final Object iteratorFactory = findSymbolValue((ScriptObject) object, NativeSymbol.iterator);
+        if (!(iteratorFactory instanceof ScriptFunction)) {
+            return object;
+        }
+
+        return Global.allocate(drainIterator(apply((ScriptFunction) iteratorFactory, object)));
+    }
+
+    /**
+     * ECMA 7.4.1 GetIterator and 7.4.6 IteratorStep, run to exhaustion: calls next
+     * until it answers done, and collects what it yielded.
+     *
+     * <p>The walk is eager, because what asks for it -- for..of, the spread operator
+     * and array destructuring -- is compiled into a loop over something with a
+     * length. That is visible in two places: an iterator that never ends never
+     * returns, and one left part way through is not told so, since ES6 7.4.8
+     * IteratorClose has nowhere to be called from.
+     *
+     * @param iterator the object next is called on
+     * @return everything the iterator yielded
+     */
+    private static Object[] drainIterator(final Object iterator) {
+        if (!(iterator instanceof ScriptObject)) {
+            throw typeError("not.an.object", safeToString(iterator));
+        }
+        final ScriptObject sobj = (ScriptObject) iterator;
+        final Object next = sobj.get("next");
+        if (!(next instanceof ScriptFunction)) {
+            throw typeError("not.a.function", safeToString(next));
+        }
+        final ScriptFunction nextFn = (ScriptFunction) next;
+
+        final ArrayList<Object> values = new ArrayList<>();
+        for (;;) {
+            final Object step = apply(nextFn, sobj);
+            if (!(step instanceof ScriptObject)) {
+                throw typeError("not.an.object", safeToString(step));
+            }
+            final ScriptObject result = (ScriptObject) step;
+            if (JSType.toBoolean(result.get("done"))) {
+                return values.toArray();
+            }
+            values.add(result.get("value"));
+        }
+    }
+
+    /**
+     * Whether a value carries the iteration protocol, which is what tells the
+     * walkers above apart from the array-likes they otherwise handle.
+     *
+     * @param object a value
+     * @return true if the value has a Symbol.iterator method
+     */
+    public static boolean isIterable(final Object object) {
+        return object instanceof ScriptObject
+                && findSymbolValue((ScriptObject) object, NativeSymbol.iterator) instanceof ScriptFunction;
     }
 
     public static Object TO_ARRAY(final Object object, final Object from) {
@@ -697,6 +759,12 @@ public final class ScriptRuntime {
 
         if (isString(object)) {
             all = toCodePoints(object.toString());
+        } else if (!(object instanceof NativeArray) && isIterable(object)) {
+            // Anything that carries the iteration protocol is spread through it, so
+            // that a Map, a Set or an object of a script's own making all work. An
+            // array is left to the length based walk below, which is what it is.
+            all = drainIterator(apply(
+                    (ScriptFunction) findSymbolValue((ScriptObject) object, NativeSymbol.iterator), object));
         } else if (object.getClass().isArray() && !(object instanceof Object[])) {
             // A Java array of a primitive type, which needs reflection to read.
             final int length = Array.getLength(object);

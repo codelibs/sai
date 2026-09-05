@@ -61,7 +61,9 @@ final class CollectionSupport {
         }
         final ScriptFunction fn = (ScriptFunction) adder;
 
-        final Iterator<?> elements = ScriptRuntime.toValueIterator(iterable);
+        // TO_ITERABLE turns anything carrying the iteration protocol into the array
+        // the walk below expects, and leaves an array or an array-like alone.
+        final Iterator<?> elements = ScriptRuntime.toValueIterator(ScriptRuntime.TO_ITERABLE(iterable));
         while (elements.hasNext()) {
             final Object element = elements.next();
             if (!pairs) {
