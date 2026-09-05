@@ -781,12 +781,17 @@ public enum JSType {
      * Converts an object for a comparison with a number. Almost identical to {@link #toNumber(Object)} but
      * converts {@code null} to {@code NaN} instead of zero, so it won't compare equal to zero.
      *
+     * <p>ES6 7.2.12 has == reduce the object with no hint at all, which for an ordinary
+     * object is the same as asking for a number but which a Symbol.toPrimitive is told
+     * about as the "default" hint. The reduction is therefore made here rather than
+     * being left to {@link #toNumber(Object)}, which asks for a number.
+     *
      * @param obj  an object
      *
      * @return a number
      */
     public static double toNumberForEq(final Object obj) {
-        return obj == null ? Double.NaN : toNumber(obj);
+        return obj == null ? Double.NaN : toNumber(toPrimitive(obj));
     }
 
     /**

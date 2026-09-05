@@ -1317,6 +1317,15 @@ public final class ScriptRuntime {
      * @return true if {@code obj} is an instanceof {@code clazz}
      */
     public static boolean INSTANCEOF(final Object obj, final Object clazz) {
+        // ES6 12.9.4 step 3: an object carrying Symbol.hasInstance decides for itself
+        // what counts as one of its instances, whether or not it is even a function.
+        if (clazz instanceof ScriptObject) {
+            final Object hasInstance = findSymbolValue((ScriptObject) clazz, NativeSymbol.hasInstance);
+            if (hasInstance instanceof ScriptFunction) {
+                return JSType.toBoolean(apply((ScriptFunction) hasInstance, clazz, obj));
+            }
+        }
+
         if (clazz instanceof ScriptFunction) {
             if (obj instanceof ScriptObject) {
                 return ((ScriptObject) clazz).isInstance((ScriptObject) obj);
