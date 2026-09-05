@@ -697,4 +697,10 @@ public class AccessorProperty extends Property {
     private static MethodHandle findOwnMH_S(final String name, final Class<?> rtype, final Class<?>... types) {
         return MH.findStatic(LOOKUP, AccessorProperty.class, name, MH.type(rtype, types));
     }
+
+    @Override
+    boolean canAcceptValue() {
+        return objectSetter != null;
+    }
+
 }

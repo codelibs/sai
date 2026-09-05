@@ -1,0 +1,14 @@
+name descriptor: two,false,false,true
+length descriptor: 2,false,false,true
+renamed: chosen
+relengthed: 7
+attributes after redefine: chosen,false,false,true
+attributes replaced: locked,true,false
+delete name: true
+name after delete: ''
+length after delete: 1
+name is no longer own, length still is: false,true
+assignment ignored: 'assigned',0
+prototype still settable: true
+length reads arity: 0,1,3
+name reads the identifier: named

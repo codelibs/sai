@@ -157,10 +157,11 @@ public class ScriptFunction extends ScriptObject {
         anonmap$ = PropertyMap.newMap();
         final ArrayList<Property> properties = new ArrayList<>(3);
         properties.add(AccessorProperty.create("prototype", Property.NOT_ENUMERABLE | Property.NOT_CONFIGURABLE, G$PROTOTYPE, S$PROTOTYPE));
-        properties.add(AccessorProperty.create("length", Property.NOT_ENUMERABLE | Property.NOT_CONFIGURABLE | Property.NOT_WRITABLE,
-                G$LENGTH, null));
-        properties.add(AccessorProperty.create("name", Property.NOT_ENUMERABLE | Property.NOT_CONFIGURABLE | Property.NOT_WRITABLE, G$NAME,
-                null));
+        // ES6 19.2.4.1 and 19.2.4.2 both read { writable: false, enumerable: false,
+        // configurable: true }. Neither property was standard before ES6, so making
+        // them configurable takes nothing away from ES5.
+        properties.add(AccessorProperty.create("length", Property.NOT_ENUMERABLE | Property.NOT_WRITABLE, G$LENGTH, null));
+        properties.add(AccessorProperty.create("name", Property.NOT_ENUMERABLE | Property.NOT_WRITABLE, G$NAME, null));
         map$ = PropertyMap.newMap(properties);
         strictmodemap$ = createStrictModeMap(map$);
         boundfunctionmap$ = createBoundFunctionMap(strictmodemap$);

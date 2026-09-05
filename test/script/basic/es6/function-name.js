@@ -55,9 +55,8 @@ print("arrow             = '" + arrow.name + "'");
 var literal = { key: function() {}, other: function inner() {} };
 print("object literal    = '" + literal.key.name + "' '" + literal.other.name + "'");
 
-// approximation: ES6 infers a name only for an assignment to an identifier, but
-// sai's parser derives one from a property access too, and that same derived name
-// is what has always shown up in stack traces
+// ES6 12.14.4 infers a name only when the left hand side of the assignment is an
+// identifier, so an assignment to a property leaves the function anonymous
 literal.viaAccess = function() {};
 print("property access   = '" + literal.viaAccess.name + "'");
 
@@ -72,8 +71,7 @@ print("bound anonymous   = '" + (function() {}).bind({}).name + "'");
 print("bound twice       = '" + declared.bind({}).bind({}).name + "'");
 print("bound inferred    = '" + fromVar.bind({}).name + "'");
 
-// the descriptor is unchanged - ES6 also makes name configurable, which sai does
-// not do yet, so this records what is actually there
+// ES6 19.2.4.2 reads { writable: false, enumerable: false, configurable: true }
 var desc = Object.getOwnPropertyDescriptor(function f() {}, "name");
 print("value             = '" + desc.value + "'");
 print("writable          = " + desc.writable);

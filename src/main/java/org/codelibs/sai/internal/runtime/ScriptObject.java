@@ -601,7 +601,13 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
             final boolean newValue = newDesc.has(VALUE);
             final Object value = newValue ? newDesc.getValue() : currentDesc.getValue();
 
-            if (newValue && property != null) {
+            if (newValue && property != null && !property.canAcceptValue()) {
+                // A getter-only built-in accessor, such as a function's name or its
+                // length, has no setter for the new value to go through, so giving it
+                // one replaces the property outright.
+                deleteOwnProperty(property);
+                property = addOwnProperty(key, 0, value);
+            } else if (newValue && property != null) {
                 // Temporarily clear flags.
                 property = modifyOwnProperty(property, 0);
                 set(key, value, 0);
@@ -902,7 +908,10 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
     private void erasePropertyValue(final Property property) {
         // Erase the property field value with undefined. If the property is defined
         // by user-defined accessors, we don't want to call the setter!!
-        if (!(property instanceof UserAccessorProperty)) {
+        // A property that is not writable has no field to erase and, if it is a
+        // built-in accessor such as a function's name or length, no setter to erase
+        // it through either.
+        if (!(property instanceof UserAccessorProperty) && property.isWritable()) {
             assert property != null;
             property.setValue(this, this, UNDEFINED, false);
         }

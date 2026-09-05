@@ -4491,10 +4491,10 @@ public class Parser extends AbstractParser implements Loggable {
             if (nameExpr instanceof PropertyKey) {
                 markDefaultNameUsed();
                 return ((PropertyKey) nameExpr).getPropertyName();
-            } else if (nameExpr instanceof AccessNode) {
-                markDefaultNameUsed();
-                return ((AccessNode) nameExpr).getProperty();
             }
+            // An AccessNode is deliberately not one of these. ES6 12.14.4 names the
+            // right hand side of an assignment only when the left hand side is an
+            // IdentifierRef, so o.qux = function(){} leaves the function unnamed.
         }
         return null;
     }
