@@ -2962,14 +2962,22 @@ public class Parser extends AbstractParser implements Loggable {
         private final boolean getter;
         /** True only for the {@code __proto__ : value} form, which sets the prototype. */
         private final boolean protoAssignment;
+        /** True when ES6 12.14.4 names the value after the key, which only the runtime knows. */
+        private final boolean namedByKey;
 
         DeferredProperty(final long token, final int line, final Expression key, final Expression value,
                 final FunctionNode accessor, final boolean getter) {
-            this(token, line, key, value, accessor, getter, false);
+            this(token, line, key, value, accessor, getter, false, false);
         }
 
         DeferredProperty(final long token, final int line, final Expression key, final Expression value,
                 final FunctionNode accessor, final boolean getter, final boolean protoAssignment) {
+            this(token, line, key, value, accessor, getter, protoAssignment, false);
+        }
+
+        DeferredProperty(final long token, final int line, final Expression key, final Expression value,
+                final FunctionNode accessor, final boolean getter, final boolean protoAssignment,
+                final boolean namedByKey) {
             this.token = token;
             this.line = line;
             this.key = key;
@@ -2977,6 +2985,7 @@ public class Parser extends AbstractParser implements Loggable {
             this.accessor = accessor;
             this.getter = getter;
             this.protoAssignment = protoAssignment;
+            this.namedByKey = namedByKey;
         }
     }
 
@@ -3002,13 +3011,29 @@ public class Parser extends AbstractParser implements Loggable {
         expect(RBRACKET);
 
         if (type == LPAREN) {
+            // A method is compiled under a synthetic name, and ES6 12.14.4 names it
+            // after the key once the key is known.
             return new DeferredProperty(keyToken, keyLine, key,
-                    methodDefinition(keyToken, keyLine, syntheticMethodName(keyToken, keyLine, null)), null, false);
+                    methodDefinition(keyToken, keyLine, syntheticMethodName(keyToken, keyLine, null)), null, false,
+                    false, true);
         }
 
         expect(COLON);
 
-        return new DeferredProperty(keyToken, keyLine, key, assignmentExpression(false), null, false);
+        // ES6 12.14.4 names a function under a computed key after the key, which is
+        // only known once the key has been evaluated. The name the enclosing context
+        // would otherwise lend it -- the variable the whole literal is assigned to --
+        // is hidden here so that the function reaches the runtime unnamed.
+        hideDefaultName();
+        final Expression value;
+        try {
+            value = assignmentExpression(false);
+        } finally {
+            defaultNames.pop();
+        }
+
+        return new DeferredProperty(keyToken, keyLine, key, value, null, false, false,
+                value instanceof FunctionNode && ((FunctionNode) value).isAnonymous());
     }
 
     /**
@@ -3057,7 +3082,12 @@ public class Parser extends AbstractParser implements Loggable {
                     // Every other property is created, not assigned: an object literal
                     // defines its own properties, so an inherited setter of the same name
                     // -- __proto__ on Object.prototype above all -- must not run.
-                    step = new RuntimeNode(property.token, objectFinish, RuntimeNode.Request.DEFINE_PROPERTY,
+                    //
+                    // ES6 12.14.4 also names a function that has no name of its own after
+                    // the key it is stored under, which only the runtime can do here.
+                    step = new RuntimeNode(property.token, objectFinish,
+                            property.namedByKey ? RuntimeNode.Request.DEFINE_NAMED_PROPERTY
+                                    : RuntimeNode.Request.DEFINE_PROPERTY,
                             createIdentNode(identToken, objectFinish, temporary), property.key, property.value);
                 }
             } else {

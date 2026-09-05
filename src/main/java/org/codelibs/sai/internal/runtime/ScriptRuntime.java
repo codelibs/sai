@@ -872,16 +872,57 @@ public final class ScriptRuntime {
     public static Object DEFINE_PROPERTY(final Object target, final Object key, final Object value) {
         final Global global = Context.getGlobal();
 
-        Global.checkObject(target).defineOwnProperty(JSType.toString(key),
+        Global.checkObject(target).defineOwnProperty(JSType.toPropertyKey(key),
                 global.newDataDescriptor(value, true, true, true), false);
 
         return value;
     }
 
+    /**
+     * Define an enumerable data property whose value is a function with no name of its
+     * own, which ES6 12.14.4 SetFunctionName then names after the key it is stored
+     * under. A symbol key names it by its description in brackets, and a symbol with no
+     * description leaves the name empty.
+     *
+     * @param target the object being built
+     * @param key    the computed key
+     * @param value  the function
+     * @return the value, so that the step can sit in a comma expression
+     */
+    public static Object DEFINE_NAMED_PROPERTY(final Object target, final Object key, final Object value) {
+        final Object propertyKey = JSType.toPropertyKey(key);
+
+        if (value instanceof ScriptFunction) {
+            // The name is an own accessor of every function, so it is redefined rather
+            // than written; 19.2.4.2 leaves it not writable and not enumerable.
+            ((ScriptFunction) value).defineOwnProperty("name",
+                    Context.getGlobal().newDataDescriptor(functionName(propertyKey), true, false, false), false);
+        }
+
+        Global.checkObject(target).defineOwnProperty(propertyKey,
+                Context.getGlobal().newDataDescriptor(value, true, true, true), false);
+
+        return value;
+    }
+
+    /**
+     * ES6 12.14.4 SetFunctionName: the name a function stored under a key takes. A
+     * symbol is named by its description in brackets, and one with no description
+     * leaves the name empty.
+     */
+    private static String functionName(final Object propertyKey) {
+        if (propertyKey instanceof JSSymbol) {
+            final String description = ((JSSymbol) propertyKey).getDescription();
+            return description == null ? "" : "[" + description + "]";
+        }
+
+        return JSType.toString(propertyKey);
+    }
+
     public static Object DEFINE_METHOD(final Object target, final Object key, final Object value) {
         final Global global = Context.getGlobal();
 
-        Global.checkObject(target).defineOwnProperty(JSType.toString(key),
+        Global.checkObject(target).defineOwnProperty(JSType.toPropertyKey(key),
                 global.newDataDescriptor(value, true, false, true), false);
 
         return value;
@@ -906,7 +947,7 @@ public final class ScriptRuntime {
         final Global global = Context.getGlobal();
         final boolean getter = JSType.toBoolean(isGetter);
 
-        Global.checkObject(target).defineOwnProperty(JSType.toString(key),
+        Global.checkObject(target).defineOwnProperty(JSType.toPropertyKey(key),
                 global.newAccessorDescriptor(getter ? accessor : null, getter ? null : accessor, true, false), false);
 
         return accessor;

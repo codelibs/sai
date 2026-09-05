@@ -1,0 +1,19 @@
+a data property: 1
+a shorthand method: 2
+an accessor: 3
+a literal with both kinds of key: 4,5
+the descriptor: 1,true,true,true
+a computed __proto__ defines: true,true
+a symbol with a description: "[described]"
+a symbol without one: ""
+a string key: "a string"
+a shorthand method: "[described]"
+a named function expression: keeps
+a function named elsewhere: already
+the name descriptor: [described],false,false,true
+source order: 1,b,2,3 a,b,c
+names: plain
+symbols: 1,true
+a class method: 6
+a class accessor: 7
+a static class method: 8

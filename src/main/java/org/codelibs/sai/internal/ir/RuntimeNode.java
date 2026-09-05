@@ -95,6 +95,8 @@ public class RuntimeNode extends Expression {
         TEMPLATE_OBJECT,
         /** Define an enumerable data property, for a computed key in an object literal */
         DEFINE_PROPERTY,
+        /** Define one whose value is a function that takes its name from the key */
+        DEFINE_NAMED_PROPERTY,
         /** Define a non-enumerable method, for an ES6 class body */
         DEFINE_METHOD,
         /** Define a non-enumerable accessor, for an ES6 class body */
