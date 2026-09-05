@@ -1,0 +1,12 @@
+source: .
+global: true
+ignoreCase: false
+multiline: false
+no flags keeps flags: gi
+string pattern: m
+generic toString: /foo/bar
+own toString: /ab+c/gi
+octal outside class: !
+octal inside class: !
+octal two digit: A
+back reference: aa

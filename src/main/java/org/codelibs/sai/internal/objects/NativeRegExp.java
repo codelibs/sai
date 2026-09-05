@@ -196,10 +196,18 @@ public final class NativeRegExp extends ScriptObject {
 
         if (regexp != UNDEFINED) {
             if (regexp instanceof NativeRegExp) {
-                if (flags != UNDEFINED) {
+                if (flags == UNDEFINED) {
+                    return (NativeRegExp) regexp; // 15.10.3.1 - undefined flags and regexp as
+                }
+                // ES6 21.2.3.1 builds a new RegExp from the pattern's source, letting the
+                // flags argument replace the pattern's own. ES5 15.10.4.1 rejected the pair
+                // outright. This is a change to an existing operation rather than a name
+                // that did not exist before, so --language=es6 gates it, as it gates the
+                // one-argument form of Array.prototype.splice.
+                if (!Global.getEnv()._es6) {
                     throw typeError("regex.cant.supply.flags");
                 }
-                return (NativeRegExp) regexp; // 15.10.3.1 - undefined flags and regexp as
+                return new NativeRegExp(((NativeRegExp) regexp).getRegExp().getSource(), JSType.toString(flags));
             }
             patternString = JSType.toString(regexp);
         }
@@ -342,7 +350,10 @@ public final class NativeRegExp extends ScriptObject {
      */
     @Function(attributes = Attribute.NOT_ENUMERABLE)
     public static String toString(final Object self) {
-        return checkRegExp(self).toString();
+        // ES6 21.2.5.14 is generic: it reads "source" and "flags" off this rather than
+        // requiring a RegExp, so a plain object carrying those two names formats too.
+        final ScriptObject sobj = Global.checkObject(self);
+        return "/" + JSType.toString(sobj.get("source")) + "/" + JSType.toString(sobj.get("flags"));
     }
 
     /**

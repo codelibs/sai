@@ -705,21 +705,19 @@ final class RegExpScanner extends Scanner {
         if (isDecimalDigit(ch0)) {
 
             if (ch0 == '0') {
-                // We know this is an octal escape.
-                if (inCharClass) {
-                    // Convert octal escape to unicode escape if inside character class.
-                    int octalValue = 0;
-                    while (isOctalDigit(ch0)) {
-                        octalValue = octalValue * 8 + ch0 - '0';
-                        skip(1);
-                    }
-
-                    unicode(octalValue, sb);
-
-                } else {
-                    // Copy decimal escape as-is
-                    decimalDigits();
+                // We know this is an octal escape (Annex B 21.2.2.1 LegacyOctalEscapeSequence).
+                // Convert it to a unicode escape rather than passing the digits through:
+                // the JavaScript syntax profile this compiles against leaves Joni's own
+                // octal support switched off, so "\\041" would otherwise reach the engine
+                // as the three literal characters 0, 4 and 1. Inside a character class the
+                // conversion was already being done for the same reason.
+                int octalValue = 0;
+                while (isOctalDigit(ch0)) {
+                    octalValue = octalValue * 8 + ch0 - '0';
+                    skip(1);
                 }
+
+                unicode(octalValue, sb);
             } else {
                 // This should be a backreference, but could also be an octal escape or even a literal string.
                 int decimalValue = 0;
