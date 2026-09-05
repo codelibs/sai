@@ -123,9 +123,11 @@ show("for..in", seen.join(","));
 show("Object.keys", Object.keys(mixed).join(","));
 show("getOwnPropertyNames", Object.getOwnPropertyNames(mixed).join(","));
 show("JSON.stringify", JSON.stringify(mixed));
-show("Object.assign", (function () {
+// Object.assign is the exception: ES6 19.1.2.1 walks every own key, so it copies
+// a symbol keyed property that the listings above leave out.
+show("Object.assign copies it", (function () {
     var copy = Object.assign({}, mixed);
-    return copy.name + "," + (copy[key] === undefined);
+    return copy.name + "," + copy[key];
 }()));
 
 // A symbol as a value is dropped by JSON, as an unrepresentable value is.

@@ -58,6 +58,7 @@ import org.codelibs.sai.internal.objects.annotations.Where;
 import org.codelibs.sai.internal.runtime.AccessorProperty;
 import org.codelibs.sai.internal.runtime.ECMAException;
 import org.codelibs.sai.internal.runtime.JSType;
+import org.codelibs.sai.internal.runtime.PropertyDescriptor;
 import org.codelibs.sai.internal.runtime.Property;
 import org.codelibs.sai.internal.runtime.PropertyMap;
 import org.codelibs.sai.internal.runtime.ScriptObject;
@@ -569,6 +570,21 @@ public final class NativeObject {
                 // a getter on the source is read as a value, a setter on the target is invoked
                 setMember(to, key, sobj.get(key));
             }
+            // ES6 19.1.2.1 step 4: assign walks every own key, and a symbol keyed one
+            // is a key like any other here. It is the one operation of its kind that
+            // does, which is why it cannot read the string only listing above and stop.
+            if (to instanceof ScriptObject) {
+                for (final Object symbol : sobj.getOwnSymbols()) {
+                    final Object desc = sobj.getOwnPropertyDescriptor(symbol);
+                    if (desc instanceof ScriptObject
+                            && JSType.toBoolean(((ScriptObject) desc).get(PropertyDescriptor.ENUMERABLE))) {
+                        ((ScriptObject) to).set(symbol, sobj.get(symbol), CALLSITE_STRICT);
+                    }
+                }
+            }
+            // A ScriptObjectMirror is a Bindings, which is a Map<String, Object>, and
+            // so has nowhere to put a symbol keyed property. That is the same ceiling
+            // getOwnKeys runs into at the mirror boundary.
         } else if (from instanceof ScriptObjectMirror) {
             final ScriptObjectMirror mirror = (ScriptObjectMirror) from;
             for (final String key : mirror.getOwnKeys(false)) {
