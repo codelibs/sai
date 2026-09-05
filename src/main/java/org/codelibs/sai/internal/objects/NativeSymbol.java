@@ -123,6 +123,23 @@ public final class NativeSymbol extends ScriptObject {
     private static final MethodHandle WRAPFILTER = findOwnMH("wrapFilter", MH.type(NativeSymbol.class, Object.class));
     private static final MethodHandle PROTOFILTER = findOwnMH("protoFilter", MH.type(Object.class, Object.class));
 
+    /**
+     * The getter behind every {@code Symbol.species}: ES6 defines each of them as
+     * {@code get [Symbol.species]() { return this; }}, so one handle serves them all.
+     */
+    static final MethodHandle SPECIES_GETTER = findOwnMH("species", MH.type(Object.class, Object.class));
+
+    /**
+     * ES6 24.1.3.3 and its like: a constructor's Symbol.species is itself, unless a
+     * subclass says otherwise.
+     *
+     * @param self the constructor the accessor was read from
+     * @return the constructor to build a derived object with
+     */
+    public static Object species(final Object self) {
+        return self;
+    }
+
     // initialized by saigen
     private static PropertyMap $saigenmap$;
 

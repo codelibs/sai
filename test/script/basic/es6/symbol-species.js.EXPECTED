@@ -1,0 +1,35 @@
+Array: function,true,true,false,true
+Map: function,true,true,false,true
+Set: function,true,true,false,true
+RegExp: function,true,true,false,true
+ArrayBuffer: function,true,true,false,true
+Int8Array: function,true,true,false,true
+Uint8Array: function,true,true,false,true
+Uint8ClampedArray: function,true,true,false,true
+Int16Array: function,true,true,false,true
+Uint16Array: function,true,true,false,true
+Int32Array: function,true,true,false,true
+Uint32Array: function,true,true,false,true
+Float32Array: function,true,true,false,true
+Float64Array: function,true,true,false,true
+read from a derived constructor: true
+concat: true
+filter: true
+map: true
+slice: true
+splice: true
+the elements reach the species: 2,4,6
+map writes no length: true
+slice writes one: 2
+lengths handed to the constructor: 0,0,3,2,2
+an ordinary concat: true,1,2
+an ordinary map: true
+an ordinary filter: 2,3
+an ordinary slice: 2,3
+an ordinary splice: 2
+an array-like has no species: a,b
+a species of Array: true
+a species of null: true
+a species of undefined: true
+a species that cannot construct: true
+a hole stays a hole: true,false,true

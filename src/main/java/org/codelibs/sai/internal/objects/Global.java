@@ -1824,6 +1824,17 @@ public final class Global extends Scope {
         return ScriptFunction.getPrototype(builtinArray);
     }
 
+    /**
+     * The Array constructor this Global was built with, whatever the global name
+     * Array now points at. ES6 9.4.2.3 ArraySpeciesCreate compares against it to
+     * tell an ordinary array apart from a derived one.
+     *
+     * @return the built-in Array constructor
+     */
+    ScriptFunction getArrayConstructor() {
+        return builtinArray;
+    }
+
     ScriptObject getBooleanPrototype() {
         return ScriptFunction.getPrototype(builtinBoolean);
     }
@@ -1929,6 +1940,21 @@ public final class Global extends Scope {
     }
 
     /**
+     * ES6 gives every constructor that builds a new object out of an old one a
+     * Symbol.species: an accessor that answers the receiver, so that a subclass which
+     * does not override it is the one used to build the new object.
+     *
+     * <p>Installed from Java because saigen writes an annotated property's key into
+     * the generated class as a constant pool entry, and a symbol is not one.
+     *
+     * @param constructor the constructor to add the accessor to
+     */
+    private static void installSpecies(final ScriptObject constructor) {
+        constructor.addOwnProperty(NativeSymbol.species, Attribute.NOT_ENUMERABLE,
+                ScriptFunction.createBuiltin("get [Symbol.species]", NativeSymbol.SPECIES_GETTER), null);
+    }
+
+    /**
      * ECMA 20.2.1.9 and 24.3.3 give the two namespace objects a Symbol.toStringTag,
      * so that Object.prototype.toString names them. The tag goes on when the object
      * is built rather than when a script first reaches for Symbol: the well known
@@ -2018,6 +2044,7 @@ public final class Global extends Scope {
     private synchronized ScriptFunction getBuiltinMap() {
         if (this.builtinMap == null) {
             this.builtinMap = initConstructorAndSwitchPoint("Map", ScriptFunction.class);
+            installSpecies(this.builtinMap);
             installIterator(ScriptFunction.getPrototype(this.builtinMap), "entries");
         }
         return this.builtinMap;
@@ -2030,6 +2057,7 @@ public final class Global extends Scope {
     private synchronized ScriptFunction getBuiltinSet() {
         if (this.builtinSet == null) {
             this.builtinSet = initConstructorAndSwitchPoint("Set", ScriptFunction.class);
+            installSpecies(this.builtinSet);
             installIterator(ScriptFunction.getPrototype(this.builtinSet), "values");
         }
         return this.builtinSet;
@@ -2042,6 +2070,7 @@ public final class Global extends Scope {
     private synchronized ScriptFunction getBuiltinArrayBuffer() {
         if (this.builtinArrayBuffer == null) {
             this.builtinArrayBuffer = initConstructorAndSwitchPoint("ArrayBuffer", ScriptFunction.class);
+            installSpecies(this.builtinArrayBuffer);
         }
         return this.builtinArrayBuffer;
     }
@@ -2091,6 +2120,10 @@ public final class Global extends Scope {
     private ScriptFunction initTypedArrayConstructor(final String name) {
         final ScriptFunction func = initConstructorAndSwitchPoint(name, ScriptFunction.class);
         ScriptFunction.getPrototype(func).setInitialProto(getTypedArrayPrototype());
+        // ES6 22.2.2.4 puts Symbol.species on %TypedArray% itself, which the nine
+        // concrete constructors would inherit; they do not share one here, so each
+        // gets its own.
+        installSpecies(func);
         return func;
     }
 
@@ -2302,6 +2335,7 @@ public final class Global extends Scope {
     private synchronized ScriptFunction getBuiltinRegExp() {
         if (this.builtinRegExp == null) {
             this.builtinRegExp = initConstructorAndSwitchPoint("RegExp", ScriptFunction.class);
+            installSpecies(this.builtinRegExp);
             final ScriptObject regExpProto = ScriptFunction.getPrototype(builtinRegExp);
             // initialize default regexp object
             this.DEFAULT_REGEXP = new NativeRegExp("(?:)", "", this, regExpProto);
@@ -2707,6 +2741,7 @@ public final class Global extends Scope {
         // built-in constructors
         this.builtinArray = initConstructorAndSwitchPoint("Array", ScriptFunction.class);
         installIterator(getArrayPrototype(), "values");
+        installSpecies(this.builtinArray);
         this.builtinBoolean = initConstructorAndSwitchPoint("Boolean", ScriptFunction.class);
         // ES6 20.1.2.12 and 20.1.2.13 want Number.parseInt and Number.parseFloat to be the very
         // same function objects as the global ones - the identity is observable and kangax tests
