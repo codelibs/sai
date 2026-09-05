@@ -1338,20 +1338,35 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
 
         final ArrayData array = getArray();
 
+        // ES6 9.1.12 puts every array index first, ascending, and only then the string
+        // keys in creation order. The array store already iterates ascending, and the
+        // property map already preserves creation order, so the two lists just need
+        // concatenating -- except that an index can also live in the property map, which
+        // happens when it was introduced by defineProperty or given attributes an array
+        // element cannot carry. Those have to be merged into the ascending run rather
+        // than left in the map's creation order at the end.
+        final boolean mergeIndexKeys = selfMap.containsArrayKeys();
+        final List<Long> indexKeys = mergeIndexKeys ? new ArrayList<Long>() : null;
+
         for (final Iterator<Long> iter = array.indexIterator(); iter.hasNext();) {
-            keys.add(JSType.toString(iter.next().longValue()));
+            final Long index = iter.next();
+            if (mergeIndexKeys) {
+                indexKeys.add(index);
+            } else {
+                keys.add(JSType.toString(index.longValue()));
+            }
         }
 
         for (final Property property : selfMap.getProperties()) {
             final boolean enumerable = property.isEnumerable();
             final String key = property.getKey();
             if (all) {
-                keys.add(key);
+                addOwnKey(keys, indexKeys, key);
             } else if (enumerable) {
                 // either we don't have non-enumerable filter set or filter set
                 // does not contain the current property.
                 if (nonEnumerable == null || !nonEnumerable.contains(key)) {
-                    keys.add(key);
+                    addOwnKey(keys, indexKeys, key);
                 }
             } else {
                 // store this non-enumerable property for later proto walk
@@ -1361,7 +1376,37 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
             }
         }
 
+        if (mergeIndexKeys) {
+            Collections.sort(indexKeys);
+            final List<Object> ordered = new ArrayList<>(indexKeys.size() + keys.size());
+            for (final Long index : indexKeys) {
+                ordered.add(JSType.toString(index.longValue()));
+            }
+            ordered.addAll(keys);
+            return ordered.toArray(new String[ordered.size()]);
+        }
+
         return keys.toArray(new String[keys.size()]);
+    }
+
+    /**
+     * Route one own key of the property map to the ascending index run or to the
+     * creation-ordered remainder, depending on whether it is an array index.
+     *
+     * @param keys      the creation-ordered remainder
+     * @param indexKeys the ascending run, or null when the map holds no array key and
+     *                  every key here therefore belongs to the remainder
+     * @param key       the key to place
+     */
+    private static void addOwnKey(final List<Object> keys, final List<Long> indexKeys, final String key) {
+        if (indexKeys != null) {
+            final int index = getArrayIndex(key);
+            if (isValidArrayIndex(index)) {
+                indexKeys.add(ArrayIndex.toLongIndex(index));
+                return;
+            }
+        }
+        keys.add(key);
     }
 
     /**

@@ -1,0 +1,8 @@
+getOwnPropertyNames: 012349 DB-1AEFGHIJKLMNOPQRSTUVWXYZC
+keys: 012349 DB-1AEFGHIJKLMNOPQRSTUVWXYZC
+for-in: 012349 DB-1AEFGHIJKLMNOPQRSTUVWXYZC
+JSON.stringify starts sorted: true
+Object.assign order: 012349 DB-1AEFGHIJKLMNOPQRSTC
+promoted index keeps place: 012
+sparse array: 10,20,10000000
+index edge: 0,4294967294,4294967295,z
