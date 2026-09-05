@@ -489,6 +489,15 @@ public class ScriptFunction extends ScriptObject {
     }
 
     /**
+     * Does this function have a parameter list that is not a plain list of names?
+     *
+     * @return true if a parameter has a default, is a pattern, or is a rest parameter
+     */
+    public final boolean hasNonSimpleParameters() {
+        return data.hasNonSimpleParameters();
+    }
+
+    /**
      * Returns true if this is a non-strict, non-built-in function that requires
      * non-primitive this argument according to ECMA 10.4.3.
      *

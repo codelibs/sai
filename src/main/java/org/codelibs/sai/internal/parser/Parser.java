@@ -5347,6 +5347,7 @@ public class Parser extends AbstractParser implements Loggable {
         }
 
         lc.setFlag(functionNode, FunctionNode.USES_ARGUMENTS);
+        lc.setFlag(functionNode, FunctionNode.HAS_NON_SIMPLE_PARAMETERS);
 
         final long restToken = parameters.rest.getToken();
         final Expression value = new RuntimeNode(restToken, finish, RuntimeNode.Request.TO_ARRAY,
@@ -5364,6 +5365,15 @@ public class Parser extends AbstractParser implements Loggable {
         }
 
         assert parameterSetups.size() == parameters.size();
+
+        for (final ParameterSetup setup : parameterSetups) {
+            if (setup != null) {
+                // A default or a pattern makes the list non-simple, which is what ES6
+                // 9.2.12 keys the unmapped arguments object off.
+                lc.setFlag(functionNode, FunctionNode.HAS_NON_SIMPLE_PARAMETERS);
+                break;
+            }
+        }
 
         final int lineNumber = functionNode.getLineNumber();
 

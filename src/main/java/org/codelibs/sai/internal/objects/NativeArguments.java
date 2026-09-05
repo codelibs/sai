@@ -258,7 +258,10 @@ public final class NativeArguments extends ScriptObject {
      */
     public static ScriptObject allocate(final Object[] arguments, final ScriptFunction callee, final int numParams) {
         // Strict functions won't always have a callee for arguments, and will pass null instead.
-        final boolean isStrict = callee == null || callee.isStrict();
+        // ES6 9.2.12 asks for the same unmapped object when the parameter list is
+        // anything but a plain list of names, so that assigning to a parameter with a
+        // default does not write through to arguments.
+        final boolean isStrict = callee == null || callee.isStrict() || callee.hasNonSimpleParameters();
         final Global global = Global.instance();
         final ScriptObject proto = global.getObjectPrototype();
         if (isStrict) {
