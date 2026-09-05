@@ -62,6 +62,7 @@ import org.codelibs.sai.internal.runtime.JSType;
 import org.codelibs.sai.internal.runtime.OptimisticBuiltins;
 import org.codelibs.sai.internal.runtime.PropertyDescriptor;
 import org.codelibs.sai.internal.runtime.PropertyMap;
+import org.codelibs.sai.internal.runtime.ScriptFunction;
 import org.codelibs.sai.internal.runtime.ScriptObject;
 import org.codelibs.sai.internal.runtime.ScriptRuntime;
 import org.codelibs.sai.internal.runtime.Undefined;
@@ -769,8 +770,8 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
      * @return resulting NativeArray
      */
     @SpecializedFunction(linkLogic = ConcatLinkLogic.class)
-    public static NativeArray concat(final Object self, final int arg) {
-        if (hasConcatSpreadable(self)) {
+    public static Object concat(final Object self, final int arg) {
+        if (hasConcatSpreadable(self) || arraySpeciesConstructor(self) != null) {
             return concat(self, new Object[] { arg });
         }
 
@@ -787,8 +788,8 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
      * @return resulting NativeArray
      */
     @SpecializedFunction(linkLogic = ConcatLinkLogic.class)
-    public static NativeArray concat(final Object self, final long arg) {
-        if (hasConcatSpreadable(self)) {
+    public static Object concat(final Object self, final long arg) {
+        if (hasConcatSpreadable(self) || arraySpeciesConstructor(self) != null) {
             return concat(self, new Object[] { arg });
         }
 
@@ -805,8 +806,8 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
      * @return resulting NativeArray
      */
     @SpecializedFunction(linkLogic = ConcatLinkLogic.class)
-    public static NativeArray concat(final Object self, final double arg) {
-        if (hasConcatSpreadable(self)) {
+    public static Object concat(final Object self, final double arg) {
+        if (hasConcatSpreadable(self) || arraySpeciesConstructor(self) != null) {
             return concat(self, new Object[] { arg });
         }
 
@@ -823,8 +824,8 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
      * @return resulting NativeArray
      */
     @SpecializedFunction(linkLogic = ConcatLinkLogic.class)
-    public static NativeArray concat(final Object self, final Object arg) {
-        if (hasConcatSpreadable(self) || hasConcatSpreadable(arg)) {
+    public static Object concat(final Object self, final Object arg) {
+        if (hasConcatSpreadable(self) || hasConcatSpreadable(arg) || arraySpeciesConstructor(self) != null) {
             return concat(self, new Object[] { arg });
         }
 
@@ -860,16 +861,93 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
      * @return resulting NativeArray
      */
     @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
-    public static NativeArray concat(final Object self, final Object... args) {
+    public static Object concat(final Object self, final Object... args) {
         final ArrayList<Object> list = new ArrayList<>();
+        final Object obj0 = Global.toObject(self);
 
-        concatToList(list, Global.toObject(self));
+        concatToList(list, obj0);
 
         for (final Object obj : args) {
             concatToList(list, obj);
         }
 
-        return new NativeArray(list.toArray());
+        // 22.1.3.1 asks the species for an empty object and writes the length itself.
+        return toSpecies(obj0, new NativeArray(list.toArray()), 0, true);
+    }
+
+    /**
+     * ES6 9.4.2.3 ArraySpeciesCreate, steps 2 to 6: the constructor the five methods
+     * that build a new array out of an old one should use, or null when that is the
+     * ordinary Array. Only an array whose constructor, or whose constructor's
+     * Symbol.species, has been replaced answers anything else.
+     */
+    private static Object arraySpeciesConstructor(final Object self) {
+        if (!(self instanceof ScriptObject) || !((ScriptObject) self).isArray()) {
+            return null;
+        }
+
+        Object species = ((ScriptObject) self).get("constructor");
+
+        if (species instanceof ScriptObject) {
+            species = ScriptRuntime.findSymbolValue((ScriptObject) species, NativeSymbol.species);
+        }
+
+        // A null Symbol.species reads as undefined, and both mean the ordinary Array.
+        if (species == null || species == ScriptRuntime.UNDEFINED || species == Global.instance().getArrayConstructor()) {
+            return null;
+        }
+
+        return species;
+    }
+
+    /**
+     * Hand the array a method has just built to whatever its Symbol.species asks
+     * for, or keep the array when nothing does.
+     *
+     * <p>The one departure from ES6 9.4.2.3 is when the species constructor runs:
+     * the specification builds the object before reading the elements, this builds
+     * it after. Only a constructor that watches the array while the callbacks run
+     * can tell, and building afterwards keeps every one of these methods on the
+     * array path it already had.
+     *
+     * @param self            the array being read, already an object
+     * @param built           the ordinary array the method produced
+     * @param constructLength the length the specification hands the constructor
+     * @param setLength       whether the specification writes length afterwards
+     * @return the array, or the object the species built
+     */
+    private static Object toSpecies(final Object self, final NativeArray built, final long constructLength,
+            final boolean setLength) {
+        final Object species = arraySpeciesConstructor(self);
+
+        if (species == null) {
+            return built;
+        }
+
+        if (!(species instanceof ScriptFunction)) {
+            throw typeError("not.a.constructor", ScriptRuntime.safeToString(species));
+        }
+
+        final Object created = ScriptRuntime.construct((ScriptFunction) species, (double) constructLength);
+
+        if (!(created instanceof ScriptObject)) {
+            throw typeError("not.an.object", ScriptRuntime.safeToString(created));
+        }
+
+        final ScriptObject target = (ScriptObject) created;
+        final long length = JSType.toUint32(built.getLength());
+
+        for (long i = 0; i < length; i++) {
+            if (built.has(i)) {
+                target.set((double) i, built.get(i), 0);
+            }
+        }
+
+        if (setLength) {
+            target.set("length", (double) length, 0);
+        }
+
+        return target;
     }
 
     /**
@@ -1265,12 +1343,16 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
         long k = relativeStart < 0 ? Math.max(len + relativeStart, 0) : Math.min(relativeStart, len);
         final long finale = relativeEnd < 0 ? Math.max(len + relativeEnd, 0) : Math.min(relativeEnd, len);
 
+        // 22.1.3.23 asks the species for an object of the slice's length and writes
+        // the length itself afterwards.
+        final long count = Math.max(finale - k, 0);
+
         if (k >= finale) {
-            return new NativeArray(0);
+            return toSpecies(sobj, new NativeArray(0), count, true);
         }
 
         if (bulkable(sobj)) {
-            return new NativeArray(sobj.getArray().slice(k, finale));
+            return toSpecies(sobj, new NativeArray(sobj.getArray().slice(k, finale)), count, true);
         }
 
         // Construct array with proper length to have a deleted filter on undefined elements
@@ -1281,7 +1363,7 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
             }
         }
 
-        return copy;
+        return toSpecies(sobj, copy, count, true);
     }
 
     private static Object compareFunction(final Object comparefn) {
@@ -1448,7 +1530,9 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
             returnValue = slowSplice(sobj, actualStart, actualDeleteCount, items, len);
         }
 
-        return returnValue;
+        // 22.1.3.25 asks the species for an object of the deleted count and writes
+        // the length itself afterwards.
+        return toSpecies(sobj, returnValue, actualDeleteCount, true);
     }
 
     private static NativeArray slowSplice(final ScriptObject sobj, final long start, final long deleteCount, final Object[] items,
@@ -1700,8 +1784,9 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
      * @return array with elements transformed by map function
      */
     @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
-    public static NativeArray map(final Object self, final Object callbackfn, final Object thisArg) {
-        return new IteratorAction<NativeArray>(Global.toObject(self), callbackfn, thisArg, null) {
+    public static Object map(final Object self, final Object callbackfn, final Object thisArg) {
+        final Object obj = Global.toObject(self);
+        final NativeArray mapped = new IteratorAction<NativeArray>(obj, callbackfn, thisArg, null) {
             private final MethodHandle mapInvoker = getMAP_CALLBACK_INVOKER();
 
             @Override
@@ -1718,6 +1803,9 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
                 result = new NativeArray(iter0.getLength());
             }
         }.apply();
+
+        // 22.1.3.16 asks the species for an object of the source's length.
+        return toSpecies(obj, mapped, JSType.toUint32(mapped.getLength()), false);
     }
 
     /**
@@ -1729,8 +1817,9 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
      * @return filtered array
      */
     @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
-    public static NativeArray filter(final Object self, final Object callbackfn, final Object thisArg) {
-        return new IteratorAction<NativeArray>(Global.toObject(self), callbackfn, thisArg, new NativeArray()) {
+    public static Object filter(final Object self, final Object callbackfn, final Object thisArg) {
+        final Object obj = Global.toObject(self);
+        final NativeArray filtered = new IteratorAction<NativeArray>(obj, callbackfn, thisArg, new NativeArray()) {
             private long to = 0;
             private final MethodHandle filterInvoker = getFILTER_CALLBACK_INVOKER();
 
@@ -1742,6 +1831,9 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
                 return true;
             }
         }.apply();
+
+        // 22.1.3.7 asks the species for an empty object and writes no length.
+        return toSpecies(obj, filtered, 0, false);
     }
 
     private static Object reduceInner(final ArrayLikeIterator<Object> iter, final Object self, final Object... args) {
