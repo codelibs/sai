@@ -1747,7 +1747,7 @@ public class Parser extends AbstractParser implements Loggable {
         final String indexName = newTemporary();
 
         // Evaluate the source once, and start the index, before the loop.
-        appendStatement(assignTemporary(forLine, ofToken, sourceName, source));
+        appendStatement(assignTemporary(forLine, ofToken, sourceName, asIterable(ofToken, source)));
         appendStatement(assignTemporary(forLine, ofToken, indexName,
                 LiteralNode.newInstance(ofToken, finish, Integer.valueOf(0))));
 
@@ -4529,10 +4529,11 @@ public class Parser extends AbstractParser implements Loggable {
                 // ES6 pattern parameter. It becomes an ordinary parameter under a name of
                 // its own, and the bindings it stands for are declared in the body.
                 final long patternToken = token;
+                final boolean isArrayPattern = type == LBRACKET;
                 final List<Binding> pattern = destructuringPattern();
 
                 parameters.add(createIdentNode(Token.recast(patternToken, IDENT), finish, newPatternParameter()));
-                setups.add(new ParameterSetup(defaultValue(), pattern));
+                setups.add(new ParameterSetup(defaultValue(), pattern, isArrayPattern));
 
                 continue;
             }
@@ -4547,7 +4548,7 @@ public class Parser extends AbstractParser implements Loggable {
 
             if (setups != null) {
                 final Expression defaultValue = isES6() ? defaultValue() : null;
-                setups.add(defaultValue == null ? null : new ParameterSetup(defaultValue, null));
+                setups.add(defaultValue == null ? null : new ParameterSetup(defaultValue, null, false));
             }
         }
 
@@ -5346,6 +5347,14 @@ public class Parser extends AbstractParser implements Loggable {
                 for (int j = statements.size() - 1; j >= 0; j--) {
                     prependStatement(statements.get(j));
                 }
+
+                if (setup.arrayPattern) {
+                    // Goes in ahead of the bindings that read it, and behind the default
+                    // that has to have filled the parameter in first.
+                    final long parameterToken = parameter.getToken();
+                    prependStatement(assignTemporary(lineNumber, parameterToken, parameter.getName(),
+                            asIterable(parameterToken, referenceTo(parameter))));
+                }
             }
 
             if (setup.defaultValue != null) {
@@ -5434,6 +5443,7 @@ public class Parser extends AbstractParser implements Loggable {
      */
     private Expression destructuringAssignment() {
         final long patternToken = token;
+        final boolean isArrayPattern = type == LBRACKET;
         final List<Binding> pattern = destructuringPattern(true);
 
         expect(ASSIGN);
@@ -5441,7 +5451,8 @@ public class Parser extends AbstractParser implements Loggable {
 
         final String source = newTemporary();
         final List<Expression> steps = new ArrayList<>();
-        steps.add(new BinaryNode(Token.recast(patternToken, TokenType.ASSIGN), identifierFor(patternToken, source), rhs));
+        steps.add(new BinaryNode(Token.recast(patternToken, TokenType.ASSIGN), identifierFor(patternToken, source),
+                isArrayPattern ? asIterable(patternToken, rhs) : rhs));
         assignBindings(source, pattern, steps);
         steps.add(identifierFor(patternToken, source));
 
@@ -5513,13 +5524,15 @@ public class Parser extends AbstractParser implements Loggable {
      */
     private void destructuringDeclaration(final int varLine, final long varToken, final int varFlags, final boolean isStatement,
             final List<VarNode> vars) {
+        final boolean isArrayPattern = type == LBRACKET;
         final List<Binding> pattern = destructuringPattern();
 
         expect(ASSIGN);
         final Expression init = assignmentExpression(!isStatement);
 
         final String source = newTemporary();
-        appendStatement(assignTemporary(varLine, varToken, source, init));
+        appendStatement(assignTemporary(varLine, varToken, source,
+                isArrayPattern ? asIterable(varToken, init) : init));
 
         final List<Statement> statements = new ArrayList<>();
         declareBindings(source, pattern, varLine, varFlags, vars, statements);
@@ -5732,6 +5745,24 @@ public class Parser extends AbstractParser implements Loggable {
 
             declareBindings(nested, binding.nested, varLine, varFlags, vars, out);
         }
+    }
+
+    /**
+     * Wrap the source of a for..of or of an array destructuring so that a string is
+     * taken apart by code point rather than by UTF-16 code unit.
+     *
+     * Both read their source by index, so there is no single read to fix the way spread
+     * has one in TO_ARRAY; the conversion goes in once, where the source is captured,
+     * and the existing indexed reads then see the right elements. Anything that is not
+     * a string comes back untouched, so an array, the arguments object and a Java list
+     * keep taking the path they always did.
+     *
+     * @param token token to attribute the synthetic node to
+     * @param source the source expression
+     * @return the wrapped source
+     */
+    private Expression asIterable(final long token, final Expression source) {
+        return new RuntimeNode(token, finish, RuntimeNode.Request.TO_ITERABLE, source);
     }
 
     private ExpressionStatement assignTemporary(final int varLine, final long token, final String temporary,
@@ -5951,10 +5982,13 @@ public class Parser extends AbstractParser implements Loggable {
     private static final class ParameterSetup {
         private final Expression defaultValue;
         private final List<Binding> pattern;
+        /** True when the pattern is an array pattern, which reads its source by index. */
+        private final boolean arrayPattern;
 
-        ParameterSetup(final Expression defaultValue, final List<Binding> pattern) {
+        ParameterSetup(final Expression defaultValue, final List<Binding> pattern, final boolean arrayPattern) {
             this.defaultValue = defaultValue;
             this.pattern = pattern;
+            this.arrayPattern = arrayPattern;
         }
     }
 
