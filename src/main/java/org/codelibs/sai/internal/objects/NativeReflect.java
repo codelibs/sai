@@ -66,7 +66,7 @@ public final class NativeReflect extends ScriptObject {
     @Function(arity = 2, attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
     public static Object get(final Object self, final Object target, final Object key, final Object receiver) {
         final ScriptObject sobj = checkObject(target);
-        final String name = JSType.toString(key);
+        final Object name = JSType.toPropertyKey(key);
 
         if (receiver == ScriptRuntime.UNDEFINED || receiver == target) {
             return sobj.get(name);
@@ -99,7 +99,7 @@ public final class NativeReflect extends ScriptObject {
     public static Object set(final Object self, final Object target, final Object key, final Object value,
             final Object receiver) {
         final ScriptObject sobj = checkObject(target);
-        final String name = JSType.toString(key);
+        final Object name = JSType.toPropertyKey(key);
 
         if (receiver != ScriptRuntime.UNDEFINED && receiver != target) {
             // 9.1.9 OrdinarySet: a setter found on the target's chain is called with
@@ -145,7 +145,7 @@ public final class NativeReflect extends ScriptObject {
      */
     @Function(arity = 2, attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
     public static Object has(final Object self, final Object target, final Object key) {
-        return checkObject(target).has(JSType.toString(key));
+        return checkObject(target).has(JSType.toPropertyKey(key));
     }
 
     /**
@@ -158,7 +158,7 @@ public final class NativeReflect extends ScriptObject {
      */
     @Function(arity = 2, attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
     public static Object deleteProperty(final Object self, final Object target, final Object key) {
-        return checkObject(target).delete(JSType.toString(key), false);
+        return checkObject(target).delete(JSType.toPropertyKey(key), false);
     }
 
     /**
@@ -171,7 +171,7 @@ public final class NativeReflect extends ScriptObject {
      */
     @Function(arity = 2, attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
     public static Object getOwnPropertyDescriptor(final Object self, final Object target, final Object key) {
-        final Object desc = checkObject(target).getOwnPropertyDescriptor(JSType.toString(key));
+        final Object desc = checkObject(target).getOwnPropertyDescriptor(JSType.toPropertyKey(key));
         return desc == null ? ScriptRuntime.UNDEFINED : desc;
     }
 
@@ -188,7 +188,7 @@ public final class NativeReflect extends ScriptObject {
     public static Object defineProperty(final Object self, final Object target, final Object key,
             final Object attributes) {
         // reject = false, so a refusal comes back as false rather than as a TypeError.
-        return checkObject(target).defineOwnProperty(JSType.toString(key), attributes, false);
+        return checkObject(target).defineOwnProperty(JSType.toPropertyKey(key), attributes, false);
     }
 
     /**
@@ -255,8 +255,8 @@ public final class NativeReflect extends ScriptObject {
     /**
      * ECMA 26.1.11 Reflect.ownKeys ( target )
      *
-     * <p>Every own key, enumerable or not, which is what Object.getOwnPropertyNames
-     * already answers.
+     * <p>Every own key, enumerable or not, in the order 9.1.12 lays down: the names
+     * Object.getOwnPropertyNames already answers, and then the symbols.
      *
      * @param self   self reference
      * @param target the object to list
@@ -264,7 +264,19 @@ public final class NativeReflect extends ScriptObject {
      */
     @Function(arity = 1, attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
     public static Object ownKeys(final Object self, final Object target) {
-        return new NativeArray(checkObject(target).getOwnKeys(true));
+        final ScriptObject sobj = checkObject(target);
+        final Object[] names = sobj.getOwnKeys(true);
+        final Object[] symbols = sobj.getOwnSymbols();
+
+        if (symbols.length == 0) {
+            return new NativeArray(names);
+        }
+
+        final Object[] keys = new Object[names.length + symbols.length];
+        System.arraycopy(names, 0, keys, 0, names.length);
+        System.arraycopy(symbols, 0, keys, names.length, symbols.length);
+
+        return new NativeArray(keys);
     }
 
     /**
@@ -314,7 +326,7 @@ public final class NativeReflect extends ScriptObject {
      * where OrdinaryGet and OrdinarySet look before they decide what to do with the
      * receiver.
      */
-    private static ScriptObject findDescriptor(final ScriptObject start, final String name) {
+    private static ScriptObject findDescriptor(final ScriptObject start, final Object name) {
         for (ScriptObject holder = start; holder != null; holder = holder.getProto()) {
             final Object desc = holder.getOwnPropertyDescriptor(name);
             if (desc instanceof ScriptObject) {

@@ -3310,9 +3310,11 @@ public abstract class ScriptObject implements PropertyAccess, Cloneable {
 
     @Override
     public boolean hasOwnProperty(final Object key) {
+        // ES6 7.1.14 ToPropertyKey, as has above: a symbol is a key in its own right.
         final Object primitiveKey = JSType.toPrimitive(key, String.class);
         final int index = getArrayIndex(primitiveKey);
-        return isValidArrayIndex(index) ? hasOwnArrayProperty(index) : hasProperty(JSType.toString(primitiveKey), false);
+        return isValidArrayIndex(index) ? hasOwnArrayProperty(index)
+                : hasProperty(JSType.toPropertyKeyFromPrimitive(primitiveKey), false);
     }
 
     @Override
