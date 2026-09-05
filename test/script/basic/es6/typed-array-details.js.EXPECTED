@@ -1,0 +1,7 @@
+callable without new: none
+every DataView arity requires new: true
+new DataView 1-arg: true
+new DataView 2-arg: true
+new DataView 3-arg: true
+new DataView validates: true
+round trip: 1234
