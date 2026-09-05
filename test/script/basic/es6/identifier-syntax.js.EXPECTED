@@ -1,0 +1,18 @@
+astral name: 5
+astral inside a name: 7
+astral property: 1
+astral declaration: declared
+lone high surrogate: SyntaxError
+escaped letter: 3
+escaped letters in a longer name: 9
+a name that merely starts like a keyword: 4
+escaped var as a name: SyntaxError
+fully escaped var as a name: SyntaxError
+escaped if as a name: SyntaxError
+escaped true as a name: SyntaxError
+unescaped keyword as a name: SyntaxError
+keyword as a property: 1
+escaped keyword as a property: 1
+escaped keyword after a dot: 2
+ordinary: 2
+basic plane letter: 6
