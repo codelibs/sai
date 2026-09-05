@@ -329,8 +329,10 @@ public final class RecompilableScriptFunctionData extends ScriptFunctionData imp
         }
         final FunctionNode.Kind kind = fn.getKind();
         if (kind == FunctionNode.Kind.GETTER || kind == FunctionNode.Kind.SETTER) {
+            // The parser encodes an accessor's ident as "get x"/"set x". ES6 9.2.11 keeps
+            // that as the name, so only ES5 strips the prefix back off.
             final String name = NameCodec.decode(fn.getIdent().getName());
-            return name.substring(GET_SET_PREFIX_LENGTH);
+            return Context.isES6() ? name : name.substring(GET_SET_PREFIX_LENGTH);
         }
         return fn.getIdent().getName();
     }
