@@ -89,6 +89,8 @@ public class RuntimeNode extends Expression {
         IS_NOT_UNDEFINED(TokenType.NE_STRICT, Type.BOOLEAN, 2),
         /** Copy the elements of an array-like value into an array, for ES6 spread */
         TO_ARRAY,
+        /** Split a string into its code points, for ES6 for..of and array destructuring */
+        TO_ITERABLE,
         /** Look up or build the frozen strings object a tagged template hands its tag */
         TEMPLATE_OBJECT,
         /** Define a non-enumerable method, for an ES6 class body */

@@ -621,6 +621,54 @@ public final class ScriptRuntime {
      *
      * @return a new array holding the elements
      */
+    /**
+     * Split a string into one string per code point.
+     *
+     * ES6 iterates a string by code point rather than by UTF-16 code unit wherever it
+     * iterates one at all, so a character outside the basic multilingual plane arrives
+     * whole instead of as the two halves of its surrogate pair. Indexing a string is a
+     * different operation and is untouched by this: "a𠮷"[1] is still the high
+     * surrogate. A lone surrogate has no pair to join, and comes back on its own.
+     *
+     * @param string the string to split
+     * @return one string per code point
+     */
+    public static Object[] toCodePoints(final String string) {
+        final int length = string.length();
+        final Object[] all = new Object[string.codePointCount(0, length)];
+
+        int index = 0;
+        for (int offset = 0; offset < length;) {
+            final int width = Character.charCount(string.codePointAt(offset));
+            all[index++] = string.substring(offset, offset + width);
+            offset += width;
+        }
+
+        return all;
+    }
+
+    /**
+     * Materialize the source of a for..of or of an array destructuring as an array,
+     * when and only when it is a string.
+     *
+     * These read their source by index -- for..of is desugared to an index loop, and a
+     * binding pattern to an indexed get per element -- so the code point rule cannot be
+     * applied at the point of the read the way it can for spread, which already funnels
+     * through {@link #TO_ARRAY}. Converting the source once, up front, puts the right
+     * elements behind those existing reads and leaves every other kind of source, and
+     * every other use of a string, exactly as it was.
+     *
+     * @param object the source about to be iterated
+     * @return an array of code points if the source is a string, otherwise the source
+     */
+    public static Object TO_ITERABLE(final Object object) {
+        if (isString(object)) {
+            return Global.allocate(toCodePoints(object.toString()));
+        }
+
+        return object;
+    }
+
     public static Object TO_ARRAY(final Object object, final Object from) {
         if (object == null || object == UNDEFINED) {
             throw typeError("cant.read.property.of.undefined", "length");
@@ -629,12 +677,7 @@ public final class ScriptRuntime {
         final Object[] all;
 
         if (isString(object)) {
-            final String string = object.toString();
-            all = new Object[string.length()];
-
-            for (int i = 0; i < all.length; i++) {
-                all[i] = String.valueOf(string.charAt(i));
-            }
+            all = toCodePoints(object.toString());
         } else if (object.getClass().isArray() && !(object instanceof Object[])) {
             // A Java array of a primitive type, which needs reflection to read.
             final int length = Array.getLength(object);

@@ -1,0 +1,18 @@
+length: 4
+index 1: true
+charAt: true
+spread array: 3
+spread array parts: a|𠮷|b
+spread call: 3
+for-of: 3 a|𠮷|b
+destructuring declaration: true
+destructuring assignment: true
+destructuring parameter: true
+rest: 2 true
+object pattern length: 4
+object pattern index 1: true
+lone surrogate: 1
+trailing high surrogate: 2
+array spread: 3
+arguments spread: 2
+empty string: 0
