@@ -890,14 +890,17 @@ public enum JSType {
         }
 
         final boolean negative;
+        final boolean signed;
         if (f == '-') {
             if (++start == end) {
                 return Double.NaN; // Single-char "-" string
             }
             f = str.charAt(start);
             negative = true;
+            signed = true;
         } else {
-            if (f == '+') {
+            signed = f == '+';
+            if (signed) {
                 if (++start == end) {
                     return Double.NaN; // Single-char "+" string
                 }
@@ -907,9 +910,16 @@ public enum JSType {
         }
 
         final double value;
-        if (start + 1 < end && f == '0' && Character.toLowerCase(str.charAt(start + 1)) == 'x') {
-            //decode hex string
-            value = parseRadix(str.toCharArray(), start + 2, end, 16);
+        final int radix = radixPrefix(str, start, end);
+        // The 0o and 0b prefixes arrived with ES2015 7.1.3.1 and are gated the same
+        // way the literals themselves are; 0x has been readable since ES5. The check
+        // is reached only by a string that already starts with such a prefix.
+        if (radix == 16 || radix != 0 && Context.isES6()) {
+            // None of the three may carry a sign: only StrDecimalLiteral may.
+            if (signed) {
+                return Double.NaN;
+            }
+            value = parseRadix(str.toCharArray(), start + 2, end, radix);
         } else if (f == 'I' && end - start == 8 && str.regionMatches(start, "Infinity", 0, 8)) {
             return negative ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
         } else {
@@ -928,6 +938,26 @@ public enum JSType {
         }
 
         return negative ? -value : value;
+    }
+
+    /**
+     * Returns the radix the prefix at the start of a numeric string names, or zero
+     * when there is no prefix. ECMA 7.1.3.1 admits 0x, 0o and 0b, in either case.
+     */
+    private static int radixPrefix(final String str, final int start, final int end) {
+        if (start + 2 > end || str.charAt(start) != '0') {
+            return 0;
+        }
+        switch (Character.toLowerCase(str.charAt(start + 1))) {
+        case 'x':
+            return 16;
+        case 'o':
+            return 8;
+        case 'b':
+            return 2;
+        default:
+            return 0;
+        }
     }
 
     /**
