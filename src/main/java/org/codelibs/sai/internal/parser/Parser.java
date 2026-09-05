@@ -75,6 +75,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.codelibs.sai.internal.codegen.CompilerConstants;
 import org.codelibs.sai.internal.codegen.Namespace;
@@ -1544,6 +1545,11 @@ public class Parser extends AbstractParser implements Loggable {
                 if (vars != null) {
                     // for (var i in obj)
                     if (vars.size() == 1) {
+                        // Annex B.3.6 keeps the initializer ES5.1 had no grammar for, but
+                        // only outside strict mode.
+                        if (isStrictMode && vars.get(0).getInit() != null) {
+                            throw error(AbstractParser.message("init.in.for.in"), vars.get(0).getToken());
+                        }
                         forNode = forNode.setInit(lc, new IdentNode(vars.get(0).getName()));
                     } else {
                         // for (var i, j in obj) is invalid
@@ -4572,6 +4578,11 @@ public class Parser extends AbstractParser implements Loggable {
         // accepted where the body that has to apply them is parsed as well.
         final List<IdentNode> parameters = out == null ? new ArrayList<IdentNode>() : out.list;
         final List<ParameterSetup> setups = out == null ? null : out.setups;
+        // ES6 14.1.2: a list that is anything but a plain sequence of names cannot repeat
+        // one, whether or not the code is strict. Every name the list binds is gathered
+        // here, since a pattern binds names that never become parameters of their own.
+        final List<IdentNode> bound = new ArrayList<>();
+        boolean simple = true;
         // Track commas.
         boolean first = true;
 
@@ -4589,6 +4600,8 @@ public class Parser extends AbstractParser implements Loggable {
                 next();
                 out.rest = getIdent();
                 verifyStrictIdent(out.rest, "function parameter");
+                bound.add(out.rest);
+                simple = false;
 
                 break;
             }
@@ -4602,6 +4615,8 @@ public class Parser extends AbstractParser implements Loggable {
 
                 parameters.add(createIdentNode(Token.recast(patternToken, IDENT), finish, newPatternParameter()));
                 setups.add(new ParameterSetup(defaultValue(), pattern, isArrayPattern));
+                collectBoundNames(pattern, bound);
+                simple = false;
 
                 continue;
             }
@@ -4613,14 +4628,47 @@ public class Parser extends AbstractParser implements Loggable {
             verifyStrictIdent(ident, "function parameter");
 
             parameters.add(ident);
+            bound.add(ident);
 
             if (setups != null) {
                 final Expression defaultValue = isES6() ? defaultValue() : null;
                 setups.add(defaultValue == null ? null : new ParameterSetup(defaultValue, null, false));
+                simple &= defaultValue == null;
             }
         }
 
+        if (!simple) {
+            verifyUniqueParameters(bound);
+        }
+
         return parameters;
+    }
+
+    /**
+     * Gather the names a destructuring pattern binds, nested patterns included.
+     */
+    private static void collectBoundNames(final List<Binding> pattern, final List<IdentNode> out) {
+        for (final Binding binding : pattern) {
+            if (binding.nested != null) {
+                collectBoundNames(binding.nested, out);
+            } else if (binding.target instanceof IdentNode) {
+                out.add((IdentNode) binding.target);
+            }
+        }
+    }
+
+    /**
+     * ES6 14.1.2: a parameter list carrying a default, a pattern or a rest element binds
+     * each of its names once, whether or not the code is strict.
+     */
+    private void verifyUniqueParameters(final List<IdentNode> bound) {
+        final Set<String> seen = new HashSet<>();
+
+        for (final IdentNode ident : bound) {
+            if (!seen.add(ident.getName())) {
+                throw error(AbstractParser.message("param.redefinition", ident.getName()), ident.getToken());
+            }
+        }
     }
 
     /**
