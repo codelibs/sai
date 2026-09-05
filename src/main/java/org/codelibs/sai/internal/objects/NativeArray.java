@@ -2086,6 +2086,12 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
             invoker = getFROM_CALLBACK_INVOKER();
         }
 
+        final ScriptObject iterator = ScriptRuntime.getIterator(Global.toObject(items));
+
+        if (iterator != null) {
+            return fromIterator(iterator, mapfn, callbackThis, invoker);
+        }
+
         final Object[] values = readArrayLike(items);
 
         if (!mapping) {
@@ -2095,16 +2101,51 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
         final Object[] mapped = new Object[values.length];
 
         for (int k = 0; k < values.length; k++) {
-            try {
-                mapped[k] = invoker.invokeExact(mapfn, callbackThis, values[k], (double) k);
-            } catch (final RuntimeException | Error e) {
-                throw e;
-            } catch (final Throwable t) {
-                throw new RuntimeException(t);
-            }
+            mapped[k] = map(invoker, mapfn, callbackThis, values[k], k);
         }
 
         return new NativeArray(mapped);
+    }
+
+    /**
+     * ES6 22.1.2.1 step 6: the branch that reads the source through the iteration
+     * protocol, one element at a time. A mapping function that raises closes the walk,
+     * as 7.4.6 IteratorClose asks, so that an iterator left part way through learns it
+     * will not be read to the end.
+     */
+    private static Object fromIterator(final ScriptObject iterator, final Object mapfn, final Object callbackThis,
+            final MethodHandle invoker) {
+        final ArrayList<Object> values = new ArrayList<>();
+
+        ScriptObject step;
+        while ((step = ScriptRuntime.iteratorStep(iterator)) != null) {
+            final Object value = step.get("value");
+
+            if (invoker == null) {
+                values.add(value);
+                continue;
+            }
+
+            try {
+                values.add(map(invoker, mapfn, callbackThis, value, values.size()));
+            } catch (final RuntimeException | Error e) {
+                ScriptRuntime.iteratorClose(iterator);
+                throw e;
+            }
+        }
+
+        return new NativeArray(values.toArray());
+    }
+
+    private static Object map(final MethodHandle invoker, final Object mapfn, final Object callbackThis,
+            final Object value, final int index) {
+        try {
+            return invoker.invokeExact(mapfn, callbackThis, value, (double) index);
+        } catch (final RuntimeException | Error e) {
+            throw e;
+        } catch (final Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     /**

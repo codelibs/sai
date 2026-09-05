@@ -61,19 +61,41 @@ final class CollectionSupport {
         }
         final ScriptFunction fn = (ScriptFunction) adder;
 
-        // TO_ITERABLE turns anything carrying the iteration protocol into the array
-        // the walk below expects, and leaves an array or an array-like alone.
-        final Iterator<?> elements = ScriptRuntime.toValueIterator(ScriptRuntime.TO_ITERABLE(iterable));
-        while (elements.hasNext()) {
-            final Object element = elements.next();
-            if (!pairs) {
-                ScriptRuntime.apply(fn, instance, element);
-            } else if (element instanceof ScriptObject) {
-                final ScriptObject pair = (ScriptObject) element;
-                ScriptRuntime.apply(fn, instance, pair.get(0), pair.get(1));
-            } else {
-                throw typeError("not.an.object", ScriptRuntime.safeToString(element));
+        final ScriptObject iterator = ScriptRuntime.getIterator(iterable);
+
+        if (iterator == null) {
+            // Nothing carrying the protocol: a string is taken apart by code point and
+            // everything else is walked by its length, as this did before.
+            final Iterator<?> elements = ScriptRuntime.toValueIterator(ScriptRuntime.TO_ITERABLE(iterable));
+            while (elements.hasNext()) {
+                add(instance, fn, elements.next(), pairs);
             }
+            return;
+        }
+
+        // 23.1.1.2 step 4.g: when adding an entry fails the walk is closed, so that an
+        // iterator left part way through learns it will not be read to the end.
+        ScriptObject step;
+        while ((step = ScriptRuntime.iteratorStep(iterator)) != null) {
+            final Object element = step.get("value");
+            try {
+                add(instance, fn, element, pairs);
+            } catch (final RuntimeException e) {
+                ScriptRuntime.iteratorClose(iterator);
+                throw e;
+            }
+        }
+    }
+
+    private static void add(final ScriptObject instance, final ScriptFunction adder, final Object element,
+            final boolean pairs) {
+        if (!pairs) {
+            ScriptRuntime.apply(adder, instance, element);
+        } else if (element instanceof ScriptObject) {
+            final ScriptObject pair = (ScriptObject) element;
+            ScriptRuntime.apply(adder, instance, pair.get(0), pair.get(1));
+        } else {
+            throw typeError("not.an.object", ScriptRuntime.safeToString(element));
         }
     }
 }
