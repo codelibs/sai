@@ -263,6 +263,17 @@ public abstract class Property implements Serializable {
     }
 
     /**
+     * Whether a value can be written to this property at all, leaving aside whether
+     * the writable flag currently allows it. A built-in accessor created with no
+     * setter has nowhere to put one.
+     *
+     * @return true unless the property has no way to accept a value
+     */
+    boolean canAcceptValue() {
+        return true;
+    }
+
+    /**
      * Check whether this property is writable (see ECMA 8.6.1)
      * @return true if writable
      */
