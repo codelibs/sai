@@ -38,22 +38,22 @@ print(JSON.stringify(desc))
 print("getter", desc.get)
 print("setter", desc.set)
 
-// no computed "__proto__" name, only identifier!
+// A written-out key sets the prototype whether it is an identifier or a string:
+// B.3.1 excludes a ComputedPropertyName, not a StringLiteral, and both an
+// identifier and a string are LiteralPropertyName. The computed form is covered
+// by test/script/basic/es6/proto-in-object-literals.js, which needs --language=es6
+// to write one at all.
 var p = {}
 var obj = {
     "__proto__" : p
 }
 
-if (Object.getPrototypeOf(obj) === p) {
-    fail("obj has wrong __proto__, allows computed __proto__!")
+if (Object.getPrototypeOf(obj) !== p) {
+    fail("string key did not set __proto__")
 }
 
-if (obj.__proto__ !== p) {
-    fail("__proto__ not created as normal property!")
-}
-
-if (Object.getPrototypeOf(obj) !== Object.prototype) {
-    fail("obj has wrong __proto__")
+if (obj.hasOwnProperty("__proto__")) {
+    fail("string key created a normal property as well!")
 }
 
 var obj2 = {

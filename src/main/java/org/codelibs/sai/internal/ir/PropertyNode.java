@@ -48,6 +48,9 @@ public final class PropertyNode extends Node {
     /** Property getter. */
     private final FunctionNode setter;
 
+    /** Is this the {@code __proto__ : value} form that sets the prototype? */
+    private final boolean protoAssignment;
+
     /**
      * Constructor
      *
@@ -57,23 +60,43 @@ public final class PropertyNode extends Node {
      * @param value   the value of this property
      * @param getter  getter function body
      * @param setter  setter function body
+     * @param protoAssignment true if this is {@code __proto__ : value}, the one form of
+     *                        property definition that sets the prototype instead of
+     *                        defining a property
      */
     public PropertyNode(final long token, final int finish, final PropertyKey key, final Expression value, final FunctionNode getter,
-            final FunctionNode setter) {
+            final FunctionNode setter, final boolean protoAssignment) {
         super(token, finish);
         this.key = key;
         this.value = value;
         this.getter = getter;
         this.setter = setter;
+        this.protoAssignment = protoAssignment;
     }
 
     private PropertyNode(final PropertyNode propertyNode, final PropertyKey key, final Expression value, final FunctionNode getter,
-            final FunctionNode setter) {
+            final FunctionNode setter, final boolean protoAssignment) {
         super(propertyNode);
         this.key = key;
         this.value = value;
         this.getter = getter;
         this.setter = setter;
+        this.protoAssignment = protoAssignment;
+    }
+
+    /**
+     * Is this the {@code __proto__ : value} form of Annex B.3.1, which sets the
+     * prototype rather than defining a property?
+     *
+     * Only that form does. A computed key, a shorthand property, a shorthand method and
+     * an accessor all define an ordinary own property, even when they spell the name the
+     * same way, so the name alone cannot decide it -- the parser marks the one form that
+     * counts.
+     *
+     * @return true if this sets the prototype
+     */
+    public boolean isProtoAssignment() {
+        return protoAssignment;
     }
 
     /**
@@ -136,7 +159,7 @@ public final class PropertyNode extends Node {
         if (this.getter == getter) {
             return this;
         }
-        return new PropertyNode(this, key, value, getter, setter);
+        return new PropertyNode(this, key, value, getter, setter, protoAssignment);
     }
 
     /**
@@ -151,7 +174,7 @@ public final class PropertyNode extends Node {
         if (this.key == key) {
             return this;
         }
-        return new PropertyNode(this, key, value, getter, setter);
+        return new PropertyNode(this, key, value, getter, setter, protoAssignment);
     }
 
     /**
@@ -171,7 +194,7 @@ public final class PropertyNode extends Node {
         if (this.setter == setter) {
             return this;
         }
-        return new PropertyNode(this, key, value, getter, setter);
+        return new PropertyNode(this, key, value, getter, setter, protoAssignment);
     }
 
     /**
@@ -191,6 +214,6 @@ public final class PropertyNode extends Node {
         if (this.value == value) {
             return this;
         }
-        return new PropertyNode(this, key, value, getter, setter);
+        return new PropertyNode(this, key, value, getter, setter, protoAssignment);
     }
 }

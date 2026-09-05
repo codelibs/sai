@@ -767,6 +767,30 @@ public final class ScriptRuntime {
      *
      * @return the method
      */
+    /**
+     * Define an enumerable data property, for a property of an object literal whose key
+     * is computed.
+     *
+     * An object literal creates its own properties; it does not assign them. The
+     * difference is observable whenever the prototype chain carries a setter of the same
+     * name, and Object.prototype always carries one for {@code __proto__}, so
+     * {@code { [k]: v }} with k of "__proto__" has to define an own property rather than
+     * reset the prototype the way an assignment would.
+     *
+     * @param target the object being built
+     * @param key    the computed key
+     * @param value  the value
+     * @return the value, so that the step can sit in a comma expression
+     */
+    public static Object DEFINE_PROPERTY(final Object target, final Object key, final Object value) {
+        final Global global = Context.getGlobal();
+
+        Global.checkObject(target).defineOwnProperty(JSType.toString(key),
+                global.newDataDescriptor(value, true, true, true), false);
+
+        return value;
+    }
+
     public static Object DEFINE_METHOD(final Object target, final Object key, final Object value) {
         final Global global = Context.getGlobal();
 
