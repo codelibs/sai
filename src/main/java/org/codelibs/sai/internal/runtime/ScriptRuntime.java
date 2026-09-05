@@ -739,6 +739,81 @@ public final class ScriptRuntime {
     }
 
     /**
+     * ECMA 7.4.1 GetIterator, for a caller that walks the iterator itself rather than
+     * having it drained. Answers null when the value carries no Symbol.iterator, which
+     * leaves the caller on the length based walk it used before the protocol was here.
+     *
+     * @param object the value to iterate
+     * @return the iterator, or null if the value is not iterable
+     */
+    public static ScriptObject getIterator(final Object object) {
+        if (!(object instanceof ScriptObject)) {
+            return null;
+        }
+
+        final Object iteratorFactory = findSymbolValue((ScriptObject) object, NativeSymbol.iterator);
+
+        if (!(iteratorFactory instanceof ScriptFunction)) {
+            return null;
+        }
+
+        final Object iterator = apply((ScriptFunction) iteratorFactory, object);
+
+        if (!(iterator instanceof ScriptObject)) {
+            throw typeError("not.an.object", safeToString(iterator));
+        }
+
+        return (ScriptObject) iterator;
+    }
+
+    /**
+     * ECMA 7.4.5 IteratorStep: take one step, and answer what it reached, or null once
+     * the walk is over. 7.4.4 IteratorValue is the {@code value} of what comes back.
+     *
+     * @param iterator the iterator to step
+     * @return the result object, or null when the walk is over
+     */
+    public static ScriptObject iteratorStep(final ScriptObject iterator) {
+        final Object next = iterator.get("next");
+
+        if (!(next instanceof ScriptFunction)) {
+            throw typeError("not.a.function", safeToString(next));
+        }
+
+        final Object step = apply((ScriptFunction) next, iterator);
+
+        if (!(step instanceof ScriptObject)) {
+            throw typeError("not.an.object", safeToString(step));
+        }
+
+        final ScriptObject result = (ScriptObject) step;
+
+        return JSType.toBoolean(result.get("done")) ? null : result;
+    }
+
+    /**
+     * ECMA 7.4.6 IteratorClose: tell an iterator that was left part way through that it
+     * will not be read to the end, so that it can release whatever it was holding.
+     *
+     * <p>Only called where the walk ended abruptly, so anything the iterator's
+     * {@code return} raises is dropped: 7.4.6 keeps the completion that ended the walk
+     * rather than the one closing it produced.
+     *
+     * @param iterator the iterator to close
+     */
+    public static void iteratorClose(final ScriptObject iterator) {
+        try {
+            final Object close = iterator.get("return");
+
+            if (close instanceof ScriptFunction) {
+                apply((ScriptFunction) close, iterator);
+            }
+        } catch (final RuntimeException e) {
+            // The reason the walk ended is the one worth reporting.
+        }
+    }
+
+    /**
      * Whether a value carries the iteration protocol, which is what tells the
      * walkers above apart from the array-likes they otherwise handle.
      *

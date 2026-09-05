@@ -1,0 +1,20 @@
+Map on a bad entry: closed 1, read 1
+WeakMap on a bad entry: closed 1, read 1
+WeakSet on a bad member: closed 1, read 1
+Set on an adder that raises: closed 1, read 1
+Array.from on a mapping that raises: closed 1, read 2
+a Set that fills: closed 0, read 4
+Array.from that maps every element: closed 0, read 4
+an iterator with no return: true
+a return that raises: 1 is not an Object
+Map from pairs: ab,2
+Set from an array: 1,2,3
+Set from a string: abc
+WeakSet from an array: true
+Array.from an array: 1,2,3
+Array.from with a mapping: 2,4,6
+Array.from a string by code point: 3
+Array.from an array-like: a,b
+Array.from a set: 1,2
+Array.from arguments: 1,2,3
+Array.from a Java list: 1,2
