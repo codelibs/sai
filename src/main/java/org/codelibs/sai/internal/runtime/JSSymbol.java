@@ -18,8 +18,6 @@
 
 package org.codelibs.sai.internal.runtime;
 
-import java.io.Serializable;
-
 /**
  * An ES2015 symbol: a property key that is not a name, and a primitive value in
  * its own right.
@@ -31,10 +29,15 @@ import java.io.Serializable;
  *
  * <p>The description is for reading, not for identity: two symbols made with the
  * same description are still two symbols.
+ *
+ * <p>Deliberately not Serializable. A Property carries its key into the persistent
+ * code cache, and a symbol read back from one would be a different symbol than the
+ * one written: identity is the whole of what a symbol is, and it does not survive
+ * the round trip. Leaving the class unserializable turns that into a
+ * NotSerializableException at the moment it is attempted, rather than a key that
+ * quietly no longer matches anything.
  */
-public final class JSSymbol implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public final class JSSymbol {
 
     private final String description;
 

@@ -27,7 +27,7 @@ for..in: name
 Object.keys: name
 getOwnPropertyNames: name
 JSON.stringify: {"name":1}
-Object.assign: 1,true
+Object.assign copies it: 1,2
 a symbol value in JSON: {}
 defineProperty: 7
 getOwnPropertyDescriptor: 7
