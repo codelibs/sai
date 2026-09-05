@@ -1927,6 +1927,10 @@ public final class Global extends Scope {
         if (this.builtinSymbol == null) {
             this.builtinSymbol = initConstructorAndSwitchPoint("Symbol", ScriptFunction.class);
             NativeSymbol.installWellKnownSymbols(this.builtinSymbol);
+            // ES6 19.4.3.4: a wrapper reduces to the symbol it stands for, not to the
+            // string that spells the symbol out.
+            installSymbolMethod(ScriptFunction.getPrototype(this.builtinSymbol), NativeSymbol.toPrimitive,
+                    "toPrimitive", NativeSymbol.SYMBOL_TO_PRIMITIVE);
         }
         return this.builtinSymbol;
     }

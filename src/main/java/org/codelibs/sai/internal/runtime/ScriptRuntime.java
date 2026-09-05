@@ -1266,7 +1266,9 @@ public final class ScriptRuntime {
     }
 
     private static boolean isNumberOrStringAndObject(final JSType xType, final JSType yType) {
-        return (xType == JSType.NUMBER || xType == JSType.STRING) && yType == JSType.OBJECT;
+        // ES6 7.2.12 step 10 puts a symbol beside a number and a string here, so that a
+        // symbol compares equal to the wrapper it was put in.
+        return (xType == JSType.NUMBER || xType == JSType.STRING || xType == JSType.SYMBOL) && yType == JSType.OBJECT;
     }
 
     private static boolean equalNumberToString(final Object num, final Object str) {
