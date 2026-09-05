@@ -851,6 +851,33 @@ public final class Global extends Scope {
 
     private volatile Object weakSet = LAZY_SENTINEL;
 
+    /**
+     * Getter for the Reflect property.
+     * @param self self reference
+     * @return the value of the Reflect property
+     */
+    @Getter(name = "Reflect", attributes = Attribute.NOT_ENUMERABLE)
+    public static Object getReflect(final Object self) {
+        final Global global = Global.instanceFrom(self);
+        if (global.reflect == LAZY_SENTINEL) {
+            global.reflect = global.getBuiltinReflect();
+        }
+        return global.reflect;
+    }
+
+    /**
+     * Setter for the Reflect property.
+     * @param self self reference
+     * @param value value of the Reflect property
+     */
+    @Setter(name = "Reflect", attributes = Attribute.NOT_ENUMERABLE)
+    public static void setReflect(final Object self, final Object value) {
+        final Global global = Global.instanceFrom(self);
+        global.reflect = value;
+    }
+
+    private volatile Object reflect = LAZY_SENTINEL;
+
     /** Sai extension: Java access - global.Packages */
     @Property(name = "Packages", attributes = Attribute.NOT_ENUMERABLE)
     public volatile Object packages;
@@ -1003,6 +1030,7 @@ public final class Global extends Scope {
     private ScriptFunction builtinSet;
     private ScriptFunction builtinWeakMap;
     private ScriptFunction builtinWeakSet;
+    private ScriptObject builtinReflect;
     private ScriptFunction builtinDataView;
     private ScriptFunction builtinInt8Array;
     private ScriptFunction builtinUint8Array;
@@ -1828,6 +1856,13 @@ public final class Global extends Scope {
 
     ScriptObject getWeakSetPrototype() {
         return ScriptFunction.getPrototype(getBuiltinWeakSet());
+    }
+
+    private synchronized ScriptObject getBuiltinReflect() {
+        if (this.builtinReflect == null) {
+            this.builtinReflect = initConstructorAndSwitchPoint("Reflect", ScriptObject.class);
+        }
+        return this.builtinReflect;
     }
 
     private synchronized ScriptFunction getBuiltinMap() {
