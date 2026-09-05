@@ -1,0 +1,35 @@
+array has its own next: false
+array reads next from its kind: true
+array reads Symbol.iterator from %IteratorPrototype%: true
+array is its own iterable: true
+string has its own next: false
+string reads next from its kind: true
+string reads Symbol.iterator from %IteratorPrototype%: true
+string is its own iterable: true
+map has its own next: false
+map reads next from its kind: true
+map reads Symbol.iterator from %IteratorPrototype%: true
+map is its own iterable: true
+set has its own next: false
+set reads next from its kind: true
+set reads Symbol.iterator from %IteratorPrototype%: true
+set is its own iterable: true
+typed array has its own next: false
+typed array reads next from its kind: true
+typed array reads Symbol.iterator from %IteratorPrototype%: true
+typed array is its own iterable: true
+array and typed array share a prototype: true
+map and set do not: true
+%IteratorPrototype% sits on Object.prototype: true
+every kind shares it: true
+array names itself: [object Array Iterator]
+string names itself: [object String Iterator]
+map names itself: [object Map Iterator]
+set names itself: [object Set Iterator]
+typed array names itself: [object Array Iterator]
+shared next steps the receiver: 1,2
+a plain object is not a walk: true
+for-of over an array walk: 1,2,3
+spread over a set walk: 1,2
+Array.from over a map walk: 1,a
+string walk steps by code point: a,2,b,true

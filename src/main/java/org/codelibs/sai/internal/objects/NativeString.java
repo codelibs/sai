@@ -1520,7 +1520,7 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
      */
     public static Object iterator(final Object self) {
         final String str = checkObjectToString(self);
-        return ArrayIterator.newIterator(new NativeArray(ScriptRuntime.toCodePoints(str)), ArrayIterator.Kind.VALUES);
+        return StringIterator.newIterator(str);
     }
 
     /**

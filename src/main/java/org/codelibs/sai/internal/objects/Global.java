@@ -1073,6 +1073,17 @@ public final class Global extends Scope {
     private ScriptObject builtinTypedArrayPrototype;
 
     /*
+     * ES6 25.1.2 %IteratorPrototype% and the four prototypes that sit on it. They are
+     * not reachable by name from a script, so they are built on demand rather than
+     * with the other built-ins.
+     */
+    private ScriptObject iteratorPrototype;
+    private ScriptObject arrayIteratorPrototype;
+    private ScriptObject stringIteratorPrototype;
+    private ScriptObject mapIteratorPrototype;
+    private ScriptObject setIteratorPrototype;
+
+    /*
      * ECMA section 13.2.3 The [[ThrowTypeError]] Function Object
      */
     private ScriptFunction typeErrorThrower;
@@ -1932,6 +1943,71 @@ public final class Global extends Scope {
         return ScriptFunction.getPrototype(getBuiltinSymbol());
     }
 
+    /**
+     * ES6 25.1.2 %IteratorPrototype%, the object every built-in iterator inherits
+     * from. Its one member is the Symbol.iterator that hands the receiver back,
+     * which is what lets an iterator be used as an iterable in its own right.
+     *
+     * @return %IteratorPrototype%
+     */
+    synchronized ScriptObject getIteratorPrototype() {
+        if (this.iteratorPrototype == null) {
+            this.iteratorPrototype = newObject();
+            this.iteratorPrototype.addOwnProperty(NativeSymbol.iterator, Attribute.NOT_ENUMERABLE,
+                    ScriptFunction.createBuiltin("[Symbol.iterator]", AbstractIterator.SELF));
+        }
+        return this.iteratorPrototype;
+    }
+
+    /**
+     * ES6 22.1.5.2 %ArrayIteratorPrototype%, shared by an array's walk and a typed
+     * array's.
+     *
+     * @return %ArrayIteratorPrototype%
+     */
+    synchronized ScriptObject getArrayIteratorPrototype() {
+        if (this.arrayIteratorPrototype == null) {
+            this.arrayIteratorPrototype = AbstractIterator.newPrototype(getIteratorPrototype(), "Array Iterator");
+        }
+        return this.arrayIteratorPrototype;
+    }
+
+    /**
+     * ES6 21.1.5.2 %StringIteratorPrototype%.
+     *
+     * @return %StringIteratorPrototype%
+     */
+    synchronized ScriptObject getStringIteratorPrototype() {
+        if (this.stringIteratorPrototype == null) {
+            this.stringIteratorPrototype = AbstractIterator.newPrototype(getIteratorPrototype(), "String Iterator");
+        }
+        return this.stringIteratorPrototype;
+    }
+
+    /**
+     * ES6 23.1.5.2 %MapIteratorPrototype%.
+     *
+     * @return %MapIteratorPrototype%
+     */
+    synchronized ScriptObject getMapIteratorPrototype() {
+        if (this.mapIteratorPrototype == null) {
+            this.mapIteratorPrototype = AbstractIterator.newPrototype(getIteratorPrototype(), "Map Iterator");
+        }
+        return this.mapIteratorPrototype;
+    }
+
+    /**
+     * ES6 23.2.5.2 %SetIteratorPrototype%.
+     *
+     * @return %SetIteratorPrototype%
+     */
+    synchronized ScriptObject getSetIteratorPrototype() {
+        if (this.setIteratorPrototype == null) {
+            this.setIteratorPrototype = AbstractIterator.newPrototype(getIteratorPrototype(), "Set Iterator");
+        }
+        return this.setIteratorPrototype;
+    }
+
     private synchronized ScriptObject getBuiltinReflect() {
         if (this.builtinReflect == null) {
             this.builtinReflect = initConstructorAndSwitchPoint("Reflect", ScriptObject.class);
@@ -2000,6 +2076,9 @@ public final class Global extends Scope {
                 final ScriptObject proto = (ScriptObject) protoClass.getDeclaredConstructor().newInstance();
                 proto.setIsBuiltin();
                 tagBuiltinProperties("ArrayBufferView", proto);
+                // ES6 22.2.3.31 gives %TypedArray%.prototype the same Symbol.iterator an
+                // array has, and it is that method rather than a second one.
+                installIterator(proto, "values");
                 this.builtinTypedArrayPrototype = proto;
             } catch (final ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException
                     | InvocationTargetException e) {
