@@ -29,11 +29,13 @@ import static org.codelibs.sai.internal.runtime.ECMAErrors.typeError;
 import static org.codelibs.sai.internal.runtime.ScriptRuntime.UNDEFINED;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import org.codelibs.sai.internal.dynalink.support.Lookup;
 import org.codelibs.sai.internal.objects.annotations.Attribute;
 import org.codelibs.sai.internal.objects.annotations.Constructor;
 import org.codelibs.sai.internal.objects.annotations.Function;
@@ -46,6 +48,7 @@ import org.codelibs.sai.internal.runtime.BitVector;
 import org.codelibs.sai.internal.runtime.JSType;
 import org.codelibs.sai.internal.runtime.ParserException;
 import org.codelibs.sai.internal.runtime.PropertyMap;
+import org.codelibs.sai.internal.runtime.ScriptFunction;
 import org.codelibs.sai.internal.runtime.ScriptObject;
 import org.codelibs.sai.internal.runtime.ScriptRuntime;
 import org.codelibs.sai.internal.runtime.linker.Bootstrap;
@@ -128,14 +131,30 @@ public final class NativeRegExp extends ScriptObject {
      * @return new NativeRegExp
      */
     @Constructor(arity = 2)
-    public static NativeRegExp constructor(final boolean isNew, final Object self, final Object... args) {
+    public static Object constructor(final boolean isNew, final Object self, final Object... args) {
         if (args.length > 1) {
-            return newRegExp(args[0], args[1]);
+            return construct(isNew, args[0], args[1]);
         } else if (args.length > 0) {
-            return newRegExp(args[0], UNDEFINED);
+            return construct(isNew, args[0], UNDEFINED);
         }
 
         return newRegExp(UNDEFINED, UNDEFINED);
+    }
+
+    /**
+     * ES6 21.2.3.1 step 3: called without new, a pattern that says it is a regular
+     * expression and that names this very RegExp as its constructor is handed
+     * straight back rather than copied. ES5 15.10.3.1 said the same of a pattern
+     * carrying the RegExp class; what 7.2.8 IsRegExp adds is that Symbol.match now
+     * decides, so a regular expression can opt out and an ordinary object can opt in.
+     */
+    private static Object construct(final boolean isNew, final Object pattern, final Object flags) {
+        if (!isNew && flags == UNDEFINED && isRegExp(pattern)
+                && ((ScriptObject) pattern).get("constructor") == Global.instance().getRegExpConstructor()) {
+            return pattern;
+        }
+
+        return newRegExp(pattern, flags);
     }
 
     /**
@@ -163,8 +182,8 @@ public final class NativeRegExp extends ScriptObject {
      * @return new NativeRegExp
      */
     @SpecializedFunction(isConstructor = true)
-    public static NativeRegExp constructor(final boolean isNew, final Object self, final Object pattern) {
-        return newRegExp(pattern, UNDEFINED);
+    public static Object constructor(final boolean isNew, final Object self, final Object pattern) {
+        return construct(isNew, pattern, UNDEFINED);
     }
 
     /**
@@ -179,8 +198,8 @@ public final class NativeRegExp extends ScriptObject {
      * @return new NativeRegExp
      */
     @SpecializedFunction(isConstructor = true)
-    public static NativeRegExp constructor(final boolean isNew, final Object self, final Object pattern, final Object flags) {
-        return newRegExp(pattern, flags);
+    public static Object constructor(final boolean isNew, final Object self, final Object pattern, final Object flags) {
+        return construct(isNew, pattern, flags);
     }
 
     /**
@@ -197,7 +216,12 @@ public final class NativeRegExp extends ScriptObject {
         if (regexp != UNDEFINED) {
             if (regexp instanceof NativeRegExp) {
                 if (flags == UNDEFINED) {
-                    return (NativeRegExp) regexp; // 15.10.3.1 - undefined flags and regexp as
+                    // ES5 15.10.4.1 and ES6 21.2.3.1 both build a fresh regexp from the
+                    // pattern's own source and flags here. Handing the pattern itself
+                    // back is what a call without new does, and construct above is
+                    // where that happens.
+                    final NativeRegExp pattern = (NativeRegExp) regexp;
+                    return new NativeRegExp(pattern.getRegExp().getSource(), pattern.getFlagString());
                 }
                 // ES6 21.2.3.1 builds a new RegExp from the pattern's source, letting the
                 // flags argument replace the pattern's own. ES5 15.10.4.1 rejected the pair
@@ -217,6 +241,176 @@ public final class NativeRegExp extends ScriptObject {
         }
 
         return new NativeRegExp(patternString, flagString);
+    }
+
+    /** The handles Global installs under the four symbol keys on RegExp.prototype. */
+    static final MethodHandle SYMBOL_MATCH = Lookup.findOwnStatic(MethodHandles.lookup(), "symbolMatch", Object.class, Object.class, Object.class);
+    static final MethodHandle SYMBOL_REPLACE = Lookup.findOwnStatic(MethodHandles.lookup(), "symbolReplace", Object.class, Object.class, Object.class, Object.class);
+    static final MethodHandle SYMBOL_SEARCH = Lookup.findOwnStatic(MethodHandles.lookup(), "symbolSearch", Object.class, Object.class, Object.class);
+    static final MethodHandle SYMBOL_SPLIT = Lookup.findOwnStatic(MethodHandles.lookup(), "symbolSplit", Object.class, Object.class, Object.class, Object.class);
+
+    /**
+     * ES6 7.2.8 IsRegExp: an object says for itself through Symbol.match, and only an
+     * object that says nothing is judged by whether it carries a matcher.
+     *
+     * @param value the value to judge
+     * @return true if the value is to be treated as a regular expression
+     */
+    static boolean isRegExp(final Object value) {
+        if (!(value instanceof ScriptObject)) {
+            return false;
+        }
+
+        final Object matcher = ScriptRuntime.findSymbolValue((ScriptObject) value, NativeSymbol.match);
+
+        if (matcher != UNDEFINED) {
+            return JSType.toBoolean(matcher);
+        }
+
+        return value instanceof NativeRegExp;
+    }
+
+    /**
+     * ES6 21.2.5.6 RegExp.prototype [ @@match ] ( string ), the method
+     * String.prototype.match calls once it has a regular expression in hand.
+     *
+     * <p>Installed from Global under the symbol key, since saigen cannot write one
+     * into a generated class.
+     *
+     * @param self   the regular expression
+     * @param string the string to match against
+     * @return the matches, or null
+     */
+    public static Object symbolMatch(final Object self, final Object string) {
+        final NativeRegExp regExp = checkRegExp(self);
+        final String str = JSType.toString(string);
+
+        if (!regExp.getGlobal()) {
+            return regExp.exec(str);
+        }
+
+        regExp.setLastIndex(0);
+
+        int previousLastIndex = 0;
+        final List<Object> matches = new ArrayList<>();
+
+        Object result;
+        while ((result = regExp.exec(str)) != null) {
+            final int thisIndex = regExp.getLastIndex();
+            if (thisIndex == previousLastIndex) {
+                regExp.setLastIndex(thisIndex + 1);
+                previousLastIndex = thisIndex + 1;
+            } else {
+                previousLastIndex = thisIndex;
+            }
+            matches.add(((ScriptObject) result).get(0));
+        }
+
+        if (matches.isEmpty()) {
+            return null;
+        }
+
+        return new NativeArray(matches.toArray());
+    }
+
+    /**
+     * ES6 21.2.5.8 RegExp.prototype [ @@replace ] ( string, replaceValue ).
+     *
+     * @param self         the regular expression
+     * @param string       the string to replace in
+     * @param replaceValue the replacement, a string or a function
+     * @return the string with the matches replaced
+     */
+    public static Object symbolReplace(final Object self, final Object string, final Object replaceValue) {
+        final NativeRegExp regExp = checkRegExp(self);
+        final String str = JSType.toString(string);
+
+        try {
+            if (Bootstrap.isCallable(replaceValue)) {
+                return regExp.replace(str, "", replaceValue);
+            }
+            return regExp.replace(str, JSType.toString(replaceValue), null);
+        } catch (final RuntimeException | Error e) {
+            throw e;
+        } catch (final Throwable t) {
+            throw new RuntimeException(t);
+        }
+    }
+
+    /**
+     * ES6 21.2.5.9 RegExp.prototype [ @@search ] ( string ).
+     *
+     * @param self   the regular expression
+     * @param string the string to search
+     * @return the index the match starts at, or -1
+     */
+    public static Object symbolSearch(final Object self, final Object string) {
+        return checkRegExp(self).search(JSType.toString(string));
+    }
+
+    /**
+     * ES6 21.2.5.11 RegExp.prototype [ @@split ] ( string, limit ).
+     *
+     * <p>The specification splits with a sticky copy of the regular expression, built
+     * through 7.3.20 SpeciesConstructor; the engine's own splitter already walks
+     * forward from each split point, which is what a sticky copy amounts to, so the
+     * copy is built only when the species is not the ordinary RegExp. That is also
+     * the only case in which the species is observable, and a species answering
+     * anything but a regular expression is a TypeError here rather than being driven
+     * through its own exec.
+     *
+     * @param self   the regular expression
+     * @param string the string to split
+     * @param limit  how many pieces at most
+     * @return the pieces
+     */
+    public static Object symbolSplit(final Object self, final Object string, final Object limit) {
+        if (!(self instanceof ScriptObject)) {
+            throw typeError("not.an.object", ScriptRuntime.safeToString(self));
+        }
+
+        final ScriptObject sobj = (ScriptObject) self;
+        final String str = JSType.toString(string);
+        final long lim = limit == UNDEFINED ? JSType.MAX_UINT : JSType.toUint32(limit);
+        final Object species = speciesConstructor(sobj);
+
+        if (species == null) {
+            return checkRegExp(self).split(str, lim);
+        }
+
+        if (!(species instanceof ScriptFunction)) {
+            throw typeError("not.a.constructor", ScriptRuntime.safeToString(species));
+        }
+
+        final String flags = JSType.toString(sobj.get("flags"));
+        final String sticky = flags.indexOf('y') < 0 ? flags + 'y' : flags;
+        final Object splitter = ScriptRuntime.construct((ScriptFunction) species, sobj, sticky);
+
+        if (!(splitter instanceof NativeRegExp)) {
+            throw typeError("not.a.regexp", ScriptRuntime.safeToString(splitter));
+        }
+
+        return ((NativeRegExp) splitter).split(str, lim);
+    }
+
+    /**
+     * ES6 7.3.20 SpeciesConstructor with %RegExp% as the default, answering null when
+     * that default is what it comes to.
+     */
+    private static Object speciesConstructor(final ScriptObject sobj) {
+        final Object constructor = sobj.get("constructor");
+
+        if (!(constructor instanceof ScriptObject)) {
+            return null;
+        }
+
+        final Object species = ScriptRuntime.findSymbolValue((ScriptObject) constructor, NativeSymbol.species);
+
+        if (species == null || species == UNDEFINED || species == Global.instance().getRegExpConstructor()) {
+            return null;
+        }
+
+        return species;
     }
 
     /**

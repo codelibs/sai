@@ -1,0 +1,32 @@
+RegExp.prototype: function,function,function,function
+they are not enumerable: false
+they are named: [Symbol.match]
+match: matched abc
+replace: replaced abc with x
+search: searched abc
+split: split abc at most 2
+called on the argument: true
+a non callable symbol: true
+null and undefined say nothing: 1,true
+match: b
+match global: a,a
+match no result: null
+match a string: b
+replace a string: aXc
+replace a regexp: aXcaXc
+replace with a function: aBc
+search: 2,-1
+split a string: a|b|c
+split a regexp: a|b|c
+split with a limit: a|b
+split on captures: a|1|b
+a regexp is refused: true
+startsWith after opting out: true
+endsWith after opting out: true
+includes after opting out: true
+an object that opted in is refused: true
+RegExp of a pattern that opted in: true
+RegExp of one that opted out: false
+RegExp of an ordinary regexp: true
+new RegExp copies: true,ab,gi
+split through a species: a|b,1
