@@ -177,9 +177,11 @@ public class ScriptFunction extends ScriptObject {
         return strict ? strictmodemap$ : map$;
     }
 
-    // An arrow function additionally has no "prototype" property.
+    // A function with no [[Construct]] additionally has no "prototype" property: there
+    // is nothing for one to build instances from. That is an arrow function, and under
+    // ES6 an accessor as well.
     private static PropertyMap getMap(final ScriptFunctionData data) {
-        if (data.isArrow()) {
+        if (data.isArrow() || !data.isConstructor()) {
             return data.isStrict() ? strictarrowmap$ : arrowmap$;
         }
 
