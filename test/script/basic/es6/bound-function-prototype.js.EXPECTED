@@ -1,0 +1,12 @@
+a function: true,true,true
+an arrow function: true,true,true
+a class: true,true,true
+a subclass: true,true,true
+an untouched function: true
+binding a bound function: null
+the bound this and arguments: hello, world, from here
+length and name: 1,bound greet
+no prototype of its own: false
+used with new: 1,2,true
+instances come from the target: true
+a bound subclass: true
