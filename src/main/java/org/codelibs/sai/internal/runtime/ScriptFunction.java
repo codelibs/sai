@@ -412,7 +412,14 @@ public class ScriptFunction extends ScriptObject {
      * @return a function with the specified self and parameters bound.
      */
     public final ScriptFunction createBound(final Object self, final Object[] args) {
-        return new Bound(data.makeBoundFunctionData(this, self, args), getTargetFunction());
+        final Bound bound = new Bound(data.makeBoundFunctionData(this, self, args), getTargetFunction());
+
+        // ES6 9.4.1.3 BoundFunctionCreate step 2: the bound function sits on whatever
+        // the function it was made from sits on, which for a subclass is the subclass
+        // rather than Function.prototype.
+        bound.setProto(getProto());
+
+        return bound;
     }
 
     /**
