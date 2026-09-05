@@ -206,8 +206,9 @@ public final class NativeJavaPackage extends ScriptObject {
     }
 
     @Override
-    protected Object invokeNoSuchProperty(final String key, final boolean isScope, final int programPoint) {
-        final Object retval = createProperty(key);
+    protected Object invokeNoSuchProperty(final Object key, final boolean isScope, final int programPoint) {
+        // A Java package or an importer only ever answers to a name.
+        final Object retval = createProperty(String.valueOf(key));
         if (isValid(programPoint)) {
             throw new UnwarrantedOptimismException(retval, programPoint);
         }

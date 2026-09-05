@@ -366,7 +366,7 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
      * ECMA 15.4.5.1 [[DefineOwnProperty]] ( P, Desc, Throw )
      */
     @Override
-    public boolean defineOwnProperty(final String key, final Object propertyDesc, final boolean reject) {
+    public boolean defineOwnProperty(final Object key, final Object propertyDesc, final boolean reject) {
         final PropertyDescriptor desc = toPropertyDescriptor(Global.instance(), propertyDesc);
 
         // never be undefined as "length" is always defined and can't be deleted for arrays
@@ -407,7 +407,7 @@ public final class NativeArray extends ScriptObject implements OptimisticBuiltin
             // Step 4d
             if (!succeeded) {
                 if (reject) {
-                    throw typeError("cant.redefine.property", key, ScriptRuntime.safeToString(this));
+                    throw typeError("cant.redefine.property", String.valueOf(key), ScriptRuntime.safeToString(this));
                 }
                 return false;
             }

@@ -1,0 +1,35 @@
+typeof: symbol
+new Symbol throws: true
+two calls, two symbols: false
+a symbol is itself: true
+toString: Symbol(desc)
+description: desc
+no description: undefined
+valueOf: true
+class name: [object Symbol]
+nothing of its own: undefined
+reaches Symbol.prototype: 2
+no string coercion: true
+no number coercion: true
+String(): Symbol(foo)
+Symbol.for: true
+Symbol.keyFor: shared
+keyFor an unregistered symbol: undefined
+for is not the same as calling: false
+well known: symbol,symbol,symbol,symbol,symbol,symbol,symbol,symbol,symbol,symbol,symbol
+well known are constants: false,false,false
+read back: true
+same description, different key: other
+in: true
+delete: true
+gone: undefined
+for..in: name
+Object.keys: name
+getOwnPropertyNames: name
+JSON.stringify: {"name":1}
+Object.assign: 1,true
+a symbol value in JSON: {}
+defineProperty: 7
+getOwnPropertyDescriptor: 7
+inherited: from the prototype
+Object(symbol): object,true,true

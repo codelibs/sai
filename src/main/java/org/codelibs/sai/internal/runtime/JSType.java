@@ -69,7 +69,10 @@ public enum JSType {
     OBJECT("object"),
 
     /** The function type */
-    FUNCTION("function");
+    FUNCTION("function"),
+
+    /** The symbol type, added in ES6 */
+    SYMBOL("symbol");
 
     /** The type name as returned by ECMAScript "typeof" operator*/
     private final String typeName;
@@ -273,6 +276,10 @@ public enum JSType {
             return JSType.BOOLEAN;
         }
 
+        if (obj instanceof JSSymbol) {
+            return JSType.SYMBOL;
+        }
+
         if (isString(obj)) {
             return JSType.STRING;
         }
@@ -309,6 +316,10 @@ public enum JSType {
 
         if (obj instanceof Boolean) {
             return JSType.BOOLEAN;
+        }
+
+        if (obj instanceof JSSymbol) {
+            return JSType.SYMBOL;
         }
 
         if (isString(obj)) {
@@ -420,7 +431,8 @@ public enum JSType {
      * @return true if object is primitive (includes null and undefined)
      */
     public static boolean isPrimitive(final Object obj) {
-        return obj == null || obj == ScriptRuntime.UNDEFINED || isString(obj) || isNumber(obj) || obj instanceof Boolean;
+        return obj == null || obj == ScriptRuntime.UNDEFINED || isString(obj) || isNumber(obj) || obj instanceof Boolean
+                || obj instanceof JSSymbol;
     }
 
     /**
@@ -560,6 +572,33 @@ public enum JSType {
      */
     public static String toString(final Object obj) {
         return toStringImpl(obj, false);
+    }
+
+    /**
+     * ECMA 7.1.14 ToPropertyKey: a symbol stands for itself, and everything else
+     * becomes the name it spells.
+     *
+     * @param obj the value used as a key
+     * @return the key to look the property up under
+     */
+    public static Object toPropertyKey(final Object obj) {
+        return toPropertyKeyFromPrimitive(toPrimitive(obj, String.class));
+    }
+
+    /**
+     * The second half of ECMA 7.1.14 ToPropertyKey, for a value that has already
+     * been reduced to a primitive: a symbol stands for itself, and everything else
+     * becomes the name it spells.
+     *
+     * <p>Kept separate so that a caller which has already reduced the key, and
+     * looked for an array index in what it got, does not reduce it a second time or
+     * pay for a string it does not need.
+     *
+     * @param primitiveKey a primitive value used as a key
+     * @return the key to look the property up under
+     */
+    public static Object toPropertyKeyFromPrimitive(final Object primitiveKey) {
+        return primitiveKey instanceof JSSymbol ? primitiveKey : toString(primitiveKey);
     }
 
     /**
@@ -1383,6 +1422,16 @@ public enum JSType {
             return obj.toString();
         }
 
+        if (obj instanceof JSSymbol) {
+            // ES6 7.1.12: a symbol has no string form, so asking for one is an error.
+            // A caller that only wants something printable asks safely, and gets the
+            // description back instead of an exception.
+            if (safe) {
+                return obj.toString();
+            }
+            throw typeError("symbol.to.string");
+        }
+
         if (safe && obj instanceof ScriptObject) {
             final ScriptObject sobj = (ScriptObject) obj;
             final Global gobj = Context.getGlobal();
@@ -1705,6 +1754,11 @@ public enum JSType {
 
         if (obj instanceof Undefined) {
             return Double.NaN;
+        }
+
+        if (obj instanceof JSSymbol) {
+            // ES6 7.1.3: a symbol has no numeric value either.
+            throw typeError("symbol.to.number");
         }
 
         return toNumber(toPrimitive(obj, Number.class));
