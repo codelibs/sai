@@ -1,0 +1,31 @@
+get: 987
+get misses: undefined
+set: true,654
+has own: true
+has inherited: true
+has missing: false
+deleteProperty: true,false
+getOwnPropertyDescriptor: 789,true,true,true
+getOwnPropertyDescriptor misses: undefined
+defineProperty: true,123
+defineProperty refused: false
+getPrototypeOf: true
+setPrototypeOf: true
+isExtensible: true
+preventExtensions: true,false
+ownKeys: A,B
+ownKeys order: 012349 DB-1AC
+apply: 5
+apply passes this: T
+construct: foobarbaz
+construct without arguments: 9
+construct newTarget: 1,true
+set on a frozen object: false
+set through a read-only prototype: false
+get with a receiver: R
+set with a receiver: R1
+get a data property with a receiver: 5
+primitive target rejected: true
+non-function rejected: true
+typeof Reflect: object
+not a constructor: true
