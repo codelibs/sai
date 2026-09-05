@@ -1548,10 +1548,10 @@ public class Lexer extends Scanner {
             skip(2);
             final int ch = unicodeEscapeSequence(TokenType.IDENT);
 
-            if (!Character.isJavaIdentifierStart(ch)) {
+            if (!isIdentifierStart(ch)) {
                 error(Lexer.message("illegal.identifier.character"), TokenType.IDENT, start, position);
             }
-        } else if (!Character.isJavaIdentifierStart(ch0) && !isSupplementaryIdentifierChar(true)) {
+        } else if (!isIdentifierStart(ch0) && !isSupplementaryIdentifierChar(true)) {
             // Not an identifier.
             return 0;
         }
@@ -1562,10 +1562,10 @@ public class Lexer extends Scanner {
                 skip(2);
                 final int ch = unicodeEscapeSequence(TokenType.IDENT);
 
-                if (!Character.isJavaIdentifierPart(ch)) {
+                if (!isIdentifierPart(ch)) {
                     error(Lexer.message("illegal.identifier.character"), TokenType.IDENT, start, position);
                 }
-            } else if (Character.isJavaIdentifierPart(ch0)) {
+            } else if (isIdentifierPart(ch0)) {
                 skip(1);
             } else if (isSupplementaryIdentifierChar(false)) {
                 skip(2);
@@ -1576,6 +1576,25 @@ public class Lexer extends Scanner {
 
         // Length of identifier sequence.
         return position - start;
+    }
+
+    /**
+     * ES6 11.6 reads an identifier by the Unicode ID_Start and ID_Continue properties,
+     * which Java's own identifier tests come close to but do not match: UAX #31 takes
+     * the Pattern_Syntax characters out of both, and the one such character Java calls
+     * a letter is the vertical tilde in the supplemental punctuation block. Nothing in
+     * that block can appear in an identifier, so the whole of it is refused here.
+     */
+    private static boolean isIdentifierStart(final int ch) {
+        return Character.isJavaIdentifierStart(ch) && !isPatternSyntax(ch);
+    }
+
+    private static boolean isIdentifierPart(final int ch) {
+        return Character.isJavaIdentifierPart(ch) && !isPatternSyntax(ch);
+    }
+
+    private static boolean isPatternSyntax(final int ch) {
+        return ch >= 0x2E00 && ch <= 0x2E7F;
     }
 
     /**
@@ -1592,7 +1611,7 @@ public class Lexer extends Scanner {
             return false;
         }
         final int codePoint = Character.toCodePoint(ch0, ch1);
-        return start ? Character.isJavaIdentifierStart(codePoint) : Character.isJavaIdentifierPart(codePoint);
+        return start ? isIdentifierStart(codePoint) : isIdentifierPart(codePoint);
     }
 
     /**

@@ -1,0 +1,30 @@
+Int8Array: 3,1,2,3
+Uint8Array: 3,1,2,3
+Uint8ClampedArray: 3,1,2,3
+Int16Array: 3,1,2,3
+Uint16Array: 3,1,2,3
+Int32Array: 3,1,2,3
+Uint32Array: 3,1,2,3
+Float32Array: 3,1,2,3
+Float64Array: 3,1,2,3
+from a set: 2
+from an empty iterable: 0
+from a length: 3
+from an array: 6,7
+from a typed array: 8,9
+from a buffer: 4
+a plain object is read as a length: 0
+a repeated name in a pattern: true
+a name repeated beside a pattern: true
+a name repeated beside a default: true
+a name repeated beside a rest: true
+a name repeated in nested patterns: true
+a plain list may repeat: accepted
+a pattern binding the function name: true
+two patterns binding different names: 3
+an initializer outside strict mode: accepted
+and inside it: true
+a Pattern_Syntax character: true
+an ordinary letter: accepted
+a letter above the basic plane: accepted
+one in an escape: true

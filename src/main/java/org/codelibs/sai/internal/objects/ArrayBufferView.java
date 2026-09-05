@@ -264,6 +264,28 @@ public abstract class ArrayBufferView extends ScriptObject {
      *
      * @return new ArrayBufferView
      */
+    /**
+     * ES6 22.2.4.4 InitializeTypedArrayFromIterable: read the whole iterable, then build
+     * a view of what came out of it.
+     */
+    private static ArrayBufferView fromIterable(final Factory factory, final Object iterable) {
+        final ScriptObject iterator = ScriptRuntime.getIterator(iterable);
+        final List<Object> values = new ArrayList<>();
+
+        ScriptObject step;
+        while ((step = ScriptRuntime.iteratorStep(iterator)) != null) {
+            values.add(step.get("value"));
+        }
+
+        final ArrayBufferView view = factory.construct(values.size());
+
+        for (int i = 0; i < values.size(); i++) {
+            view.set(i, values.get(i), 0);
+        }
+
+        return view;
+    }
+
     protected static ArrayBufferView constructorImpl(final boolean newObj, final Object[] args, final Factory factory) {
         final Object arg0 = args.length != 0 ? args[0] : 0;
         final ArrayBufferView dest;
@@ -296,6 +318,11 @@ public abstract class ArrayBufferView extends ScriptObject {
             // Constructor(type[] array)
             length = lengthToInt(((NativeArray) arg0).getArray().length());
             dest = factory.construct(length);
+        } else if (ScriptRuntime.isIterable(arg0)) {
+            // ES6 22.2.4.4 InitializeTypedArrayFromIterable: anything carrying the
+            // iteration protocol is read through it, its length not being known until
+            // the walk is over.
+            return fromIterable(factory, arg0);
         } else {
             // Constructor(unsigned long length). Treating infinity as 0 is a special case for ArrayBufferView.
             final double dlen = JSType.toNumber(arg0);
