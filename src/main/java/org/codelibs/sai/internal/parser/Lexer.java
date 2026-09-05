@@ -886,7 +886,10 @@ public class Lexer extends Scanner {
         // Scan identifier.
         final int length = scanIdentifier();
         // Check to see if it is a keyword.
-        final TokenType type = TokenLookup.lookupKeyword(content, start, length);
+        TokenType type = TokenLookup.lookupKeyword(content, start, length);
+        if (type == TokenType.IDENT) {
+            type = escapedKeyword(start, length);
+        }
         if (type == FUNCTION && pauseOnFunctionBody) {
             pauseOnNextLeftBrace = true;
         }
@@ -1548,7 +1551,7 @@ public class Lexer extends Scanner {
             if (!Character.isJavaIdentifierStart(ch)) {
                 error(Lexer.message("illegal.identifier.character"), TokenType.IDENT, start, position);
             }
-        } else if (!Character.isJavaIdentifierStart(ch0)) {
+        } else if (!Character.isJavaIdentifierStart(ch0) && !isSupplementaryIdentifierChar(true)) {
             // Not an identifier.
             return 0;
         }
@@ -1564,6 +1567,8 @@ public class Lexer extends Scanner {
                 }
             } else if (Character.isJavaIdentifierPart(ch0)) {
                 skip(1);
+            } else if (isSupplementaryIdentifierChar(false)) {
+                skip(2);
             } else {
                 break;
             }
@@ -1571,6 +1576,61 @@ public class Lexer extends Scanner {
 
         // Length of identifier sequence.
         return position - start;
+    }
+
+    /**
+     * Whether the next two units are a surrogate pair naming a code point that may
+     * appear in an identifier. ES6 11.6 reads an identifier by code point, so a
+     * letter above the basic plane is a letter like any other; testing either half
+     * of the pair on its own would only ever say no.
+     *
+     * @param start true to ask whether the code point may begin an identifier
+     * @return true if the pair names such a code point
+     */
+    private boolean isSupplementaryIdentifierChar(final boolean start) {
+        if (!Character.isHighSurrogate(ch0) || !Character.isLowSurrogate(ch1)) {
+            return false;
+        }
+        final int codePoint = Character.toCodePoint(ch0, ch1);
+        return start ? Character.isJavaIdentifierStart(codePoint) : Character.isJavaIdentifierPart(codePoint);
+    }
+
+    /**
+     * The keyword an identifier spells once its escapes are resolved, or IDENT when
+     * it spells no keyword.
+     *
+     * <p>ES6 11.6.1 matches a reserved word against the code points an identifier
+     * names rather than against the characters it was written with, and ES5.1 7.6
+     * reads the same way, so v\u0061r is the keyword var and cannot be a name.
+     * Resolving the escape here rather than rejecting it outright is what keeps
+     * { v\u0061r: 1 } and o.v\u0061r working, since a property name may be any
+     * IdentifierName, keyword or not.
+     *
+     * <p>It leaves one thing the specification would refuse: a keyword written with
+     * an escape where the keyword itself is allowed, so \u0069f (x) {} parses as an
+     * if statement instead of failing.
+     *
+     * @param start  start of the identifier in the content
+     * @param length its length in the content
+     * @return the keyword token type, or IDENT
+     */
+    private TokenType escapedKeyword(final int start, final int length) {
+        boolean escaped = false;
+        for (int i = start; i < start + length; i++) {
+            if (content[i] == '\\') {
+                escaped = true;
+                break;
+            }
+        }
+        if (!escaped) {
+            return TokenType.IDENT;
+        }
+        final String name = valueOfIdent(start, length);
+        if (name == null || name.isEmpty()) {
+            return TokenType.IDENT;
+        }
+        final char[] resolved = name.toCharArray();
+        return TokenLookup.lookupKeyword(resolved, 0, resolved.length);
     }
 
     /**
@@ -1937,7 +1997,8 @@ public class Lexer extends Scanner {
                     pauseOnNextLeftBrace = false;
                     break;
                 }
-            } else if (Character.isJavaIdentifierStart(ch0) || ch0 == '\\' && ch1 == 'u') {
+            } else if (Character.isJavaIdentifierStart(ch0) || ch0 == '\\' && ch1 == 'u'
+                    || isSupplementaryIdentifierChar(true)) {
                 // Scan and add identifier or keyword.
                 scanIdentifierOrKeyword();
             } else if (es6 && ch0 == '`') {
