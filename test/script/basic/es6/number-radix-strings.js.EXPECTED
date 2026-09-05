@@ -1,0 +1,23 @@
+0o1: 1
+0o777: 511
+0O17: 15
+0b1: 1
+0b1011: 11
+0B11: 3
+0x10: 16
+0X1f: 31
+0o8: NaN
+0b2: NaN
+0o: NaN
+0b: NaN
+padded: 15
+-0x10: NaN
++0x10: NaN
+-0o1: NaN
++0b1: NaN
+unary plus: 8
+multiplication: 3
+comparison: true
+decimal: 10,-10,150,0.5,-Infinity,0
+parseInt: 16,-16,0
+literals: 15,5,31
