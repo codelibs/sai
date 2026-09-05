@@ -101,8 +101,8 @@ public abstract class Property implements Serializable {
     /** Does this property support dual field representation? */
     public static final int DUAL_FIELDS = 1 << 11;
 
-    /** Property key. */
-    private final String key;
+    /** Property key: a String, or an ES6 symbol. */
+    private final Object key;
 
     /** Property flags. */
     private int flags;
@@ -120,7 +120,9 @@ public abstract class Property implements Serializable {
     /** SwitchPoint that is invalidated when property is changed, optional */
     protected transient SwitchPoint builtinSwitchPoint;
 
-    private static final long serialVersionUID = 2099814273074501176L;
+    // Bumped when the key widened from String to Object: a stored property map from
+    // before that reads its key field by type, and would otherwise come back keyless.
+    private static final long serialVersionUID = 2099814273074501177L;
 
     /**
      * Constructor
@@ -129,7 +131,7 @@ public abstract class Property implements Serializable {
      * @param flags property flags
      * @param slot  property field number or spill slot
      */
-    Property(final String key, final int flags, final int slot) {
+    Property(final Object key, final int flags, final int slot) {
         assert key != null;
         this.key = key;
         this.flags = flags;
@@ -433,7 +435,7 @@ public abstract class Property implements Serializable {
      * Get the key for this property. This key is an ordinary string. The "name".
      * @return key for property
      */
-    public String getKey() {
+    public Object getKey() {
         return key;
     }
 
@@ -614,7 +616,7 @@ public abstract class Property implements Serializable {
         final StringBuilder sb = new StringBuilder();
         final Class<?> t = getLocalType();
 
-        sb.append(indent(getKey(), 20)).append(" id=").append(Debug.id(this)).append(" (0x").append(indent(Integer.toHexString(flags), 4))
+        sb.append(indent(String.valueOf(getKey()), 20)).append(" id=").append(Debug.id(this)).append(" (0x").append(indent(Integer.toHexString(flags), 4))
                 .append(") ").append(getClass().getSimpleName()).append(" {").append(indent(type(t), 5)).append('}');
 
         if (slot != -1) {

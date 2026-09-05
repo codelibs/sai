@@ -102,7 +102,7 @@ import java.util.Set;
  * immutable hash map, addition is constant time.  For LinkedHashMap it's O(N+C)
  * since we have to clone the older map.
  */
-public final class PropertyHashMap implements Map<String, Property> {
+public final class PropertyHashMap implements Map<Object, Property> {
     /** Number of initial bins. Power of 2. */
     private static final int INITIAL_BINS = 32;
 
@@ -244,7 +244,7 @@ public final class PropertyHashMap implements Map<String, Property> {
      *
      * @return New {@link PropertyHashMap}.
      */
-    public PropertyHashMap immutableRemove(final String key) {
+    public PropertyHashMap immutableRemove(final Object key) {
         if (bins != null) {
             final int binIndex = binIndex(bins, key);
             final Element bin = bins[binIndex];
@@ -272,7 +272,7 @@ public final class PropertyHashMap implements Map<String, Property> {
      *
      * @return {@link Property} matching key or {@code null} if not found.
      */
-    public Property find(final String key) {
+    public Property find(final Object key) {
         final Element element = findElement(key);
         return element != null ? element.getProperty() : null;
     }
@@ -302,7 +302,7 @@ public final class PropertyHashMap implements Map<String, Property> {
      *
      * @return The bin index.
      */
-    private static int binIndex(final Element[] bins, final String key) {
+    private static int binIndex(final Element[] bins, final Object key) {
         return key.hashCode() & bins.length - 1;
     }
 
@@ -341,7 +341,7 @@ public final class PropertyHashMap implements Map<String, Property> {
         final Element[] newBins = new Element[binSize];
         for (Element element = list; element != null; element = element.getLink()) {
             final Property property = element.getProperty();
-            final String key = property.getKey();
+            final Object key = property.getKey();
             final int binIndex = binIndex(newBins, key);
 
             newBins[binIndex] = new Element(newBins[binIndex], property);
@@ -356,7 +356,7 @@ public final class PropertyHashMap implements Map<String, Property> {
      *
      * @return {@link Element} matching key or {@code null} if not found.
      */
-    private Element findElement(final String key) {
+    private Element findElement(final Object key) {
         if (bins != null) {
             final int binIndex = binIndex(bins, key);
             return findElement(bins[binIndex], key);
@@ -371,7 +371,7 @@ public final class PropertyHashMap implements Map<String, Property> {
      * @param key         {@link Element} key.
      * @return {@link Element} matching key or {@code null} if not found.
      */
-    private static Element findElement(final Element elementList, final String key) {
+    private static Element findElement(final Element elementList, final Object key) {
         final int hashCode = key.hashCode();
         for (Element element = elementList; element != null; element = element.getLink()) {
             if (element.match(key, hashCode)) {
@@ -414,7 +414,7 @@ public final class PropertyHashMap implements Map<String, Property> {
      */
     private PropertyHashMap addNoClone(final Property property) {
         int newSize = size;
-        final String key = property.getKey();
+        final Object key = property.getKey();
         Element newList = list;
         if (bins != null) {
             final int binIndex = binIndex(bins, key);
@@ -435,7 +435,7 @@ public final class PropertyHashMap implements Map<String, Property> {
         return new PropertyHashMap(newSize, bins, newList);
     }
 
-    private PropertyHashMap replaceNoClone(final String key, final Property property) {
+    private PropertyHashMap replaceNoClone(final Object key, final Property property) {
         if (bins != null) {
             final int binIndex = binIndex(bins, key);
             Element bin = bins[binIndex];
@@ -455,7 +455,7 @@ public final class PropertyHashMap implements Map<String, Property> {
      *
      * @return New list with {@link Element} removed.
      */
-    private static Element removeFromList(final Element list, final String key) {
+    private static Element removeFromList(final Element list, final Object key) {
         if (list == null) {
             return null;
         }
@@ -478,7 +478,7 @@ public final class PropertyHashMap implements Map<String, Property> {
     }
 
     // for element x. if x get link matches,
-    private static Element replaceInList(final Element list, final String key, final Property property) {
+    private static Element replaceInList(final Element list, final Object key, final Property property) {
         assert list != null;
         final int hashCode = key.hashCode();
 
@@ -514,15 +514,6 @@ public final class PropertyHashMap implements Map<String, Property> {
         return size == 0;
     }
 
-    @Override
-    public boolean containsKey(final Object key) {
-        if (key instanceof String) {
-            return findElement((String) key) != null;
-        }
-        assert key instanceof String;
-        return false;
-    }
-
     /**
      * Check if the map contains a key.
      *
@@ -530,7 +521,8 @@ public final class PropertyHashMap implements Map<String, Property> {
      *
      * @return {@code true} of key is in {@link PropertyHashMap}.
      */
-    public boolean containsKey(final String key) {
+    @Override
+    public boolean containsKey(final Object key) {
         return findElement(key) != null;
     }
 
@@ -546,29 +538,12 @@ public final class PropertyHashMap implements Map<String, Property> {
 
     @Override
     public Property get(final Object key) {
-        if (key instanceof String) {
-            final Element element = findElement((String) key);
-            return element != null ? element.getProperty() : null;
-        }
-        assert key instanceof String;
-        return null;
-    }
-
-    /**
-     * Get the {@link Property} given a key that is an explicit {@link String}.
-     * See also {@link PropertyHashMap#get(Object)}
-     *
-     * @param key {@link Property} key.
-     *
-     * @return {@link Property}, or {@code null} if no property with that key was found.
-     */
-    public Property get(final String key) {
         final Element element = findElement(key);
         return element != null ? element.getProperty() : null;
     }
 
     @Override
-    public Property put(final String key, final Property value) {
+    public Property put(final Object key, final Property value) {
         throw new UnsupportedOperationException("Immutable map.");
     }
 
@@ -578,7 +553,7 @@ public final class PropertyHashMap implements Map<String, Property> {
     }
 
     @Override
-    public void putAll(final Map<? extends String, ? extends Property> m) {
+    public void putAll(final Map<?, ? extends Property> m) {
         throw new UnsupportedOperationException("Immutable map.");
     }
 
@@ -588,8 +563,8 @@ public final class PropertyHashMap implements Map<String, Property> {
     }
 
     @Override
-    public Set<String> keySet() {
-        final HashSet<String> set = new HashSet<>();
+    public Set<Object> keySet() {
+        final HashSet<Object> set = new HashSet<>();
         for (Element element = list; element != null; element = element.getLink()) {
             set.add(element.getKey());
         }
@@ -602,8 +577,8 @@ public final class PropertyHashMap implements Map<String, Property> {
     }
 
     @Override
-    public Set<Entry<String, Property>> entrySet() {
-        final HashSet<Entry<String, Property>> set = new HashSet<>();
+    public Set<Entry<Object, Property>> entrySet() {
+        final HashSet<Entry<Object, Property>> set = new HashSet<>();
         for (Element element = list; element != null; element = element.getLink()) {
             set.add(element);
         }
@@ -613,7 +588,7 @@ public final class PropertyHashMap implements Map<String, Property> {
     /**
      * List map element.
      */
-    static final class Element implements Entry<String, Property> {
+    static final class Element implements Entry<Object, Property> {
         /** Link for list construction. */
         private Element link;
 
@@ -621,7 +596,7 @@ public final class PropertyHashMap implements Map<String, Property> {
         private final Property property;
 
         /** Element key. Kept separate for performance.) */
-        private final String key;
+        private final Object key;
 
         /** Element key hash code. */
         private final int hashCode;
@@ -637,7 +612,7 @@ public final class PropertyHashMap implements Map<String, Property> {
             this.hashCode = this.key.hashCode();
         }
 
-        boolean match(final String otherKey, final int otherHashCode) {
+        boolean match(final Object otherKey, final int otherHashCode) {
             return this.hashCode == otherHashCode && this.key.equals(otherKey);
         }
 
@@ -652,7 +627,7 @@ public final class PropertyHashMap implements Map<String, Property> {
         }
 
         @Override
-        public String getKey() {
+        public Object getKey() {
             return key;
         }
 

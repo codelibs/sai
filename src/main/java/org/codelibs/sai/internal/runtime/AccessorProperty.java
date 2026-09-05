@@ -130,7 +130,7 @@ public class AccessorProperty extends Property {
      *
      * @return  New {@link AccessorProperty} created.
      */
-    public static AccessorProperty create(final String key, final int propertyFlags, final MethodHandle getter, final MethodHandle setter) {
+    public static AccessorProperty create(final Object key, final int propertyFlags, final MethodHandle getter, final MethodHandle setter) {
         return new AccessorProperty(key, propertyFlags, -1, getter, setter);
     }
 
@@ -184,7 +184,7 @@ public class AccessorProperty extends Property {
      * @param objectSetter    object setter
      */
     @SuppressWarnings("this-escape")
-    protected AccessorProperty(final String key, final int flags, final int slot, final MethodHandle primitiveGetter,
+    protected AccessorProperty(final Object key, final int flags, final int slot, final MethodHandle primitiveGetter,
             final MethodHandle primitiveSetter, final MethodHandle objectGetter, final MethodHandle objectSetter) {
         super(key, flags, slot);
         assert getClass() != AccessorProperty.class;
@@ -209,7 +209,7 @@ public class AccessorProperty extends Property {
      * @param setter the property setter or null if non writable, non configurable
      */
     @SuppressWarnings("this-escape")
-    private AccessorProperty(final String key, final int flags, final int slot, final MethodHandle getter, final MethodHandle setter) {
+    private AccessorProperty(final Object key, final int flags, final int slot, final MethodHandle getter, final MethodHandle setter) {
         super(key, flags | IS_BUILTIN | DUAL_FIELDS | (getter.type().returnType().isPrimitive() ? IS_NASGEN_PRIMITIVE : 0), slot);
         assert !isSpill();
 
@@ -253,7 +253,7 @@ public class AccessorProperty extends Property {
      * @param slot             property field number or spill slot
      */
     @SuppressWarnings("this-escape")
-    public AccessorProperty(final String key, final int flags, final Class<?> structure, final int slot) {
+    public AccessorProperty(final Object key, final int flags, final Class<?> structure, final int slot) {
         super(key, flags, slot);
 
         initGetterSetter(structure);
@@ -301,7 +301,7 @@ public class AccessorProperty extends Property {
      * @param initialValue initial value to which the property can be set
      */
     @SuppressWarnings("this-escape")
-    protected AccessorProperty(final String key, final int flags, final int slot, final ScriptObject owner, final Object initialValue) {
+    protected AccessorProperty(final Object key, final int flags, final int slot, final ScriptObject owner, final Object initialValue) {
         this(key, flags, owner.getClass(), slot);
         setInitialValue(owner, initialValue);
     }
@@ -317,7 +317,7 @@ public class AccessorProperty extends Property {
      * @param initialType  initial type of the property
      */
     @SuppressWarnings("this-escape")
-    public AccessorProperty(final String key, final int flags, final Class<?> structure, final int slot, final Class<?> initialType) {
+    public AccessorProperty(final Object key, final int flags, final Class<?> structure, final int slot, final Class<?> initialType) {
         this(key, flags, structure, slot);
         setType(hasDualFields() ? initialType : Object.class);
     }
@@ -560,7 +560,7 @@ public class AccessorProperty extends Property {
     private void checkUndeclared() {
         if ((getFlags() & NEEDS_DECLARATION) != 0) {
             // a lexically defined variable that hasn't seen its declaration - throw ReferenceError
-            throw ECMAErrors.referenceError("not.defined", getKey());
+            throw ECMAErrors.referenceError("not.defined", String.valueOf(getKey()));
         }
     }
 
@@ -616,7 +616,7 @@ public class AccessorProperty extends Property {
         }
 
         if (isBuiltin()) {
-            mh = MH.filterArguments(mh, 0, debugInvalidate(MH.insertArguments(INVALIDATE_SP, 0, this), getKey()));
+            mh = MH.filterArguments(mh, 0, debugInvalidate(MH.insertArguments(INVALIDATE_SP, 0, this), String.valueOf(getKey())));
         }
 
         assert mh.type().returnType() == void.class : mh.type();

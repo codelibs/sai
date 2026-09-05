@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.LongAdder;
  */
 public class PropertyListeners {
 
-    private Map<String, WeakPropertyMapSet> listeners;
+    private Map<Object, WeakPropertyMapSet> listeners;
 
     // These counters are updated in debug mode
     private static LongAdder listenersAdded;
@@ -57,7 +57,7 @@ public class PropertyListeners {
             this.listeners = new WeakHashMap<>();
             // We need to copy the nested weak sets in order to avoid concurrent modification issues, see JDK-8146274
             synchronized (listener) {
-                for (final Map.Entry<String, WeakPropertyMapSet> entry : listener.listeners.entrySet()) {
+                for (final Map.Entry<Object, WeakPropertyMapSet> entry : listener.listeners.entrySet()) {
                     this.listeners.put(entry.getKey(), new WeakPropertyMapSet(entry.getValue()));
                 }
             }
@@ -108,7 +108,7 @@ public class PropertyListeners {
      * @param propertyMap the property map
      * @return the new property map
      */
-    public static PropertyListeners addListener(final PropertyListeners listeners, final String key, final PropertyMap propertyMap) {
+    public static PropertyListeners addListener(final PropertyListeners listeners, final Object key, final PropertyMap propertyMap) {
         final PropertyListeners newListeners;
         if (listeners == null || !listeners.containsListener(key, propertyMap)) {
             newListeners = new PropertyListeners(listeners);
@@ -125,7 +125,7 @@ public class PropertyListeners {
      * @param propertyMap the property map
      * @return true if property map is registered with property key
      */
-    synchronized boolean containsListener(final String key, final PropertyMap propertyMap) {
+    synchronized boolean containsListener(final Object key, final PropertyMap propertyMap) {
         if (listeners == null) {
             return false;
         }
@@ -138,7 +138,7 @@ public class PropertyListeners {
      *
      * @param propertyMap The property listener that is added.
      */
-    synchronized final void addListener(final String key, final PropertyMap propertyMap) {
+    synchronized final void addListener(final Object key, final PropertyMap propertyMap) {
         if (Context.DEBUG) {
             listenersAdded.increment();
         }
