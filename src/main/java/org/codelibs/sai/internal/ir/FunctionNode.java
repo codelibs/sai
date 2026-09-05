@@ -930,10 +930,19 @@ public final class FunctionNode extends LexicalContextExpression implements Flag
     /**
      * Returns true if this is a named function expression (that is, it isn't a declared function, it isn't an
      * anonymous function expression, and it isn't a program).
+     *
+     * Only a function expression and a class expression bind their own name inside their own body. A method, a
+     * getter and a setter carry an ident too -- the property they define -- but ES6 14.3.8 gives them no such
+     * binding, and treating them as named function expressions let that ident shadow an outer name of the same
+     * spelling from inside the body.
+     *
      * @return true if this is a named function expression
      */
     public boolean isNamedFunctionExpression() {
-        return !getFlag(IS_PROGRAM | IS_ANONYMOUS | IS_DECLARED);
+        if (getFlag(IS_PROGRAM | IS_ANONYMOUS | IS_DECLARED)) {
+            return false;
+        }
+        return kind == Kind.NORMAL || kind == Kind.CLASS_CONSTRUCTOR;
     }
 
     @Override

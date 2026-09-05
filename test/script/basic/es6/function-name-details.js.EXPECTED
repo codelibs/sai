@@ -1,0 +1,10 @@
+new Function name: anonymous
+new Function with args: anonymous
+new Function still runs: 3
+getter name: get foo
+setter name: set foo
+shorthand method sees outer f: outer
+accessor sees outer g: outer g
+named function expression self-binds: function
+class expression name in body (known gap): undefined
+shorthand method name: f

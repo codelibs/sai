@@ -249,7 +249,16 @@ public final class NativeFunction {
     public static ScriptFunction function(final boolean newObj, final Object self, final Object... args) {
         final StringBuilder sb = new StringBuilder();
 
-        sb.append("(function (");
+        // ES6 19.2.1.1.1 CreateDynamicFunction builds the source with the identifier
+        // "anonymous" in the name position, which is where the result's name comes from.
+        // Naming it here rather than special-casing the result also means toString shows
+        // the source the specification describes, as other engines do.
+        //
+        // That source is observable in more than the name -- it is what toString prints
+        // and what a stack frame is labelled with -- so it waits for --language=es6
+        // rather than moving under ES5, where the function has always printed as
+        // "function (x)" and shown up as <anonymous> in a trace.
+        sb.append(Global.getEnv()._es6 ? "(function anonymous(" : "(function (");
         final String funcBody;
         if (args.length > 0) {
             final StringBuilder paramListBuf = new StringBuilder();
