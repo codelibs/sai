@@ -174,7 +174,7 @@ public final class NativeSet extends ScriptObject {
      */
     @Function(arity = 0, attributes = Attribute.NOT_ENUMERABLE)
     public static Object values(final Object self) {
-        return LinkedMapIterator.newIterator(checkSet(self).map, LinkedMapIterator.Kind.VALUES);
+        return LinkedMapIterator.newSetIterator(checkSet(self).map, LinkedMapIterator.Kind.VALUES);
     }
 
     /**
@@ -185,7 +185,7 @@ public final class NativeSet extends ScriptObject {
      */
     @Function(arity = 0, attributes = Attribute.NOT_ENUMERABLE)
     public static Object keys(final Object self) {
-        return LinkedMapIterator.newIterator(checkSet(self).map, LinkedMapIterator.Kind.VALUES);
+        return LinkedMapIterator.newSetIterator(checkSet(self).map, LinkedMapIterator.Kind.VALUES);
     }
 
     /**
@@ -197,7 +197,7 @@ public final class NativeSet extends ScriptObject {
      */
     @Function(arity = 0, attributes = Attribute.NOT_ENUMERABLE)
     public static Object entries(final Object self) {
-        return LinkedMapIterator.newIterator(checkSet(self).map, LinkedMapIterator.Kind.ENTRIES);
+        return LinkedMapIterator.newSetIterator(checkSet(self).map, LinkedMapIterator.Kind.ENTRIES);
     }
 
     /**

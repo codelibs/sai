@@ -16,33 +16,19 @@
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+
 package org.codelibs.sai.internal.objects;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-
-import org.codelibs.sai.internal.dynalink.support.Lookup;
-import org.codelibs.sai.internal.objects.annotations.Attribute;
 import org.codelibs.sai.internal.runtime.JSType;
-import org.codelibs.sai.internal.runtime.ScriptFunction;
 import org.codelibs.sai.internal.runtime.ScriptObject;
 import org.codelibs.sai.internal.runtime.ScriptRuntime;
 
 /**
- * The walk behind the object Array.prototype.keys, values and entries hand back.
- *
- * ES6 makes these three iterators, but this engine has no iterator protocol:
- * for-of is desugared to an index loop in the parser, spread and destructuring
- * read by index too, and there is no Symbol.iterator to hang an iterable off. The
- * object built here therefore does NOT drive for-of, spread or destructuring -
- * <pre>
- *     for (var v of [1, 2].values()) { ... }   // does not iterate
- * </pre>
- * - and is only useful on its own, by calling next() until the result says done.
- * Wiring it into for-of needs a redesign of for-of itself, which is a separate
- * piece of work.
+ * The walk behind the object Array.prototype.keys, values and entries hand back,
+ * and the one %TypedArray%.prototype hands back too - ES6 22.2.3.30 gives a typed
+ * array the very same iterator an array has.
  */
-final class ArrayIterator {
+final class ArrayIterator extends AbstractIterator {
     /** What next() yields for each element. */
     enum Kind {
         /** the index */
@@ -53,67 +39,47 @@ final class ArrayIterator {
         ENTRIES
     }
 
-    private static final MethodHandle NEXT = Lookup.findOwnStatic(MethodHandles.lookup(), "next", Object.class,
-            ArrayIterator.class, Object.class);
-
     private final ScriptObject array;
     private final Kind kind;
     private long index;
     private boolean done;
 
     private ArrayIterator(final ScriptObject array, final Kind kind) {
+        super(Global.instance().getArrayIteratorPrototype());
         this.array = array;
         this.kind = kind;
     }
 
     /**
-     * Build the object Array.prototype.keys, values and entries return: an ordinary
-     * script object carrying a next method bound to a fresh walk of the array.
+     * Build the iterator Array.prototype.keys, values and entries return.
      *
      * @param array the array being walked
      * @param kind  what next() yields for each element
      * @return the iterator object
      */
     static ScriptObject newIterator(final ScriptObject array, final Kind kind) {
-        final ScriptObject iterator = Global.instance().newObject();
-
-        iterator.addOwnProperty("next", Attribute.NOT_ENUMERABLE,
-                ScriptFunction.createBuiltin("next", NEXT.bindTo(new ArrayIterator(array, kind))));
-
-        return iterator;
+        return new ArrayIterator(array, kind);
     }
 
-    @SuppressWarnings("unused")
-    private static Object next(final ArrayIterator walk, final Object self) {
-        final ScriptObject result = Global.instance().newObject();
-        final long length = JSType.toUint32(walk.array.getLength());
+    @Override
+    ScriptObject step() {
+        final long length = JSType.toUint32(this.array.getLength());
 
-        if (walk.done || walk.index >= length) {
+        if (this.done || this.index >= length) {
             // An exhausted iterator stays exhausted, even if the array grows later.
-            walk.done = true;
-            result.set("value", ScriptRuntime.UNDEFINED, 0);
-            result.set("done", true, 0);
-            return result;
+            this.done = true;
+            return result(ScriptRuntime.UNDEFINED, true);
         }
 
-        final long at = walk.index++;
-        final Object value;
+        final long at = this.index++;
 
-        switch (walk.kind) {
+        switch (this.kind) {
         case KEYS:
-            value = (double) at;
-            break;
+            return result((double) at, false);
         case VALUES:
-            value = walk.array.get(at);
-            break;
+            return result(this.array.get(at), false);
         default:
-            value = new NativeArray(new Object[] { (double) at, walk.array.get(at) });
-            break;
+            return result(new NativeArray(new Object[] { (double) at, this.array.get(at) }), false);
         }
-
-        result.set("value", value, 0);
-        result.set("done", false, 0);
-
-        return result;
     }
 }

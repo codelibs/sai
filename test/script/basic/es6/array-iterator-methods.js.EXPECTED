@@ -13,7 +13,7 @@ done
 done
 [0,null] [1,1]
 [0,"z"]
-for-of reached 0
+for-of reached 3
 keys true
 keys true
 values true

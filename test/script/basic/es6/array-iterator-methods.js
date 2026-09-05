@@ -20,9 +20,9 @@
  * ES6 Array.prototype.keys / values / entries, and the ES6 reading of a
  * one-argument splice.
  *
- * The three iterator methods hand back an object with a next method. This engine
- * has no iterator protocol, so that object does not drive for-of, spread or
- * destructuring; the test below pins that limitation down as well.
+ * The three iterator methods hand back an object with a next method, which since
+ * %IteratorPrototype% is also an iterable in its own right; the test below reads
+ * one through for-of as well as by hand.
  *
  * @test
  * @run
@@ -83,9 +83,8 @@ print(step(holes.next()) + " " + step(holes.next()));
 // array-likes work too
 print(step(Array.prototype.entries.call({ 0: "z", length: 1 }).next()));
 
-// LIMITATION: the returned object is not iterable, so for-of does not read it.
-// for-of is desugared to an index loop in the parser and the iterator object has
-// no length, so the loop body never runs.
+// 25.1.2: the walk inherits a Symbol.iterator that hands itself back, so for-of
+// reads it the way it reads the array.
 var reached = 0;
 for (var ignored of [1, 2, 3].values()) {
     reached++;
