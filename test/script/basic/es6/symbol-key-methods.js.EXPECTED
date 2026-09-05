@@ -1,0 +1,22 @@
+hasOwnProperty: true
+hasOwnProperty misses another symbol: false
+propertyIsEnumerable: true
+a non enumerable one is still own: true
+but is not enumerable: false
+inherited is not own: false
+inherited is not enumerable here: false
+a name: true
+a number: true
+an array index: true
+Reflect.defineProperty: true
+Reflect.get: 3
+Reflect.has: true
+Reflect.getOwnPropertyDescriptor: 3
+Reflect.set: true,4
+Reflect.deleteProperty: true,false
+Reflect.get through a receiver: 5,true
+ownKeys counts both: 8
+ownKeys lists the names first: 1,2,A,B,C
+ownKeys lists the symbols in order: true,true,true
+ownKeys of an object with no symbols: a,b
+ownKeys skips inherited symbols: 0

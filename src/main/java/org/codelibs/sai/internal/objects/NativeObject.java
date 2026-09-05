@@ -762,11 +762,12 @@ public final class NativeObject {
      */
     @Function(attributes = Attribute.NOT_ENUMERABLE)
     public static boolean propertyIsEnumerable(final Object self, final Object v) {
-        final String str = JSType.toString(v);
+        // ES6 7.1.14 ToPropertyKey: a symbol names a property here too.
+        final Object key = JSType.toPropertyKey(v);
         final Object obj = Global.toObject(self);
 
         if (obj instanceof ScriptObject) {
-            final org.codelibs.sai.internal.runtime.Property property = ((ScriptObject) obj).getMap().findProperty(str);
+            final org.codelibs.sai.internal.runtime.Property property = ((ScriptObject) obj).getMap().findProperty(key);
             return property != null && property.isEnumerable();
         }
 
