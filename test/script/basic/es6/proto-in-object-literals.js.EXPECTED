@@ -1,0 +1,19 @@
+colon sets proto: true
+colon defines no own: true
+colon accepts null: true
+colon ignores a number: true
+computed keeps proto: true
+computed defines own: true
+computed own value: true
+computed does not call inherited setter: true
+shorthand keeps proto: true
+shorthand defines own: true
+method keeps proto: true
+method defines own: true
+accessor keeps proto: true
+accessor defines own: true
+string key sets proto: true
+duplicate proto: true
+mixed forms set proto: true
+mixed forms define own: true
+assignment still sets proto: true

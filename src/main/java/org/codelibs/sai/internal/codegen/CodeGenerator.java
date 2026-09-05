@@ -2513,9 +2513,10 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
 
             if (value == null) {
                 gettersSetters.add(propertyNode);
-            } else if (propertyNode.getKey() instanceof IdentNode && key.equals(ScriptObject.PROTO_PROPERTY_NAME)) {
-                // ES6 draft compliant __proto__ inside object literal
-                // Identifier key and name is __proto__
+            } else if (propertyNode.isProtoAssignment()) {
+                // Annex B.3.1 __proto__ inside an object literal. The parser marks the
+                // one form that sets the prototype -- a written-out key, not computed,
+                // not a shorthand, not a method -- because by here they all look alike.
                 protoNode = value;
                 continue;
             }

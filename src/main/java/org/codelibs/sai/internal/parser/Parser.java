@@ -127,6 +127,7 @@ import org.codelibs.sai.internal.runtime.JSErrorType;
 import org.codelibs.sai.internal.runtime.ParserException;
 import org.codelibs.sai.internal.runtime.RecompilableScriptFunctionData;
 import org.codelibs.sai.internal.runtime.ScriptEnvironment;
+import org.codelibs.sai.internal.runtime.ScriptObject;
 import org.codelibs.sai.internal.runtime.ScriptRuntime;
 import org.codelibs.sai.internal.runtime.ScriptingFunctions;
 import org.codelibs.sai.internal.runtime.Source;
@@ -2818,6 +2819,7 @@ public class Parser extends AbstractParser implements Loggable {
 
         // Create a block for the object literal.
         boolean commaSeen = true;
+        boolean protoSeen = false;
         loop: while (true) {
             switch (type) {
             case RBRACE:
@@ -2854,6 +2856,18 @@ public class Parser extends AbstractParser implements Loggable {
                     break;
                 }
 
+                if (property.isProtoAssignment()) {
+                    // Annex B.3.1: setting the prototype twice in one literal is an early
+                    // error, in strict mode and out of it. Only this form counts -- a
+                    // computed key, a shorthand and a method spelt the same way are
+                    // ordinary properties and may repeat as any other property may.
+                    if (protoSeen) {
+                        throw error(AbstractParser.message("multiple.proto.key"), property.getToken());
+                    }
+
+                    protoSeen = true;
+                }
+
                 if (!deferred.isEmpty()) {
                     // A property after a computed key has to be applied after it.
                     final boolean getterFirst = property.getGetter() != null;
@@ -2861,7 +2875,7 @@ public class Parser extends AbstractParser implements Loggable {
                     deferred.add(new DeferredProperty(property.getToken(), line,
                             LiteralNode.newInstance(property.getToken(), property.getFinish(), property.getKeyName()),
                             property.getValue(), getterFirst ? property.getGetter() : property.getSetter(),
-                            getterFirst));
+                            getterFirst, property.isProtoAssignment()));
                     break;
                 }
 
@@ -2946,15 +2960,23 @@ public class Parser extends AbstractParser implements Loggable {
         /** The function, when this is an accessor rather than a data property. */
         private final FunctionNode accessor;
         private final boolean getter;
+        /** True only for the {@code __proto__ : value} form, which sets the prototype. */
+        private final boolean protoAssignment;
 
         DeferredProperty(final long token, final int line, final Expression key, final Expression value,
                 final FunctionNode accessor, final boolean getter) {
+            this(token, line, key, value, accessor, getter, false);
+        }
+
+        DeferredProperty(final long token, final int line, final Expression key, final Expression value,
+                final FunctionNode accessor, final boolean getter, final boolean protoAssignment) {
             this.token = token;
             this.line = line;
             this.key = key;
             this.value = value;
             this.accessor = accessor;
             this.getter = getter;
+            this.protoAssignment = protoAssignment;
         }
     }
 
@@ -3024,10 +3046,20 @@ public class Parser extends AbstractParser implements Loggable {
             final Expression step;
 
             if (property.accessor == null) {
-                final Expression target =
-                        new IndexNode(indexToken, objectFinish, createIdentNode(identToken, objectFinish, temporary),
-                                property.key);
-                step = new BinaryNode(Token.recast(objectToken, TokenType.ASSIGN), target, property.value);
+                if (property.protoAssignment) {
+                    // The one form that sets the prototype. Assigning through the
+                    // inherited __proto__ accessor is what does that.
+                    final Expression target =
+                            new IndexNode(indexToken, objectFinish, createIdentNode(identToken, objectFinish, temporary),
+                                    property.key);
+                    step = new BinaryNode(Token.recast(objectToken, TokenType.ASSIGN), target, property.value);
+                } else {
+                    // Every other property is created, not assigned: an object literal
+                    // defines its own properties, so an inherited setter of the same name
+                    // -- __proto__ on Object.prototype above all -- must not run.
+                    step = new RuntimeNode(property.token, objectFinish, RuntimeNode.Request.DEFINE_PROPERTY,
+                            createIdentNode(identToken, objectFinish, temporary), property.key, property.value);
+                }
             } else {
                 // An accessor is not expressible as an assignment. A property of an
                 // object literal is enumerable, unlike a class member.
@@ -3135,7 +3167,7 @@ public class Parser extends AbstractParser implements Loggable {
                 final IdentNode methodName = createIdentNode(propertyToken, finish, ident);
 
                 return new PropertyNode(propertyToken, finish, createIdentNode(propertyToken, finish, ident)
-                        .setIsPropertyName(), methodDefinition(propertyToken, functionLine, methodName), null, null);
+                        .setIsPropertyName(), methodDefinition(propertyToken, functionLine, methodName), null, null, false);
             }
 
             if (isES6() && (type == COMMARIGHT || type == RBRACE)) {
@@ -3145,7 +3177,7 @@ public class Parser extends AbstractParser implements Loggable {
                 final IdentNode value = detectSpecialProperty(createIdentNode(propertyToken, finish, ident));
 
                 return new PropertyNode(propertyToken, finish, createIdentNode(propertyToken, finish, ident)
-                        .setIsPropertyName(), value, null, null);
+                        .setIsPropertyName(), value, null, null, false);
             }
 
             if (type != COLON) {
@@ -3162,7 +3194,7 @@ public class Parser extends AbstractParser implements Loggable {
                         return null;
                     }
 
-                    return new PropertyNode(propertyToken, finish, getter.ident, null, getter.functionNode, null);
+                    return new PropertyNode(propertyToken, finish, getter.ident, null, getter.functionNode, null, false);
 
                 case "set":
                     final PropertyFunction setter = propertySetterFunction(getSetToken, functionLine);
@@ -3174,7 +3206,7 @@ public class Parser extends AbstractParser implements Loggable {
                         return null;
                     }
 
-                    return new PropertyNode(propertyToken, finish, setter.ident, null, null, setter.functionNode);
+                    return new PropertyNode(propertyToken, finish, setter.ident, null, null, setter.functionNode, false);
                 default:
                     break;
                 }
@@ -3193,15 +3225,21 @@ public class Parser extends AbstractParser implements Loggable {
                 return new PropertyNode(propertyToken, finish, propertyName,
                         methodDefinition(methodToken, functionLine,
                                 syntheticMethodName(methodToken, functionLine, propertyName.getPropertyName())),
-                        null, null);
+                        null, null, false);
             }
         }
 
         expect(COLON);
 
+        // Annex B.3.1 gives this form, and only this form, the power to set the
+        // prototype. The key is written out here rather than computed, so the decision
+        // can be made now instead of being guessed from the key's shape later.
+        final boolean protoAssignment = ScriptObject.PROTO_PROPERTY_NAME.equals(propertyName.getPropertyName());
+
         defaultNames.push(propertyName);
         try {
-            return new PropertyNode(propertyToken, finish, propertyName, assignmentExpression(false), null, null);
+            return new PropertyNode(propertyToken, finish, propertyName, assignmentExpression(false), null, null,
+                    protoAssignment);
         } finally {
             defaultNames.pop();
         }
@@ -3343,11 +3381,11 @@ public class Parser extends AbstractParser implements Loggable {
         final List<PropertyNode> descriptor = new ArrayList<>();
 
         descriptor.add(new PropertyNode(token, finish, identifierFor(token, getter ? "get" : "set").setIsPropertyName(),
-                accessor, null, null));
+                accessor, null, null, false));
         descriptor.add(new PropertyNode(token, finish, identifierFor(token, "configurable").setIsPropertyName(),
-                LiteralNode.newInstance(token, finish, true), null, null));
+                LiteralNode.newInstance(token, finish, true), null, null, false));
         descriptor.add(new PropertyNode(token, finish, identifierFor(token, "enumerable").setIsPropertyName(),
-                LiteralNode.newInstance(token, finish, enumerable), null, null));
+                LiteralNode.newInstance(token, finish, enumerable), null, null, false));
 
         final List<Expression> arguments = new ArrayList<>();
         arguments.add(target);

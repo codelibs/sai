@@ -93,6 +93,8 @@ public class RuntimeNode extends Expression {
         TO_ITERABLE,
         /** Look up or build the frozen strings object a tagged template hands its tag */
         TEMPLATE_OBJECT,
+        /** Define an enumerable data property, for a computed key in an object literal */
+        DEFINE_PROPERTY,
         /** Define a non-enumerable method, for an ES6 class body */
         DEFINE_METHOD,
         /** Define a non-enumerable accessor, for an ES6 class body */
