@@ -1,0 +1,40 @@
+Map without new: true
+Map(null): 0
+Map(undefined): 0
+constructor goes through prototype.set: a,b
+built from pairs: 1,2
+set returns this: true
+has: true
+get: 123
+size: 1
+delete: true,false
+size after delete: 0
+-0 reads back as +0: minus
+-0 stored as +0: true
+NaN is its own key: nan
+1 and 1.0 are one key: 1,double
+insertion order: b=9 a=2 c=3
+keys: x,y,true
+values: 10,20,true
+entries: x:10
+delete during iteration skips: 3
+exhausted stays exhausted: true
+forEach arguments: v,k,true
+clear: 0,false
+prototype is not an instance: true
+class name: [object Map]
+Set without new: true
+Set(null): 0
+constructor goes through prototype.add: p,q
+built from values: true,true
+add returns this: true
+added twice, stored once: 1
+Set has: true,false
+Set delete: true,0
+Set forEach: 3/3/true 1/1/true 2/2/true
+Set entries pairs the value with itself: z:z
+Set keys is Set values: z
+Set prototype is not an instance: true
+Set class name: [object Set]
+Set from a Set: 2
+Map from a Map: v

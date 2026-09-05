@@ -741,6 +741,62 @@ public final class Global extends Scope {
 
     private volatile Object float64Array;
 
+    /**
+     * Getter for the Map property.
+     * @param self self reference
+     * @return the value of the Map property
+     */
+    @Getter(name = "Map", attributes = Attribute.NOT_ENUMERABLE)
+    public static Object getMapConstructor(final Object self) {
+        final Global global = Global.instanceFrom(self);
+        if (global.mapCtor == LAZY_SENTINEL) {
+            global.mapCtor = global.getBuiltinMap();
+        }
+        return global.mapCtor;
+    }
+
+    /**
+     * Setter for the Map property.
+     * @param self self reference
+     * @param value value of the Map property
+     */
+    @Setter(name = "Map", attributes = Attribute.NOT_ENUMERABLE)
+    public static void setMapConstructor(final Object self, final Object value) {
+        final Global global = Global.instanceFrom(self);
+        global.mapCtor = value;
+    }
+
+    // Not named "map" or "set": in a ScriptObject those read as the property map
+    // and the property setter.
+    private volatile Object mapCtor = LAZY_SENTINEL;
+
+    /**
+     * Getter for the Set property.
+     * @param self self reference
+     * @return the value of the Set property
+     */
+    @Getter(name = "Set", attributes = Attribute.NOT_ENUMERABLE)
+    public static Object getSetConstructor(final Object self) {
+        final Global global = Global.instanceFrom(self);
+        if (global.setCtor == LAZY_SENTINEL) {
+            global.setCtor = global.getBuiltinSet();
+        }
+        return global.setCtor;
+    }
+
+    /**
+     * Setter for the Set property.
+     * @param self self reference
+     * @param value value of the Set property
+     */
+    @Setter(name = "Set", attributes = Attribute.NOT_ENUMERABLE)
+    public static void setSetConstructor(final Object self, final Object value) {
+        final Global global = Global.instanceFrom(self);
+        global.setCtor = value;
+    }
+
+    private volatile Object setCtor = LAZY_SENTINEL;
+
     /** Sai extension: Java access - global.Packages */
     @Property(name = "Packages", attributes = Attribute.NOT_ENUMERABLE)
     public volatile Object packages;
@@ -889,6 +945,8 @@ public final class Global extends Scope {
     private ScriptFunction builtinJavaImporter;
     private ScriptObject builtinJavaApi;
     private ScriptFunction builtinArrayBuffer;
+    private ScriptFunction builtinMap;
+    private ScriptFunction builtinSet;
     private ScriptFunction builtinDataView;
     private ScriptFunction builtinInt8Array;
     private ScriptFunction builtinUint8Array;
@@ -1692,6 +1750,28 @@ public final class Global extends Scope {
 
     ScriptObject getJSAdapterPrototype() {
         return ScriptFunction.getPrototype(getBuiltinJSAdapter());
+    }
+
+    private synchronized ScriptFunction getBuiltinMap() {
+        if (this.builtinMap == null) {
+            this.builtinMap = initConstructorAndSwitchPoint("Map", ScriptFunction.class);
+        }
+        return this.builtinMap;
+    }
+
+    ScriptObject getMapPrototype() {
+        return ScriptFunction.getPrototype(getBuiltinMap());
+    }
+
+    private synchronized ScriptFunction getBuiltinSet() {
+        if (this.builtinSet == null) {
+            this.builtinSet = initConstructorAndSwitchPoint("Set", ScriptFunction.class);
+        }
+        return this.builtinSet;
+    }
+
+    ScriptObject getSetPrototype() {
+        return ScriptFunction.getPrototype(getBuiltinSet());
     }
 
     private synchronized ScriptFunction getBuiltinArrayBuffer() {
