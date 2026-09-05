@@ -42,6 +42,7 @@ import org.codelibs.sai.internal.codegen.CompilerConstants.Call;
 import org.codelibs.sai.internal.codegen.types.Type;
 import org.codelibs.sai.internal.dynalink.beans.StaticClass;
 import org.codelibs.sai.internal.objects.Global;
+import org.codelibs.sai.internal.objects.NativeSymbol;
 import org.codelibs.sai.internal.parser.Lexer;
 import org.codelibs.sai.internal.runtime.arrays.ArrayLikeIterator;
 import org.codelibs.sai.internal.runtime.linker.Bootstrap;
@@ -472,6 +473,14 @@ public enum JSType {
     }
 
     private static Object toPrimitive(final ScriptObject sobj, final Class<?> hint) {
+        // ES6 7.1.1 step 2: an object carrying Symbol.toPrimitive converts through it
+        // rather than through valueOf and toString, and is told which hint was asked
+        // for. A null hint is the "default" one, which is what == and + ask with.
+        final Object exotic = ScriptRuntime.findSymbolValue(sobj, NativeSymbol.toPrimitive);
+        if (exotic instanceof ScriptFunction) {
+            final String name = hint == null ? "default" : hint == Number.class ? "number" : "string";
+            return requirePrimitive(ScriptRuntime.apply((ScriptFunction) exotic, sobj, name));
+        }
         return requirePrimitive(sobj.getDefaultValue(hint));
     }
 

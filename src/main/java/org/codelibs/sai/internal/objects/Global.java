@@ -1899,6 +1899,17 @@ public final class Global extends Scope {
         return this.builtinSymbol;
     }
 
+    /**
+     * ECMA 20.2.1.9 and 24.3.3 give the two namespace objects a Symbol.toStringTag,
+     * so that Object.prototype.toString names them. The tag goes on when the object
+     * is built rather than when a script first reaches for Symbol: the well known
+     * symbols are constants that exist whether or not the Symbol global has been
+     * touched, and a property keyed on one shows up in no listing.
+     */
+    private static void tagNamespace(final ScriptObject namespace, final String tag) {
+        namespace.addOwnProperty(NativeSymbol.toStringTag, Attribute.NOT_ENUMERABLE | Attribute.NOT_WRITABLE, tag);
+    }
+
     ScriptObject getSymbolPrototype() {
         return ScriptFunction.getPrototype(getBuiltinSymbol());
     }
@@ -2157,6 +2168,7 @@ public final class Global extends Scope {
     private synchronized ScriptObject getBuiltinJSON() {
         if (this.builtinJSON == null) {
             this.builtinJSON = initConstructorAndSwitchPoint("JSON", ScriptObject.class);
+            tagNamespace(this.builtinJSON, "JSON");
         }
         return this.builtinJSON;
     }
@@ -2608,6 +2620,7 @@ public final class Global extends Scope {
 
         this.builtinString = initConstructorAndSwitchPoint("String", ScriptFunction.class);
         this.builtinMath = initConstructorAndSwitchPoint("Math", ScriptObject.class);
+        tagNamespace(this.builtinMath, "Math");
 
         // initialize String.prototype.length to 0
         // add String.prototype.length
