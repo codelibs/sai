@@ -39,6 +39,7 @@ import org.codelibs.sai.internal.dynalink.CallSiteDescriptor;
 import org.codelibs.sai.internal.dynalink.linker.GuardedInvocation;
 import org.codelibs.sai.internal.dynalink.linker.LinkRequest;
 import org.codelibs.sai.internal.dynalink.support.CallSiteDescriptorFactory;
+import org.codelibs.sai.internal.objects.NativeSymbol;
 import org.codelibs.sai.internal.runtime.linker.SaiCallSiteDescriptor;
 import org.codelibs.sai.internal.runtime.linker.SaiGuards;
 
@@ -114,7 +115,7 @@ public final class WithObject extends Scope {
         }
 
         self = expression;
-        if (isNamedOperation) {
+        if (isNamedOperation && !isUnscopable(name)) {
             find = self.findProperty(name, true);
         }
 
@@ -204,11 +205,31 @@ public final class WithObject extends Scope {
         // We call findProperty on 'expression' with 'expression' itself as start parameter.
         // This way in ScriptObject.setObject we can tell the property is from a 'with' expression
         // (as opposed from another non-scope object in the proto chain such as Object.prototype).
-        final FindProperty exprProperty = expression.findProperty(key, true, expression);
-        if (exprProperty != null) {
-            return exprProperty;
+        if (!isUnscopable(key)) {
+            final FindProperty exprProperty = expression.findProperty(key, true, expression);
+            if (exprProperty != null) {
+                return exprProperty;
+            }
         }
         return super.findProperty(key, deep, start);
+    }
+
+    /**
+     * ES6 8.1.1.2.1 HasBinding: the object a with statement opens can hide names from
+     * it, by listing them in the object its Symbol.unscopables names. A hidden name
+     * is not a binding of this scope, so the lookup goes on to the scope outside.
+     *
+     * @param key the name being looked up
+     * @return true if the with expression is to be passed over for this name
+     */
+    private boolean isUnscopable(final Object key) {
+        final Object unscopables = ScriptRuntime.findSymbolValue(expression, NativeSymbol.unscopables);
+
+        if (!(unscopables instanceof ScriptObject)) {
+            return false;
+        }
+
+        return JSType.toBoolean(((ScriptObject) unscopables).get(key));
     }
 
     @Override

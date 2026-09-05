@@ -31,10 +31,13 @@ import static java.lang.Double.isNaN;
 import static org.codelibs.sai.internal.runtime.ECMAErrors.rangeError;
 import static org.codelibs.sai.internal.runtime.ECMAErrors.typeError;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
+import org.codelibs.sai.internal.dynalink.support.Lookup;
 import org.codelibs.sai.internal.objects.annotations.Attribute;
 import org.codelibs.sai.internal.objects.annotations.Constructor;
 import org.codelibs.sai.internal.objects.annotations.Function;
@@ -144,6 +147,44 @@ public final class NativeDate extends ScriptObject {
         // then it behaves as if the hint were Number, unless O is a Date object
         // in which case it behaves as if the hint were String.
         return super.getDefaultValue(hint == null ? String.class : hint);
+    }
+
+    /** The handle Global installs under Symbol.toPrimitive on Date.prototype. */
+    static final MethodHandle SYMBOL_TO_PRIMITIVE = Lookup.findOwnStatic(MethodHandles.lookup(), "symbolToPrimitive",
+            Object.class, Object.class, Object.class);
+
+    /**
+     * ES6 20.3.4.45 Date.prototype [ @@toPrimitive ] ( hint ), the reason a date reads
+     * as its string rather than its number when nothing says which is wanted.
+     *
+     * <p>Installed from Global under the symbol key, since saigen cannot write one into
+     * a generated class. The receiver only has to be an object: the method picks the
+     * order valueOf and toString are tried in, and nothing about it is specific to a
+     * date beyond that a date is the one built-in asking for "default" to mean string.
+     *
+     * @param self the object to reduce
+     * @param hint "default", "number" or "string"
+     * @return the primitive
+     */
+    public static Object symbolToPrimitive(final Object self, final Object hint) {
+        if (!(self instanceof ScriptObject)) {
+            throw typeError("not.an.object", ScriptRuntime.safeToString(self));
+        }
+
+        final String name = JSType.toString(hint);
+        final Class<?> ordinary;
+
+        if ("number".equals(name)) {
+            ordinary = Number.class;
+        } else if ("string".equals(name) || "default".equals(name)) {
+            ordinary = String.class;
+        } else {
+            throw typeError("invalid.to.primitive.hint", name);
+        }
+
+        // 7.1.1 OrdinaryToPrimitive, not ToPrimitive: going through ToPrimitive would
+        // come straight back here.
+        return ((ScriptObject) self).getDefaultValue(ordinary);
     }
 
     /**

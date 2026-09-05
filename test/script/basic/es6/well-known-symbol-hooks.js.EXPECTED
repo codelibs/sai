@@ -1,0 +1,28 @@
+instanceof through hasInstance: true,false
+it is handed the left hand side: 2
+an object that is not a function: true
+called on the right hand side: true
+an ordinary constructor: true
+an ordinary miss: false
+a plain object is still refused: true
+an unlisted name is read from the object: 1
+a listed one is read from outside: outer
+a false entry hides nothing: 1,2,3
+a non object list is ignored: 4
+a write goes outside: assigned,inner e
+Array.prototype lists: copyWithin,entries,fill,find,findIndex,keys,values
+the list has no prototype: null
+values is read from outside an array: outer values
+but join is not: function
+hints: number,string,default,default,number
+Date.prototype[Symbol.toPrimitive]: function
+number: 2
+string: 2
+default: 2
+an unknown hint: true
+a date still reads as its string: true
+and as its number when asked: true
+arguments has its own: true
+and it is Array.prototype.values: true
+arguments still reads by index: 1,2,3
+a strict arguments object has one too: true

@@ -1942,6 +1942,38 @@ public final class Global extends Scope {
      * @param prototype the prototype to add the symbol to
      * @param methodName the method it should name
      */
+    /**
+     * ES6 9.2.12 step 15 gives an arguments object its own Symbol.iterator, which is
+     * Array.prototype.values rather than a method of its own.
+     *
+     * @param arguments the arguments object to add it to
+     */
+    void installArgumentsIterator(final ScriptObject arguments) {
+        final Object values = getArrayPrototype().get("values");
+
+        if (values instanceof ScriptFunction) {
+            arguments.addOwnProperty(NativeSymbol.iterator, Attribute.NOT_ENUMERABLE, values);
+        }
+    }
+
+    /**
+     * ES6 22.1.3.32 Array.prototype [ @@unscopables ]: the names a with statement over
+     * an array is to pass over, so that code written before they existed still reads
+     * the outer binding of, say, {@code values}.
+     *
+     * @param prototype Array.prototype
+     */
+    private void installUnscopables(final ScriptObject prototype) {
+        final ScriptObject unscopables = newObject();
+
+        unscopables.setProto(null);
+        for (final String name : new String[] { "copyWithin", "entries", "fill", "find", "findIndex", "keys", "values" }) {
+            unscopables.addOwnProperty(name, 0, true);
+        }
+
+        prototype.addOwnProperty(NativeSymbol.unscopables, Attribute.NOT_ENUMERABLE | Attribute.NOT_WRITABLE, unscopables);
+    }
+
     private static void installIterator(final ScriptObject prototype, final String methodName) {
         final Object method = prototype.get(methodName);
         if (method instanceof ScriptFunction) {
@@ -2263,6 +2295,10 @@ public final class Global extends Scope {
     private synchronized ScriptFunction getBuiltinDate() {
         if (this.builtinDate == null) {
             this.builtinDate = initConstructorAndSwitchPoint("Date", ScriptFunction.class);
+            // ES6 20.3.4.45: a date reduces to its string rather than its number when
+            // nothing says which is wanted, and this is where that is decided.
+            installSymbolMethod(ScriptFunction.getPrototype(this.builtinDate), NativeSymbol.toPrimitive, "toPrimitive",
+                    NativeDate.SYMBOL_TO_PRIMITIVE);
             final ScriptObject dateProto = ScriptFunction.getPrototype(builtinDate);
             // initialize default date
             this.DEFAULT_DATE = new NativeDate(NaN, dateProto);
@@ -2775,6 +2811,7 @@ public final class Global extends Scope {
         this.builtinArray = initConstructorAndSwitchPoint("Array", ScriptFunction.class);
         installIterator(getArrayPrototype(), "values");
         installSpecies(this.builtinArray);
+        installUnscopables(getArrayPrototype());
         this.builtinBoolean = initConstructorAndSwitchPoint("Boolean", ScriptFunction.class);
         // ES6 20.1.2.12 and 20.1.2.13 want Number.parseInt and Number.parseFloat to be the very
         // same function objects as the global ones - the identity is observable and kangax tests

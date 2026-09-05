@@ -264,10 +264,15 @@ public final class NativeArguments extends ScriptObject {
         final boolean isStrict = callee == null || callee.isStrict() || callee.hasNonSimpleParameters();
         final Global global = Global.instance();
         final ScriptObject proto = global.getObjectPrototype();
-        if (isStrict) {
-            return new NativeStrictArguments(arguments, numParams, proto, NativeStrictArguments.getInitialMap());
-        }
-        return new NativeArguments(arguments, callee, numParams, proto, NativeArguments.getInitialMap());
+        final ScriptObject arg = isStrict
+                ? new NativeStrictArguments(arguments, numParams, proto, NativeStrictArguments.getInitialMap())
+                : new NativeArguments(arguments, callee, numParams, proto, NativeArguments.getInitialMap());
+
+        // ES6 9.2.12 step 15: an arguments object carries its own Symbol.iterator, and
+        // it is Array.prototype.values rather than a method of its own.
+        global.installArgumentsIterator(arg);
+
+        return arg;
     }
 
     /**
