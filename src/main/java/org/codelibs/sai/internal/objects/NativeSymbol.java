@@ -123,6 +123,26 @@ public final class NativeSymbol extends ScriptObject {
     private static final MethodHandle WRAPFILTER = findOwnMH("wrapFilter", MH.type(NativeSymbol.class, Object.class));
     private static final MethodHandle PROTOFILTER = findOwnMH("protoFilter", MH.type(Object.class, Object.class));
 
+    /** The handle Global installs under Symbol.toPrimitive on Symbol.prototype. */
+    static final MethodHandle SYMBOL_TO_PRIMITIVE = findOwnMH("symbolToPrimitive", MH.type(Object.class, Object.class,
+            Object.class));
+
+    /**
+     * ES6 19.4.3.4 Symbol.prototype [ @@toPrimitive ] ( hint ), which answers the symbol
+     * a wrapper stands for whatever the hint is.
+     *
+     * <p>It is what keeps a wrapper usable where the symbol is: as a property key, and
+     * on either side of ==. Without it the wrapper would reduce through toString, which
+     * spells the symbol out as a string rather than answering it.
+     *
+     * @param self the wrapper, or the symbol itself
+     * @param hint the hint, which a symbol has no use for
+     * @return the symbol
+     */
+    public static Object symbolToPrimitive(final Object self, final Object hint) {
+        return checkSymbol(self);
+    }
+
     /**
      * The getter behind every {@code Symbol.species}: ES6 defines each of them as
      * {@code get [Symbol.species]() { return this; }}, so one handle serves them all.

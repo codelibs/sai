@@ -1,0 +1,25 @@
+Symbol.prototype has it: function
+the wrapper does not: false
+the descriptor: function,false,true
+it is an object: object
+it is a Symbol: true
+it is not the symbol: true
+but it values as one: true
+and reduces to one: true
+the hint makes no difference: true,true,true
+wrapper == symbol: true
+symbol == wrapper: true
+but not strictly: false,false
+a different symbol is not equal: false
+used as a key: 1
+it left no name behind: 0
+it is among the symbols: true
+a symbol valued property: {}
+a symbol in an array: [null]
+a symbol on its own: undefined
+a wrapper valued property: {"foo":{}}
+a wrapper in an array: [{}]
+a wrapper on its own: {}
+a wrapper with a null toJSON: {"foo":{}}
+a symbol still refuses to be a string: true
+its description still reads: Symbol(wrapped),Symbol(wrapped)
