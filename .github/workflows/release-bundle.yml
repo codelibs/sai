@@ -1,0 +1,42 @@
+name: Release bundle
+
+# Pushing a tag such as v0.4.0 builds the zip to upload at
+# https://central.sonatype.com/publishing. The version comes from the tag, so
+# gradle.properties does not need to be edited first.
+on:
+  push:
+    tags: [ 'v*' ]
+
+permissions:
+  contents: read
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v6
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: Set up Gradle
+      uses: gradle/actions/setup-gradle@v5
+
+    # Tests are not rerun here: the tagged commit is expected to have passed the
+    # Java CI workflow already.
+    - name: Build the Central bundle
+      env:
+        SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+        SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+      run: ./gradlew centralBundle -Pversion="${GITHUB_REF_NAME#v}"
+
+    - name: Upload the bundle
+      uses: actions/upload-artifact@v7
+      with:
+        name: central-bundle
+        path: build/distributions/*-central-bundle.zip
+        if-no-files-found: error

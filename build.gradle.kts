@@ -479,6 +479,11 @@ publishing {
     }
 
     repositories {
+        // Staging repository for the Central Portal bundle (see `centralBundle`).
+        maven {
+            name = "bundle"
+            url = uri(layout.buildDirectory.dir("central-bundle/repo"))
+        }
         maven {
             name = "central"
             val isSnapshot = version.toString().endsWith("-SNAPSHOT")
@@ -538,6 +543,39 @@ signing {
     if (hasSigningConfig) {
         sign(publishing.publications["maven"])
     }
+}
+
+// Central Portal bundle: a zip of the signed Maven repository layout, for upload at
+// https://central.sonatype.com/publishing. Gradle's file repository writes the checksums,
+// the signing plugin the .asc files.
+val bundleSigned = signing.isRequired
+val bundleRepoDir = layout.buildDirectory.dir("central-bundle/repo")
+
+val cleanCentralBundleRepo = tasks.register<Delete>("cleanCentralBundleRepo") {
+    delete(bundleRepoDir)
+}
+
+tasks.named("publishMavenPublicationToBundleRepository") {
+    dependsOn(cleanCentralBundleRepo)
+}
+
+tasks.register<Zip>("centralBundle") {
+    group = "publishing"
+    description = "Build the zip to upload to the Maven Central Portal (needs signing configured, non-SNAPSHOT version)"
+
+    // Locals, not the script's top-level vals: a doFirst that reads those captures the script
+    // object, which the configuration cache cannot serialize.
+    val signed = bundleSigned
+    val bundleVersion = project.version.toString()
+    doFirst {
+        check(signed) { "Signing is not configured; Central rejects an unsigned bundle." }
+        check(!bundleVersion.endsWith("-SNAPSHOT")) { "Central does not accept SNAPSHOT versions: $bundleVersion" }
+    }
+
+    dependsOn("publishMavenPublicationToBundleRepository")
+    from(bundleRepoDir)
+    archiveBaseName.set("sai")
+    archiveClassifier.set("central-bundle")
 }
 
 // Custom run task for testing

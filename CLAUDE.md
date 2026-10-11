@@ -47,6 +47,10 @@ Sai is a runtime environment for programs written in ECMAScript 5.1 that runs on
 
 # Publish to Maven Central
 ./gradlew publish
+
+# Zip for manual upload at https://central.sonatype.com/publishing
+# (needs SIGNING_KEY / SIGNING_PASSWORD and a non-SNAPSHOT version, e.g. -Pversion=0.4.0)
+./gradlew centralBundle
 ```
 
 ## Testing
