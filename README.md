@@ -129,4 +129,5 @@ For security issues, follow [SECURITY.md](SECURITY.md) rather than opening an is
 ## License
 
 GPLv2 with the Classpath Exception, inherited from Nashorn. See [LICENSE](LICENSE) and
-[ASSEMBLY_EXCEPTION](ASSEMBLY_EXCEPTION).
+[ASSEMBLY_EXCEPTION](ASSEMBLY_EXCEPTION). Code bundled from other projects is listed in
+[NOTICE](NOTICE).

@@ -181,6 +181,15 @@ tasks.jar {
     }
 }
 
+// The source headers say the Classpath exception is "in the LICENSE file that accompanied this
+// code", and the BSD and MIT code bundled in the engine requires its notice to travel with
+// every copy. So the binary, sources and javadoc JARs all carry these under META-INF.
+tasks.withType<Jar>().configureEach {
+    metaInf {
+        from(layout.projectDirectory.files("LICENSE", "ASSEMBLY_EXCEPTION", "NOTICE"))
+    }
+}
+
 // test/script/nosecurity/JDK-8055034.js forks a Shell process and builds its classpath as
 // `<sai.jar>/../../lib/*`, which resolves to build/lib. The path is assembled at runtime, so
 // grepping for "build/lib" does not find this use - do not remove this task.
