@@ -5,7 +5,7 @@
 
 [versions]
 # ASM is the bytecode backend for both the code generator and saigen.
-asm = "9.11"
+asm = "9.11.1"
 # TestNG 7 needs Java 11+, which the toolchain already guarantees. jcommander, bsh and
 # snakeyaml used to be declared next to it because the Ant build assembled the test classpath
 # by hand; nothing in the tree references them, and TestNG now brings what it needs itself.
