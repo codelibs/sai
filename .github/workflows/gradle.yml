@@ -2,8 +2,8 @@ name: Java CI with Gradle
 
 on:
   push:
-    branches: [ master ]
-  # Every pull request, not just those targeting master, so the intermediate
+    branches: [ main ]
+  # Every pull request, not just those targeting main, so the intermediate
   # branches in a stacked series are checked too.
   pull_request:
 
